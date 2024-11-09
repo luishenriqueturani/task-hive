@@ -1,6 +1,7 @@
 
 export default () => ({
   port: process.env.PORT || 3000,
+  cryptSault: process.env.CRYPT_SALT,
   db: {
     host: process.env.DB_HOST,
     port: process.env.DB_PORT,
