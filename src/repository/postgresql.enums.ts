@@ -1,0 +1,7 @@
+
+export enum PostgreSQLTokens {
+  DATA_SOURCE = 'DATA_POSTGRESQL',
+
+  USER_REPOSITORY = 'USER_REPOSITORY',
+}
+
