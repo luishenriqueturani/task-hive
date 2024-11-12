@@ -4,6 +4,7 @@ import { AppService } from './app.service';
 import { ConfigModule } from '@nestjs/config';
 import { UsersModule } from './users/users.module';
 import configuration from './config/configuration';
+import { SnowflakeIdService } from './snowflakeid/snowflakeid.service';
 
 
 
@@ -17,6 +18,7 @@ import configuration from './config/configuration';
   ],
   controllers: [AppController],
   providers: [
+    SnowflakeIdService,
     AppService
   ],
 })
