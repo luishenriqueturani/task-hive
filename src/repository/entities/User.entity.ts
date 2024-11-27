@@ -3,6 +3,8 @@ import { Project } from "./Project.entity";
 import { TaskTimeTrak } from "./TaskTimeTrak.entity";
 import { UserFriendship } from "./UserFriendship.entity";
 import { ToDo } from "./ToDo.entity";
+import { Session } from "./Session.entity";
+import { ForgetPassword } from "./ForgetPassword.entity";
 
 @Entity()
 export class User {
@@ -45,4 +47,10 @@ export class User {
 
   @OneToMany(() => UserFriendship, friendship => friendship.user2)
   friendship2: UserFriendship
+
+  @OneToMany(() => Session, session => session.user)
+  session: Session[]
+
+  @OneToMany(() => ForgetPassword, forgetPassword => forgetPassword.user)
+  forgetPassword: ForgetPassword
 }
