@@ -6,6 +6,7 @@ import { UsersModule } from './users/users.module';
 import configuration from './config/configuration';
 import { SnowflakeIdService } from './snowflakeid/snowflakeid.service';
 import { AuthModule } from './auth/auth.module';
+import { JwtModule } from '@nestjs/jwt';
 
 
 
@@ -14,6 +15,9 @@ import { AuthModule } from './auth/auth.module';
     ConfigModule.forRoot({
       isGlobal: true,
       load: [configuration],
+    }),
+    JwtModule.register({
+      secret: process.env.JWT_SECRET,
     }),
     UsersModule,
     AuthModule,
