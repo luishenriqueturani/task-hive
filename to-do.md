@@ -2,8 +2,6 @@
 # Tasks
 
 ## Por fazer
-- Módulo de autenticação
-- Controle de sessão
 - Módulo de tarefas avulsas
 - Módulo de Projetos
   - CRUD de projetos
@@ -20,3 +18,5 @@
 
 - Base do banco de dados
 - Módulo de CRUD de usuários
+- Módulo de autenticação
+- Controle de sessão

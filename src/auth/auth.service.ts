@@ -55,7 +55,7 @@ export class AuthService {
    * @param options JwtVerifyOptions
    * @returns boolean
    */
-  async checkToken(token: string, options?: JwtVerifyOptions) {
+  checkToken(token: string, options?: JwtVerifyOptions) {
     try {
       
       return this.jwtService.verify(token, options);

@@ -1,10 +1,12 @@
-import { Body, Controller, Post } from '@nestjs/common';
+import { Body, Controller, Post, UseGuards } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { AuthLoginDto } from './dto/authLogin.dto';
 import { AuthForgetPasswordDto } from './dto/authForgetPassword.dto';
 import { AuthCheckTokenDto } from './dto/authCheckToken.dto';
 import { AuthResetPasswordDto } from './dto/authResetPassword.dto';
 import { AuthLogoutDto } from './dto/authLogout.dto';
+import { AuthGuard } from 'src/guards/auth.guard';
+import { RequestToken } from 'src/decorators/requestToken.decorator';
 
 @Controller('auth')
 export class AuthController {
@@ -19,10 +21,11 @@ export class AuthController {
     }
   }
 
+  @UseGuards(AuthGuard)
   @Post('logout')
-  async logout(@Body() Body : AuthLogoutDto) {
+  async logout(@RequestToken() token: string) {
     try {
-      return await this.authService.logout(Body.token)
+      return await this.authService.logout(token)
     } catch (error) {
       throw error
     }
