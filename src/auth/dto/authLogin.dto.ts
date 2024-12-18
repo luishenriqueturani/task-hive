@@ -4,7 +4,7 @@ import { IsEmail, IsStrongPassword } from "class-validator";
 export class AuthLoginDto {
 
   @IsEmail()
-  username: string;
+  email: string;
 
   @IsStrongPassword({
     minLength: 8,
