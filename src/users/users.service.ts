@@ -1,4 +1,4 @@
-import { HttpException, HttpStatus, Inject, Injectable } from '@nestjs/common';
+import { BadRequestException, HttpException, HttpStatus, Inject, Injectable } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { Repository } from 'typeorm';
@@ -72,13 +72,21 @@ export class UsersService {
       throw new HttpException('Email already exists', HttpStatus.UNPROCESSABLE_ENTITY);
     }
 
-    return this.userRepository.save({
+    const user = await this.userRepository.save({
       avatar: createUserDto.avatar,
       email: createUserDto.email,
       name: createUserDto.name,
       password: await Crypt.hash(createUserDto.password),
       updatedAt: null,
-    });
+    })
+
+    if(!user) {
+      throw new BadRequestException('Não foi possível criar o usuário');
+    }
+
+    user.password = undefined;
+
+    return user;
   }
 
   async update(id: string, updateUserDto: UpdateUserDto) {

@@ -8,7 +8,7 @@ export class Session {
   @PrimaryGeneratedColumn("uuid")
   id: string;
 
-  @ManyToOne(() => User, user => user.toDoTaks)
+  @ManyToOne(() => User, user => user.session)
   user: User
 
   @Column()

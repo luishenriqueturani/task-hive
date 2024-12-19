@@ -7,6 +7,7 @@ import { Crypt } from 'src/utils/crypt';
 import { Repository } from 'typeorm';
 import { JWTAudience } from './auth.enums';
 import { Session } from 'src/repository/entities/Session.entity';
+import { ConfigService } from '@nestjs/config';
 
 
 export interface SessionResponse {
@@ -27,6 +28,8 @@ export class AuthService {
 
     @Inject(PostgreSQLTokens.SESSION_REPOSITORY)
     private sessionRepository: Repository<Session>,
+
+    private readonly configService: ConfigService,
   ) { }
 
   /**
@@ -37,6 +40,7 @@ export class AuthService {
    * @returns string
    */
   async createToken(user: User, audience: JWTAudience, expiresIn: string = '90d') {
+    //console.log(user)
     return this.jwtService.sign({
       id: user.id,
       name: user.name,
@@ -57,10 +61,15 @@ export class AuthService {
    */
   checkToken(token: string, options?: JwtVerifyOptions) {
     try {
-      
-      return this.jwtService.verify(token, options);
+      const res = this.jwtService.verify(token, {
+        secret: this.configService.get<string>('jwtSecret'),
+        ...options
+      });
+      //console.log(res)
+      return res
 
     } catch (error) {
+      console.log(error)
       throw new BadRequestException('Token inválido')
     }
   }
@@ -79,18 +88,26 @@ export class AuthService {
     if(!user) {
       throw new BadRequestException('Usuário não cadastrado')
     }
+    try {
+      
+      //console.log(await Crypt.compare(password, user.password))
+  
+      if(!await Crypt.compare(password, user.password)) {
+        throw new BadRequestException('Senha incorreta')
+      }
+      
+      return this.createSession(user)
 
-    if(user.password !== await Crypt.hash(password)) {
+    } catch (error) {
+      console.log(error)
       throw new BadRequestException('Senha incorreta')
     }
-
-    return this.createSession(user)
   }
 
   /**
    * 
    * @param token string
-   * @returns boolean
+   * @returns Promise<DeleteResult>
    */
   async logout(token: string) {
     const session = await this.findSessionByToken(token)
@@ -99,7 +116,9 @@ export class AuthService {
       throw new BadRequestException('Sessão inválida')
     }
 
-    return !!await this.sessionRepository.delete(session)
+    return await this.sessionRepository.delete({
+      id: session.id,
+    })
   }
 
   /**
@@ -221,6 +240,24 @@ export class AuthService {
       where: {
         token,
       },
+      select: {
+        token: true,
+        createdAt: true,
+        updatedAt: true,
+        deletedAt: true,
+        id: true,
+        user: {
+          id: true,
+          name: true,
+          email: true,
+          avatar: true,
+          createdAt: true,
+          updatedAt: true,
+        }
+      },
+      relations: ['user'],
+      withDeleted: false,
+
     });
   }
 

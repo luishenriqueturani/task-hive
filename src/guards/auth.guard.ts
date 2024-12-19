@@ -1,4 +1,5 @@
 import { CanActivate, ExecutionContext, Injectable } from "@nestjs/common";
+import { JWTAudience } from "src/auth/auth.enums";
 import { AuthService } from "src/auth/auth.service";
 import { UsersService } from "src/users/users.service";
 
@@ -20,17 +21,36 @@ export class AuthGuard implements CanActivate {
 
       const token = authorization?.replace('Bearer ', '')
 
+      //console.log(token)
+
       if(!token) {
         return false
       }
 
       request.token = token
 
-      const res = this.authService.checkToken(token)
+      const res = this.authService.checkToken(token, {
+        audience: JWTAudience.LOGIN,
+        issuer: 'TaskHive',
+      })
+
+      //console.log(res)
 
       request.tokenPayload = res
 
-      request.user = await this.userService.findOne(res.id)
+      const session = await this.authService.findSessionByToken(token)
+
+      if(!session) {
+        return false
+      }
+
+      request.session = session
+
+      console.log(session)
+
+      request.user = session.user
+
+      console.log(request.user)
 
       return true
 

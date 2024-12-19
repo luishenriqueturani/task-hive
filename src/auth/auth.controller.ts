@@ -4,7 +4,6 @@ import { AuthLoginDto } from './dto/authLogin.dto';
 import { AuthForgetPasswordDto } from './dto/authForgetPassword.dto';
 import { AuthCheckTokenDto } from './dto/authCheckToken.dto';
 import { AuthResetPasswordDto } from './dto/authResetPassword.dto';
-import { AuthLogoutDto } from './dto/authLogout.dto';
 import { AuthGuard } from 'src/guards/auth.guard';
 import { RequestToken } from 'src/decorators/requestToken.decorator';
 
