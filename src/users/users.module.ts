@@ -6,7 +6,7 @@ import { userProviders } from 'src/repository/providers/user.provider';
 import { AuthService } from 'src/auth/auth.service';
 import { sessionProviders } from 'src/repository/providers/session.provider';
 import { forgetPasswordProviders } from 'src/repository/providers/forgetPassword.provider';
-import { JwtModule, JwtService } from '@nestjs/jwt';
+import { JwtModule } from '@nestjs/jwt';
 
 @Module({
   controllers: [UsersController],

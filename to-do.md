@@ -2,7 +2,7 @@
 # Tasks
 
 ## Por fazer
-- Módulo de tarefas avulsas
+- Lógica Módulo de tarefas avulsas
 - Módulo de Projetos
   - CRUD de projetos
   - CRUD de tarefas
@@ -20,3 +20,4 @@
 - Módulo de CRUD de usuários
 - Módulo de autenticação
 - Controle de sessão
+- CRUD Módulo de tarefas avulsas

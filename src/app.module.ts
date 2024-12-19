@@ -6,6 +6,8 @@ import { UsersModule } from './users/users.module';
 import configuration from './config/configuration';
 import { SnowflakeIdService } from './snowflakeid/snowflakeid.service';
 import { AuthModule } from './auth/auth.module';
+import { ToDoModule } from './to-do/to-do.module';
+import { ToDoTypeModule } from './to-do-type/to-do-type.module';
 
 
 
@@ -17,6 +19,8 @@ import { AuthModule } from './auth/auth.module';
     }),
     UsersModule,
     AuthModule,
+    ToDoModule,
+    ToDoTypeModule,
   ],
   controllers: [AppController],
   providers: [

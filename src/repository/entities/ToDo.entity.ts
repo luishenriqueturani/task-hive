@@ -46,7 +46,9 @@ export class ToDo {
 
   @BeforeInsert()
   async generateId() {
-    this.id = this.snowflakeIdService.generateId();
+    const sfid = this.snowflakeIdService.generateId();
+    console.log(sfid)
+    this.id = sfid
   }
 
 }

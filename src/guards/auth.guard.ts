@@ -46,11 +46,11 @@ export class AuthGuard implements CanActivate {
 
       request.session = session
 
-      console.log(session)
+      //console.log(session)
 
       request.user = session.user
 
-      console.log(request.user)
+      //console.log(request.user)
 
       return true
 
