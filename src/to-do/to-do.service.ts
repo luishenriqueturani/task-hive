@@ -18,21 +18,7 @@ export class ToDoService {
   ) { }
 
   async create(createToDoDto: CreateToDoDto, user: User) {
-    try {
-
-      const recurringNextDate = new Date();
-
-      switch (createToDoDto.recurringType) {
-        case RecurringTypes.DAILY:
-          recurringNextDate.setDate(recurringNextDate.getDate() + 1);
-          break;
-        case RecurringTypes.WEEKLY:
-          recurringNextDate.setDate(recurringNextDate.getDate() + 7);
-          break;
-        case RecurringTypes.MONTHLY:
-          recurringNextDate.setMonth(recurringNextDate.getMonth() + 1);
-          break;
-      }
+    try {      
 
       const created = await this.toDoRepository.save({
         id: this.snowflakeIdService.generateId(),
@@ -44,10 +30,14 @@ export class ToDoService {
         recurringDeadline: createToDoDto.recurringDeadline,
         recurringTimes: createToDoDto.recurringTimes,
         recurringType: createToDoDto.recurringType,
-        recurringNextDate: recurringNextDate,
+        recurringNextDate: this.returnNextDate(createToDoDto.recurringType),
       })
 
       console.log(created)
+
+      /**
+       * disparar a notificação
+       */
 
       return {
         ...created,
@@ -131,7 +121,6 @@ export class ToDoService {
       const todo = await this.toDoRepository.find({
         where: {
           id: id,
-          user,
         },
       })
 
@@ -142,6 +131,10 @@ export class ToDoService {
       return this.toDoRepository.update(id.toString(), {
         title: updateToDoDto.title,
         description: updateToDoDto.description,
+        recurringDeadline: updateToDoDto.recurringDeadline,
+        recurringTimes: updateToDoDto.recurringTimes,
+        recurringType: updateToDoDto.recurringType,
+        type: updateToDoDto.isRecurring ? ToDoTypes.RECURRING : ToDoTypes.PUNCTUAL,
       })
 
     } catch (error) {
@@ -154,7 +147,6 @@ export class ToDoService {
       const todo = await this.toDoRepository.find({
         where: {
           id: id,
-          user,
         },
       })
 
@@ -164,6 +156,104 @@ export class ToDoService {
 
       return this.toDoRepository.update(id.toString(), {
         deletedAt: new Date(),
+      })
+
+    } catch (error) {
+      throw new BadRequestException('Falha ao remover a tarefa, Error: ' + error)
+    }
+  }
+
+  async endTask(id: bigint, user: User) {
+    try {
+      const todo = await this.toDoRepository.find({
+        where: {
+          id: id,
+        },
+      })
+
+      if (!todo) {
+        throw new BadRequestException('Tarefa não encontrada')
+      }
+
+      const task = await this.toDoRepository.update(id.toString(), {
+        status: ToDoStatus.DONE,
+      })
+
+      /**
+       * disparar a notificação
+       */
+
+      return task
+
+    } catch (error) {
+      throw new BadRequestException('Falha ao remover a tarefa, Error: ' + error)
+    }
+  }
+
+  async changeTaskStatus(id: bigint, status: ToDoStatus, user: User) {
+    try {
+      const todo = await this.toDoRepository.find({
+        where: {
+          id: id,
+        },
+      })
+
+      if (!todo) {
+        throw new BadRequestException('Tarefa não encontrada')
+      }
+
+      return this.toDoRepository.update(id.toString(), {
+        status: status,
+      })
+
+    } catch (error) {
+      throw new BadRequestException('Falha ao remover a tarefa, Error: ' + error)
+    }
+  }
+
+  returnNextDate(type: RecurringTypes) {
+    const recurringNextDate = new Date();
+
+    switch (type) {
+      case RecurringTypes.DAILY:
+        recurringNextDate.setDate(recurringNextDate.getDate() + 1);
+        break;
+      case RecurringTypes.WEEKLY:
+        recurringNextDate.setDate(recurringNextDate.getDate() + 7);
+        break;
+      case RecurringTypes.MONTHLY:
+        recurringNextDate.setMonth(recurringNextDate.getMonth() + 1);
+        break;
+    }
+
+    return recurringNextDate;
+  }
+
+  async nextDateRecurringTask(id: bigint, user: User) {
+    try {
+      const todo = await this.toDoRepository.findOne({
+        where: {
+          id: id,
+        },
+      })
+
+      if (!todo) {
+        throw new BadRequestException('Tarefa não encontrada')
+      }
+
+      const count = todo.recurringCount + 1;
+
+      if(todo.recurringTimes){
+
+        if(count >= todo.recurringTimes){
+          return this.endTask(id, user)
+        }
+
+      }
+
+      return this.toDoRepository.update(id.toString(), {
+        recurringNextDate: this.returnNextDate(todo.recurringType),
+        recurringCount: count,
       })
 
     } catch (error) {

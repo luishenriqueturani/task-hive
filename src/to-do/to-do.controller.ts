@@ -5,6 +5,7 @@ import { UpdateToDoDto } from './dto/update-to-do.dto';
 import { AuthGuard } from 'src/guards/auth.guard';
 import { User } from 'src/decorators/user.decorator';
 import { User as UserEntity } from 'src/repository/entities/User.entity';
+import { ChangeTaskStatusDto } from './dto/changeTaskStatus.dto';
 
 
 @UseGuards(AuthGuard)
@@ -60,6 +61,39 @@ export class ToDoController {
   remove(@Param('id') id: string, @User() user: UserEntity) {
     try {
       return this.toDoService.remove(BigInt(id), user);
+      
+    } catch (error) {
+      console.log(error)
+      throw error
+    }
+  }
+
+  @Patch('end/:id')
+  endTask(@Param('id') id: string, @User() user: UserEntity) {
+    try {
+      return this.toDoService.endTask(BigInt(id), user);
+      
+    } catch (error) {
+      console.log(error)
+      throw error
+    }
+  }
+
+  @Patch('status/:id')
+  changeTaskStatus(@Param('id') id: string, @Body() changeTaskStatusDto: ChangeTaskStatusDto, @User() user: UserEntity) {
+    try {
+      return this.toDoService.changeTaskStatus(BigInt(id), changeTaskStatusDto.status, user);
+      
+    } catch (error) {
+      console.log(error)
+      throw error
+    }
+  }
+
+  @Patch('nextDateRecurring/:id')
+  nextDateRecurringTask(@Param('id') id: string, @User() user: UserEntity) {
+    try {
+      return this.toDoService.nextDateRecurringTask(BigInt(id), user);
       
     } catch (error) {
       console.log(error)
