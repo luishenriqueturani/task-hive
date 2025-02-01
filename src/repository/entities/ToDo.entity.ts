@@ -1,6 +1,6 @@
 import { BeforeInsert, Column, CreateDateColumn, DeleteDateColumn, Entity, ManyToOne, OneToMany, PrimaryColumn, UpdateDateColumn } from "typeorm";
 import { ToDoCompleted } from "./ToDoCompleted.entity";
-import { ToDoStatus, ToDoTypes } from "../postgresql.enums";
+import { RecurringTypes, ToDoStatus, ToDoTypes } from "../postgresql.enums";
 import { SnowflakeIdService } from "src/snowflakeid/snowflakeid.service";
 import { User } from "./User.entity";
 
@@ -22,8 +22,17 @@ export class ToDo {
   @Column({ type: "enum", enum: ToDoTypes, default: ToDoTypes.RECURRING })
   type: ToDoTypes;
 
+  @Column({ type: "enum", enum: RecurringTypes, nullable: true, default: RecurringTypes.MONTHLY })
+  recurringType: RecurringTypes;
+
   @Column({ type: "int", nullable: true })
   recurringTimes: number;
+  
+  @Column({ type: "int", nullable: true, default: 0 })
+  recurringCount: number;
+
+  @Column({ type: "timestamp", nullable: true })
+  recurringNextDate: Date;
 
   @Column({ type: "timestamp", nullable: true })
   recurringDeadline: Date;

@@ -1,5 +1,6 @@
 import { Transform } from "class-transformer";
-import { IsBoolean, IsDateString, IsNumber, IsOptional, IsString, IsUUID, MaxLength, MinLength } from "class-validator";
+import { IsBoolean, IsDateString, IsEnum, IsNumber, IsOptional, IsString, IsUUID, MaxLength, MinLength } from "class-validator";
+import { RecurringTypes } from "src/repository/postgresql.enums";
 
 export class CreateToDoDto {
 
@@ -16,9 +17,6 @@ export class CreateToDoDto {
   @MaxLength(5000)
   description: string;
 
-  @IsUUID()
-  typeId: string;
-
   @IsBoolean()
   @IsOptional()
   isRecurring: boolean;
@@ -30,4 +28,8 @@ export class CreateToDoDto {
   @IsOptional()
   @IsDateString()
   recurringDeadline: Date;
+
+  @IsOptional()
+  @IsEnum(RecurringTypes)
+  recurringType: RecurringTypes;
 }

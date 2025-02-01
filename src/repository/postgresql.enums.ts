@@ -28,3 +28,9 @@ export enum ToDoTypes {
   PUNCTUAL = 'PUNCTUAL',
   RECURRING = 'RECURRING',
 }
+
+export enum RecurringTypes {
+  DAILY = 'DAILY',
+  WEEKLY = 'WEEKLY',
+  MONTHLY = 'MONTHLY',
+}

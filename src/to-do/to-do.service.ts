@@ -2,11 +2,10 @@ import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 import { CreateToDoDto } from './dto/create-to-do.dto';
 import { UpdateToDoDto } from './dto/update-to-do.dto';
 import { User } from 'src/repository/entities/User.entity';
-import { PostgreSQLTokens, ToDoStatus, ToDoTypes } from 'src/repository/postgresql.enums';
+import { PostgreSQLTokens, RecurringTypes, ToDoStatus, ToDoTypes } from 'src/repository/postgresql.enums';
 import { ToDo } from 'src/repository/entities/ToDo.entity';
 import { Repository } from 'typeorm';
 import { SnowflakeIdService } from 'src/snowflakeid/snowflakeid.service';
-import { plainToInstance } from 'class-transformer';
 
 @Injectable()
 export class ToDoService {
@@ -21,6 +20,20 @@ export class ToDoService {
   async create(createToDoDto: CreateToDoDto, user: User) {
     try {
 
+      const recurringNextDate = new Date();
+
+      switch (createToDoDto.recurringType) {
+        case RecurringTypes.DAILY:
+          recurringNextDate.setDate(recurringNextDate.getDate() + 1);
+          break;
+        case RecurringTypes.WEEKLY:
+          recurringNextDate.setDate(recurringNextDate.getDate() + 7);
+          break;
+        case RecurringTypes.MONTHLY:
+          recurringNextDate.setMonth(recurringNextDate.getMonth() + 1);
+          break;
+      }
+
       const created = await this.toDoRepository.save({
         id: this.snowflakeIdService.generateId(),
         title: createToDoDto.title,
@@ -30,6 +43,8 @@ export class ToDoService {
         type: createToDoDto.isRecurring ? ToDoTypes.RECURRING : ToDoTypes.PUNCTUAL,
         recurringDeadline: createToDoDto.recurringDeadline,
         recurringTimes: createToDoDto.recurringTimes,
+        recurringType: createToDoDto.recurringType,
+        recurringNextDate: recurringNextDate,
       })
 
       console.log(created)
@@ -58,6 +73,12 @@ export class ToDoService {
           id: true,
           title: true,
           description: true,
+          recurringDeadline: true,
+          recurringTimes: true,
+          recurringType: true,
+          recurringCount: true,
+          recurringNextDate: true,
+          type: true,
           user: {
             id: true,
             name: true,
@@ -84,6 +105,12 @@ export class ToDoService {
           id: true,
           title: true,
           description: true,
+          recurringDeadline: true,
+          recurringTimes: true,
+          recurringType: true,
+          recurringCount: true,
+          recurringNextDate: true,
+          type: true,
           user: {
             id: true,
             name: true,
