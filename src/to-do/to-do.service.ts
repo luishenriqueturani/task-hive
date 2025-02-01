@@ -2,10 +2,9 @@ import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 import { CreateToDoDto } from './dto/create-to-do.dto';
 import { UpdateToDoDto } from './dto/update-to-do.dto';
 import { User } from 'src/repository/entities/User.entity';
-import { PostgreSQLTokens, ToDoStatus } from 'src/repository/postgresql.enums';
+import { PostgreSQLTokens, ToDoStatus, ToDoTypes } from 'src/repository/postgresql.enums';
 import { ToDo } from 'src/repository/entities/ToDo.entity';
 import { Repository } from 'typeorm';
-import { ToDoTypeService } from 'src/to-do-type/to-do-type.service';
 import { SnowflakeIdService } from 'src/snowflakeid/snowflakeid.service';
 import { plainToInstance } from 'class-transformer';
 
@@ -16,26 +15,21 @@ export class ToDoService {
     @Inject(PostgreSQLTokens.TODO_REPOSITORY)
     private toDoRepository: Repository<ToDo>,
 
-    private readonly todoTypeService: ToDoTypeService,
     private snowflakeIdService: SnowflakeIdService,
   ) { }
 
   async create(createToDoDto: CreateToDoDto, user: User) {
     try {
-      const type = await this.todoTypeService.findOne(createToDoDto.typeId)
-
-      if (!type) {
-        throw new BadRequestException('Tipo de tarefa não encontrado')
-      }
 
       const created = await this.toDoRepository.save({
         id: this.snowflakeIdService.generateId(),
         title: createToDoDto.title,
         description: createToDoDto.description,
-        type,
         user,
         status: ToDoStatus.CREATED,
-
+        type: createToDoDto.isRecurring ? ToDoTypes.RECURRING : ToDoTypes.PUNCTUAL,
+        recurringDeadline: createToDoDto.recurringDeadline,
+        recurringTimes: createToDoDto.recurringTimes,
       })
 
       console.log(created)
@@ -54,7 +48,7 @@ export class ToDoService {
     try {
       //console.log(user)
       return await this.toDoRepository.find({
-        relations: ['type', 'user'],
+        relations: ['user'],
         where: {
           user: {
             id: user.id,
@@ -64,11 +58,6 @@ export class ToDoService {
           id: true,
           title: true,
           description: true,
-          type: {
-            id: true,
-            name: true,
-            description: true,
-          },
           user: {
             id: true,
             name: true,
@@ -87,7 +76,7 @@ export class ToDoService {
   findOne(id: bigint) {
     try {
       return this.toDoRepository.findOne({
-        relations: ['type', 'user'],
+        relations: ['user'],
         where: {
           id: id,
         },
@@ -95,11 +84,6 @@ export class ToDoService {
           id: true,
           title: true,
           description: true,
-          type: {
-            id: true,
-            name: true,
-            description: true,
-          },
           user: {
             id: true,
             name: true,

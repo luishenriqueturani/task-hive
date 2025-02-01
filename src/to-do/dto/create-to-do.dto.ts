@@ -1,5 +1,5 @@
 import { Transform } from "class-transformer";
-import { IsString, IsUUID, MaxLength, MinLength } from "class-validator";
+import { IsBoolean, IsDateString, IsNumber, IsOptional, IsString, IsUUID, MaxLength, MinLength } from "class-validator";
 
 export class CreateToDoDto {
 
@@ -18,4 +18,16 @@ export class CreateToDoDto {
 
   @IsUUID()
   typeId: string;
+
+  @IsBoolean()
+  @IsOptional()
+  isRecurring: boolean;
+
+  @IsOptional()
+  @IsNumber()
+  recurringTimes: number;
+
+  @IsOptional()
+  @IsDateString()
+  recurringDeadline: Date;
 }

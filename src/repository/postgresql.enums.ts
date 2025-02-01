@@ -23,3 +23,8 @@ export enum ToDoStatus {
   PAUSED = 'PAUSED',
   CREATED = 'CREATED',
 }
+
+export enum ToDoTypes {
+  PUNCTUAL = 'PUNCTUAL',
+  RECURRING = 'RECURRING',
+}
