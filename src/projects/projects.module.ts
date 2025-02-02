@@ -5,14 +5,17 @@ import { userProviders } from 'src/repository/providers/user.provider';
 import { sessionProviders } from 'src/repository/providers/session.provider';
 import { SnowflakeIdService } from 'src/snowflakeid/snowflakeid.service';
 import { DatabaseModule } from 'src/repository/database.module';
-import { UsersService } from 'src/users/users.service';
+import { projectProviders } from 'src/repository/providers/project.provider';
+import { CompaniesService } from 'src/companies/companies.service';
 
 @Module({
   controllers: [ProjectsController],
   providers: [
     ...userProviders,
     ...sessionProviders,
+    ...projectProviders,
     SnowflakeIdService,
+    CompaniesService,
     ProjectsService
   ],
   imports: [

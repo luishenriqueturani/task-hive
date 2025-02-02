@@ -2,7 +2,6 @@
 # Tasks
 
 ## Por fazer
-- CRUD de company
 - Módulo de Projetos
   - CRUD de projetos
   - CRUD de tarefas
@@ -31,8 +30,9 @@
 
 ## Feito
 
-- Base do banco de dados
-- Módulo de CRUD de usuários
-- Módulo de autenticação
-- Controle de sessão
+- CRUD de company
 - CRUD Módulo de tarefas avulsas
+- Controle de sessão
+- Módulo de autenticação
+- Módulo de CRUD de usuários
+- Base do banco de dados
