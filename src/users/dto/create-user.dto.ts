@@ -1,13 +1,15 @@
-import { IsEmail, IsOptional, IsString, IsStrongPassword } from "class-validator";
+import { IsEmail, IsOptional, IsString, IsStrongPassword, MaxLength } from "class-validator";
 import { IsEqualsTo } from "src/decorators/IsEqualsTo.decorator";
 
 export class CreateUserDto {
 
   @IsString()
   @IsOptional()
+  @MaxLength(255)
   name: string;
 
   @IsEmail()
+  @MaxLength(255)
   email: string;
 
   @IsStrongPassword({
@@ -17,6 +19,7 @@ export class CreateUserDto {
     minNumbers: 1,
     minSymbols: 1,
   })
+  @MaxLength(255)
   password: string;
 
   @IsEqualsTo('password')

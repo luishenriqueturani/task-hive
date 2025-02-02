@@ -7,7 +7,7 @@ export class Company {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column('varchar')
+  @Column({type: 'varchar', length: 255})
   name: string;
 
   @CreateDateColumn({ type: "timestamp", default: () => "CURRENT_TIMESTAMP()" })

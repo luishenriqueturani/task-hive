@@ -10,7 +10,7 @@ export class ToDo {
   @PrimaryColumn('bigint')
   id: bigint;
 
-  @Column('varchar')
+  @Column({type: 'varchar', length: 255})
   title: string;
 
   @Column({type: 'text', nullable: true})

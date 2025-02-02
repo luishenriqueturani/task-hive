@@ -2,6 +2,7 @@
 # Tasks
 
 ## Por fazer
+- CRUD de company
 - Módulo de Projetos
   - CRUD de projetos
   - CRUD de tarefas

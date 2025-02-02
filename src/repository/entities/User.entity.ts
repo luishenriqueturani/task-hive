@@ -11,13 +11,13 @@ export class User {
   @PrimaryGeneratedColumn("uuid")
   id: string;
 
-  @Column({ nullable: true })
+  @Column({ nullable: true, type: 'varchar', length: 255 })
   name: string;
 
-  @Column({ unique: true })
+  @Column({ unique: true, type: 'varchar', length: 255 })
   email: string;
 
-  @Column()
+  @Column({type: 'varchar', length: 255})
   password: string;
 
   @Column({ nullable: true })

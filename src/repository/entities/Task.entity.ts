@@ -9,7 +9,7 @@ export class Task {
   @PrimaryColumn('bigint')
   id: bigint
 
-  @Column('varchar')
+  @Column({type: 'varchar', length: 255})
   name: string
 
   @Column('text')

@@ -9,7 +9,7 @@ export class ProjectStage {
   @PrimaryColumn('bigint')
   id: bigint
 
-  @Column('varchar')
+  @Column({type: 'varchar', length: 255})
   name: string
 
   @ManyToOne(() => Project, project => project.stages)
