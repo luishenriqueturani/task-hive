@@ -30,6 +30,7 @@ export class ProjectsService {
       }
 
       return await this.projectsRepository.save({
+        id: this.snowflakeIdService.generateId(),
         name: createProjectDto.name,
         description: createProjectDto.description,
         userOwner: user,
@@ -43,18 +44,59 @@ export class ProjectsService {
   }
 
   findAll() {
-    return `This action returns all projects`;
+    try {
+      return this.projectsRepository.find()
+    } catch (error) {
+      console.log(error)
+      throw new Error('Erro ao buscar todos os projetos')
+    }
   }
 
-  findOne(id: string) {
-    return `This action returns a #${id} project`;
+  findOne(id: bigint) {
+    try {
+      return this.projectsRepository.findOne({
+        where: {
+          id: id,
+        },
+      })
+    } catch (error) {
+      console.log(error)
+      throw new Error('Erro ao buscar o projeto')
+    }
   }
 
-  update(id: string, updateProjectDto: UpdateProjectDto) {
-    return `This action updates a #${id} project`;
+  update(id: bigint, updateProjectDto: UpdateProjectDto) {
+    try {
+      const project = this.findOne(id)
+
+      if(!project) {
+        throw new Error('Projeto não encontrado')
+      }
+
+      return this.projectsRepository.update(id.toString(), {
+        name: updateProjectDto.name,
+        description: updateProjectDto.description,
+      })
+    } catch (error) {
+      console.log(error)
+      throw new Error('Erro ao atualizar o projeto')
+    }
   }
 
-  remove(id: string) {
-    return `This action removes a #${id} project`;
+  remove(id: bigint) {
+    try {
+      const project = this.findOne(id)
+
+      if(!project) {
+        throw new Error('Projeto não encontrado')
+      }
+
+      return this.projectsRepository.update(id.toString(), {
+        deletedAt: new Date(),
+      })
+    } catch (error) {
+      console.log(error)
+      throw new Error('Erro ao remover o projeto')
+    }
   }
 }

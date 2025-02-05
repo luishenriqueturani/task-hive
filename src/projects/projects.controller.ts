@@ -36,7 +36,7 @@ export class ProjectsController {
   @Get(':id')
   findOne(@Param('id') id: string, @User() user: UserEntity) {
     try {
-      return this.projectsService.findOne(id);
+      return this.projectsService.findOne(BigInt(id));
     } catch (error) {
       console.log(error)
       throw error
@@ -46,7 +46,7 @@ export class ProjectsController {
   @Patch(':id')
   update(@Param('id') id: string, @Body() updateProjectDto: UpdateProjectDto, @User() user: UserEntity) {
     try {
-      return this.projectsService.update(id, updateProjectDto);
+      return this.projectsService.update(BigInt(id), updateProjectDto);
     } catch (error) {
       console.log(error)
       throw error
@@ -56,7 +56,7 @@ export class ProjectsController {
   @Delete(':id')
   remove(@Param('id') id: string, @User() user: UserEntity) {
     try {
-      return this.projectsService.remove(id);
+      return this.projectsService.remove(BigInt(id));
     } catch (error) {
       console.log(error)
       throw error

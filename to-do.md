@@ -3,13 +3,13 @@
 
 ## Por fazer
 - Módulo de Projetos
-  - CRUD de projetos
   - CRUD de tarefas
   - CRUD de membros
     - Sistema de amizades
   - CRUD de subtarefas
   - Sistema de timetrak
     - websocket para as atualizações do timetrack
+  - Lógica para participantes de projetos
 - Lógica Módulo de tarefas avulsas
   - implementar os cronjobs
     - o cronjob roda no horário agendado, porém as tarefas executam no kafka 
@@ -29,7 +29,8 @@
 
 
 ## Feito
-
+- Módulo de Projetos
+  - CRUD de projetos
 - CRUD de company
 - CRUD Módulo de tarefas avulsas
 - Controle de sessão
