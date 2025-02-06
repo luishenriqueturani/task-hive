@@ -1,5 +1,5 @@
 import { SnowflakeIdService } from "src/snowflakeid/snowflakeid.service";
-import { BeforeInsert, Column, CreateDateColumn, DeleteDateColumn, Entity, ManyToOne, OneToMany, OneToOne, PrimaryColumn, UpdateDateColumn } from "typeorm";
+import { BeforeInsert, Column, CreateDateColumn, DeleteDateColumn, Entity, JoinColumn, ManyToOne, OneToMany, OneToOne, PrimaryColumn, UpdateDateColumn } from "typeorm";
 import { Project } from "./Project.entity";
 import { Task } from "./Task.entity";
 
@@ -19,10 +19,15 @@ export class ProjectStage {
   tasks: Task[]
 
   @OneToOne(() => ProjectStage)
+  @JoinColumn()
   nextStage: ProjectStage
-
+  
   @OneToOne(() => ProjectStage)
+  @JoinColumn()
   prevStage: ProjectStage
+
+  @Column({ type: "int", default: 0 })
+  order: number
 
   @CreateDateColumn({ type: "timestamp", default: () => "CURRENT_TIMESTAMP()" })
   createdAt: Date;

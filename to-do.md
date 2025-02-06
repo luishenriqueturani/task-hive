@@ -3,6 +3,7 @@
 
 ## Por fazer
 - Módulo de Projetos
+  - Colunas de projetos (project stages)
   - CRUD de tarefas
   - CRUD de membros
     - Sistema de amizades

@@ -9,6 +9,7 @@ import { AuthModule } from './auth/auth.module';
 import { ToDoModule } from './to-do/to-do.module';
 import { ProjectsModule } from './projects/projects.module';
 import { CompaniesModule } from './companies/companies.module';
+import { ProjectStagesModule } from './project-stages/project-stages.module';
 
 
 
@@ -23,6 +24,7 @@ import { CompaniesModule } from './companies/companies.module';
     ToDoModule,
     ProjectsModule,
     CompaniesModule,
+    ProjectStagesModule,
   ],
   controllers: [AppController],
   providers: [
