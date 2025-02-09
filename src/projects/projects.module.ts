@@ -25,7 +25,7 @@ import { forgetPasswordProviders } from 'src/repository/providers/forgetPassword
     UsersService,
     SnowflakeIdService,
     CompaniesService,
-    ProjectsService
+    ProjectsService,
   ],
   imports: [
     JwtModule,

@@ -12,6 +12,7 @@ import { UsersService } from 'src/users/users.service';
 import { SnowflakeIdService } from 'src/snowflakeid/snowflakeid.service';
 import { DatabaseModule } from 'src/repository/database.module';
 import { JwtModule } from '@nestjs/jwt';
+import { ProjectsService } from 'src/projects/projects.service';
 
 @Module({
   controllers: [ProjectStagesController],
@@ -25,6 +26,7 @@ import { JwtModule } from '@nestjs/jwt';
     AuthService,
     UsersService,
     SnowflakeIdService,
+    ProjectsService,
     ProjectStagesService
   ],
   imports: [

@@ -1,4 +1,4 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
 import { Repository } from 'typeorm';
@@ -65,15 +65,15 @@ export class ProjectsService {
     }
   }
 
-  update(id: bigint, updateProjectDto: UpdateProjectDto) {
+  async update(id: bigint, updateProjectDto: UpdateProjectDto) {
     try {
-      const project = this.findOne(id)
+      const project = await this.findOne(id)
 
       if(!project) {
-        throw new Error('Projeto não encontrado')
+        throw new BadRequestException('Projeto não encontrado')
       }
 
-      return this.projectsRepository.update(id.toString(), {
+      return await this.projectsRepository.update(id.toString(), {
         name: updateProjectDto.name,
         description: updateProjectDto.description,
       })
@@ -83,15 +83,15 @@ export class ProjectsService {
     }
   }
 
-  remove(id: bigint) {
+  async remove(id: bigint) {
     try {
-      const project = this.findOne(id)
+      const project = await this.findOne(id)
 
       if(!project) {
-        throw new Error('Projeto não encontrado')
+        throw new BadRequestException('Projeto não encontrado')
       }
 
-      return this.projectsRepository.update(id.toString(), {
+      return await this.projectsRepository.update(id.toString(), {
         deletedAt: new Date(),
       })
     } catch (error) {

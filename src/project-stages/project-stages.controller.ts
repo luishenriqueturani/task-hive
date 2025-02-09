@@ -11,26 +11,51 @@ export class ProjectStagesController {
 
   @Post()
   create(@Body() createProjectStageDto: CreateProjectStageDto) {
-    return this.projectStagesService.create(createProjectStageDto);
+    try {
+      return this.projectStagesService.create(createProjectStageDto);
+    } catch (error) {
+      console.log(error);
+      throw error;
+    }
   }
 
   @Get()
   findAll() {
-    return this.projectStagesService.findAll();
+    try {
+      return this.projectStagesService.findAll();
+    } catch (error) {
+      console.log(error);
+      throw error;
+    }
   }
 
   @Get(':id')
   findOne(@Param('id') id: string) {
-    return this.projectStagesService.findOne(+id);
+    try {
+      return this.projectStagesService.findOne(BigInt(id));
+    } catch (error) {
+      console.log(error);
+      throw error;
+    }
   }
 
   @Patch(':id')
   update(@Param('id') id: string, @Body() updateProjectStageDto: UpdateProjectStageDto) {
-    return this.projectStagesService.update(+id, updateProjectStageDto);
+    try {
+      return this.projectStagesService.update(BigInt(id), updateProjectStageDto);
+    } catch (error) {
+      console.log(error);
+      throw error;
+    }
   }
 
   @Delete(':id')
   remove(@Param('id') id: string) {
-    return this.projectStagesService.remove(+id);
+    try {
+      return this.projectStagesService.remove(BigInt(id));
+    } catch (error) {
+      console.log(error);
+      throw error;
+    }
   }
 }
