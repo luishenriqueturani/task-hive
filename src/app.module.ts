@@ -10,6 +10,7 @@ import { ToDoModule } from './to-do/to-do.module';
 import { ProjectsModule } from './projects/projects.module';
 import { CompaniesModule } from './companies/companies.module';
 import { ProjectStagesModule } from './project-stages/project-stages.module';
+import { TasksModule } from './tasks/tasks.module';
 
 
 
@@ -25,6 +26,7 @@ import { ProjectStagesModule } from './project-stages/project-stages.module';
     ProjectsModule,
     CompaniesModule,
     ProjectStagesModule,
+    TasksModule,
   ],
   controllers: [AppController],
   providers: [
