@@ -2,6 +2,7 @@ import { SnowflakeIdService } from "src/snowflakeid/snowflakeid.service";
 import { BeforeInsert, Column, CreateDateColumn, DeleteDateColumn, Entity, ManyToOne, OneToMany, PrimaryColumn, UpdateDateColumn } from "typeorm";
 import { TaskTimeTrak } from "./TaskTimeTrak.entity";
 import { ProjectStage } from "./ProjectStage.entity";
+import { User } from "./User.entity";
 
 @Entity()
 export class Task {
@@ -17,6 +18,9 @@ export class Task {
 
   @Column()
   finishDate: Date
+
+  @ManyToOne(() => User, user => user.tasks)
+  user: User
 
   @OneToMany(() => TaskTimeTrak, timeTrack => timeTrack.task)
   timeTrack: TaskTimeTrak[]

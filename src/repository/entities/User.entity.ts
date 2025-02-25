@@ -5,6 +5,7 @@ import { UserFriendship } from "./UserFriendship.entity";
 import { ToDo } from "./ToDo.entity";
 import { Session } from "./Session.entity";
 import { ForgetPassword } from "./ForgetPassword.entity";
+import { Task } from "./Task.entity";
 
 @Entity()
 export class User {
@@ -53,4 +54,7 @@ export class User {
 
   @OneToMany(() => ForgetPassword, forgetPassword => forgetPassword.user)
   forgetPassword: ForgetPassword
+
+  @OneToMany(() => Task, task => task.user)
+  tasks: Task[]
 }
