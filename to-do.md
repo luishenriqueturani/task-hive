@@ -3,13 +3,10 @@
 
 ## Por fazer
 - Módulo de Projetos
-  - Colunas de projetos (project stages)
-  - CRUD de tarefas
-  - Update de tarefas para preenchimento de todos os campos
-  - CRUD de membros
-    - Sistema de amizades
   - CRUD de subtarefas
   - Sistema de timetrak
+  - CRUD de membros
+    - Sistema de amizades
     - websocket para as atualizações do timetrack
   - Lógica para participantes de projetos
 - Lógica Módulo de tarefas avulsas
@@ -35,6 +32,9 @@
 ## Feito
 - Módulo de Projetos
   - CRUD de projetos
+  - Colunas de projetos (project stages)
+  - CRUD de tarefas
+  - Update de tarefas para preenchimento de todos os campos
 - CRUD de company
 - CRUD Módulo de tarefas avulsas
 - Controle de sessão

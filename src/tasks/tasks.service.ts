@@ -7,6 +7,7 @@ import { Task } from 'src/repository/entities/Task.entity';
 import { PostgreSQLTokens } from 'src/repository/postgresql.enums';
 import { ProjectStagesService } from 'src/project-stages/project-stages.service';
 import { User } from 'src/repository/entities/User.entity';
+import { ProjectStage } from 'src/repository/entities/ProjectStage.entity';
 
 @Injectable()
 export class TasksService {
@@ -76,7 +77,8 @@ export class TasksService {
       return this.tasksRepository.findOne({
         where: {
           id: String(id)
-        }
+        },
+        relations: ['stage']
       })
     } catch (error) {
       console.log(error)
@@ -101,9 +103,24 @@ export class TasksService {
         throw new UnauthorizedException(`You are not the owner of this task`)
       }
 
+      let stage : ProjectStage | undefined
+
+      if(updateTaskDto.stageId) {
+        stage = await this.poujectStagesService.findOne(BigInt(updateTaskDto.stageId))
+        //console.log(stage)
+        if(!stage) {
+          throw new BadRequestException(`Stage not found`)
+        }
+      }
+
       return this.tasksRepository.update({
         id: String(id)
-      }, updateTaskDto)
+      }, {
+        description: updateTaskDto.description,
+        finishDate: updateTaskDto.finishDate,
+        name: updateTaskDto.name,
+        stage: stage
+      })
 
     } catch (error) {
       console.log(error)
