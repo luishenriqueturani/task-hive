@@ -11,7 +11,7 @@ export class CreateProjectStageDto {
 
   @IsNumber()
   @Min(0)
-  oreder: number
+  order: number
 
   @IsString()
   @IsOptional()
