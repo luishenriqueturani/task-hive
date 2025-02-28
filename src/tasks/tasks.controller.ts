@@ -29,6 +29,15 @@ export class TasksController {
     }
   }
 
+  @Get('stage/:stage')
+  findByStage(@Param('stage') stage: string, @User() user: UserEntity) {
+    try {
+      return this.tasksService.findByStage(stage);
+    } catch (error) {
+      throw error;
+    }
+  }
+
   @Get(':id')
   findOne(@Param('id') id: string) {
     try {
@@ -42,6 +51,24 @@ export class TasksController {
   update(@Param('id') id: string, @Body() updateTaskDto: UpdateTaskDto, @User() user: UserEntity) {
     try {
       return this.tasksService.update(BigInt(id), updateTaskDto, user);
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  @Patch('nextStage/:id')
+  toNextStage(@Param('id') id: string, @User() user: UserEntity) {
+    try {
+      return this.tasksService.toNextStage(BigInt(id), user);
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  @Patch('previousStage/:id')
+  toPreviousStage(@Param('id') id: string, @User() user: UserEntity) {
+    try {
+      return this.tasksService.toPreviousStage(BigInt(id), user);
     } catch (error) {
       throw error;
     }

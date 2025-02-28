@@ -102,6 +102,7 @@ export class ProjectStagesService {
         where: {
           id: String(id),
         },
+        relations: ['project', 'tasks', 'nextStage', 'prevStage']
       });
     } catch (error) {
       console.log(error);

@@ -55,6 +55,22 @@ export class TasksService {
     }
   }
 
+  findByStage(stage: string) {
+    try {
+      return this.tasksRepository.find({
+        where: {
+          stage: {
+            id: stage
+          },
+        },
+        relations: ['stage']
+      })
+    } catch (error) {
+      console.log(error)
+      throw error
+    }
+  }
+
   findOne(id: bigint) {
     try {
       return this.tasksRepository.findOne({
@@ -89,6 +105,72 @@ export class TasksService {
         id: String(id)
       }, updateTaskDto)
 
+    } catch (error) {
+      console.log(error)
+      throw error
+    }
+  }
+
+  async toPreviousStage(id: bigint, user: User) {
+    try {
+      const task = await this.tasksRepository.findOne({
+        where: {
+          id: String(id)
+        },
+        relations: ['user', 'stage']
+      })
+
+      if (!task) {
+        throw new BadRequestException(`Task not found`)
+      }
+
+      if (task.user.id !== user.id) {
+        throw new UnauthorizedException(`You are not the owner of this task`)
+      }
+
+      const stage = await this.poujectStagesService.findOne(BigInt(task.stage.id))
+
+      if(!stage.prevStage) {
+        throw new BadRequestException(`Stage not found`)
+      } 
+
+      return this.tasksRepository.update(id.toString(), {
+        stage: stage.prevStage
+      })
+      
+    } catch (error) {
+      console.log(error)
+      throw error
+    }
+  }
+
+  async toNextStage(id: bigint, user: User) {
+    try {
+      const task = await this.tasksRepository.findOne({
+        where: {
+          id: String(id)
+        },
+        relations: ['user', 'stage']
+      })
+
+      if (!task) {
+        throw new BadRequestException(`Task not found`)
+      }
+
+      if (task.user.id !== user.id) {
+        throw new UnauthorizedException(`You are not the owner of this task`)
+      }
+
+      const stage = await this.poujectStagesService.findOne(BigInt(task.stage.id))
+
+      if(!stage.nextStage) {
+        throw new BadRequestException(`Stage not found`)
+      } 
+
+      return this.tasksRepository.update(id.toString(), {
+        stage: stage.nextStage
+      })
+      
     } catch (error) {
       console.log(error)
       throw error
