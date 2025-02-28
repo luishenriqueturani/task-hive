@@ -29,22 +29,39 @@ export class ProjectStagesService {
 
       if(createProjectStageDto.nextStageId) {
         nextStage = await this.findOne(BigInt(createProjectStageDto.nextStageId))
+
       }
 
       let prevStage : ProjectStage | undefined
 
       if(createProjectStageDto.prevStageId) {
         prevStage = await this.findOne(BigInt(createProjectStageDto.prevStageId))
+
       }
 
-      return await this.projectStagesRepository.save({
-        id: this.snowflakeIdService.generateId(),
+      const newStage = await this.projectStagesRepository.save({
+        id: String(this.snowflakeIdService.generateId()),
         name: createProjectStageDto.name,
         project: project,
-        oreder: createProjectStageDto.oreder,
+        order: createProjectStageDto.order,
         nextStage: nextStage,
         prevStage: prevStage,
       })
+
+
+      if(nextStage) {
+        await this.projectStagesRepository.update(nextStage.id, {
+          prevStage: newStage
+        })
+      }
+
+      if(prevStage) {
+        await this.projectStagesRepository.update(prevStage.id, {
+          nextStage: newStage
+        })
+      }
+
+      return newStage
 
     } catch (error) {
       console.log(error);
@@ -61,11 +78,29 @@ export class ProjectStagesService {
     }
   }
 
+  findAllByProject(id: string) {
+    try {
+      return this.projectStagesRepository.find({
+        where: {
+          project: {
+            id: id,
+          },
+        },
+        order: {
+          order: 'ASC',
+        }
+      });
+    } catch (error) {
+      console.log(error);
+      throw new Error(error);
+    }
+  }
+
   findOne(id: bigint) {
     try {
       return this.projectStagesRepository.findOne({
         where: {
-          id,
+          id: String(id),
         },
       });
     } catch (error) {
@@ -82,7 +117,36 @@ export class ProjectStagesService {
         throw new BadRequestException('Project stage not found');
       }
 
-      return await this.projectStagesRepository.update(id.toString(), updateProjectStageDto);
+      let nextStage : ProjectStage | undefined
+
+      if(updateProjectStageDto.nextStageId) {
+        nextStage = await this.findOne(BigInt(updateProjectStageDto.nextStageId))
+
+        if(nextStage) {
+          await this.projectStagesRepository.update(nextStage.id, {
+            prevStage: projectStage
+          })
+        }
+      }
+
+      let prevStage : ProjectStage | undefined
+
+      if(updateProjectStageDto.prevStageId) {
+        prevStage = await this.findOne(BigInt(updateProjectStageDto.prevStageId))
+
+        if(prevStage) {
+          await this.projectStagesRepository.update(prevStage.id, {
+            nextStage: projectStage
+          })
+        }
+      }
+
+      return await this.projectStagesRepository.update(id.toString(), {
+        name: updateProjectStageDto.name,
+        order: updateProjectStageDto.order,
+        nextStage: nextStage,
+        prevStage: prevStage,
+      });
 
     } catch (error) {
       console.log(error);

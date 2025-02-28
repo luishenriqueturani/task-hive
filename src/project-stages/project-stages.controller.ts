@@ -28,6 +28,16 @@ export class ProjectStagesController {
       throw error;
     }
   }
+  
+  @Get('project/:id')
+  findAllByProject(@Param('id') id: string) {
+    try {
+      return this.projectStagesService.findAllByProject(id);
+    } catch (error) {
+      console.log(error);
+      throw error;
+    }
+  }
 
   @Get(':id')
   findOne(@Param('id') id: string) {
