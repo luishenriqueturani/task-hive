@@ -28,7 +28,7 @@ export class TasksService {
       }
 
       return this.tasksRepository.save({
-        id: this.snowflakeIdService.generateId(),
+        id: String(this.snowflakeIdService.generateId()),
         name: createTaskDto.name,
         user,
         stage
@@ -59,7 +59,7 @@ export class TasksService {
     try {
       return this.tasksRepository.findOne({
         where: {
-          id: id
+          id: String(id)
         }
       })
     } catch (error) {
@@ -72,8 +72,9 @@ export class TasksService {
     try {
       const task = await this.tasksRepository.findOne({
         where: {
-          id: id
-        }
+          id: String(id)
+        },
+        relations: ['user']
       })
 
       if (!task) {
@@ -85,7 +86,7 @@ export class TasksService {
       }
 
       return this.tasksRepository.update({
-        id: id
+        id: String(id)
       }, updateTaskDto)
 
     } catch (error) {
@@ -98,8 +99,9 @@ export class TasksService {
     try {
       const task = await this.tasksRepository.findOne({
         where: {
-          id: id
-        }
+          id: String(id)
+        },
+        relations: ['user']
       })
 
       if (!task) {
@@ -111,7 +113,7 @@ export class TasksService {
       }
 
       return this.tasksRepository.update({
-        id: id
+        id: String(id)
       }, {
         deletedAt: new Date()
       })
