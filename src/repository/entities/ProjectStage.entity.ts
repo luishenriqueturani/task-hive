@@ -7,7 +7,7 @@ import { Task } from "./Task.entity";
 export class ProjectStage {
 
   @PrimaryColumn('bigint')
-  id: bigint
+  id: string
 
   @Column({type: 'varchar', length: 255})
   name: string
@@ -46,7 +46,7 @@ export class ProjectStage {
 
   @BeforeInsert()
   async generateId() {
-    this.id = this.snowflakeIdService.generateId();
+    this.id = String(this.snowflakeIdService.generateId());
   }
 }
 

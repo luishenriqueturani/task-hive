@@ -21,7 +21,7 @@ export class ToDoService {
     try {      
 
       const created = await this.toDoRepository.save({
-        id: this.snowflakeIdService.generateId(),
+        id: String(this.snowflakeIdService.generateId()),
         title: createToDoDto.title,
         description: createToDoDto.description,
         user,
@@ -89,7 +89,7 @@ export class ToDoService {
       return this.toDoRepository.findOne({
         relations: ['user'],
         where: {
-          id: id,
+          id: String(id),
         },
         select: {
           id: true,
@@ -120,7 +120,7 @@ export class ToDoService {
     try {
       const todo = await this.toDoRepository.find({
         where: {
-          id: id,
+          id: String(id),
         },
       })
 
@@ -146,7 +146,7 @@ export class ToDoService {
     try {
       const todo = await this.toDoRepository.find({
         where: {
-          id: id,
+          id: String(id),
         },
       })
 
@@ -167,7 +167,7 @@ export class ToDoService {
     try {
       const todo = await this.toDoRepository.find({
         where: {
-          id: id,
+          id: String(id),
         },
       })
 
@@ -194,7 +194,7 @@ export class ToDoService {
     try {
       const todo = await this.toDoRepository.find({
         where: {
-          id: id,
+          id: String(id),
         },
       })
 
@@ -233,7 +233,7 @@ export class ToDoService {
     try {
       const todo = await this.toDoRepository.findOne({
         where: {
-          id: id,
+          id: String(id),
         },
       })
 

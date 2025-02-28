@@ -8,7 +8,7 @@ import { User } from "./User.entity";
 export class ToDo {
 
   @PrimaryColumn('bigint')
-  id: bigint;
+  id: string;
 
   @Column({type: 'varchar', length: 255})
   title: string;
@@ -61,8 +61,8 @@ export class ToDo {
   @BeforeInsert()
   async generateId() {
     const sfid = this.snowflakeIdService.generateId();
-    console.log(sfid)
-    this.id = sfid
+    //console.log(sfid)
+    this.id = String(sfid)
   }
 
 }

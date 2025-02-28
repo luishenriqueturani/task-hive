@@ -8,15 +8,15 @@ import { User } from "./User.entity";
 export class Task {
 
   @PrimaryColumn('bigint')
-  id: bigint
+  id: string
 
   @Column({type: 'varchar', length: 255})
   name: string
 
-  @Column('text')
+  @Column({type: 'text', nullable: true})
   description: string
 
-  @Column()
+  @Column({type: 'timestamp', nullable: true})
   finishDate: Date
 
   @ManyToOne(() => User, user => user.tasks)
@@ -44,7 +44,7 @@ export class Task {
 
   @BeforeInsert()
   async generateId() {
-    this.id = this.snowflakeIdService.generateId();
+    this.id = String(this.snowflakeIdService.generateId());
   }
 
 }

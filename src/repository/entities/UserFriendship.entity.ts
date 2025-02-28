@@ -6,7 +6,7 @@ import { User } from "./User.entity";
 export class UserFriendship {
 
   @PrimaryColumn('bigint')
-  id: bigint
+  id: string
 
   @ManyToOne(() => User, user => user.friendship1)
   user1: User
@@ -30,7 +30,7 @@ export class UserFriendship {
 
   @BeforeInsert()
   async generateId() {
-    this.id = this.snowflakeIdService.generateId();
+    this.id = String(this.snowflakeIdService.generateId());
   }
 
 }

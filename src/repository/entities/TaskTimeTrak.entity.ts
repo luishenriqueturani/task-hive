@@ -6,7 +6,7 @@ import { SnowflakeIdService } from "src/snowflakeid/snowflakeid.service"
 @Entity()
 export class TaskTimeTrak {
   @PrimaryColumn('bigint')
-  id: bigint
+  id: string
 
   @ManyToOne(() => Task, task => task.timeTrack)
   task: Task
@@ -28,6 +28,6 @@ export class TaskTimeTrak {
 
   @BeforeInsert()
   async generateId() {
-    this.id = this.snowflakeIdService.generateId();
+    this.id = String(this.snowflakeIdService.generateId());
   }
 }

@@ -30,7 +30,7 @@ export class ProjectsService {
       }
 
       return await this.projectsRepository.save({
-        id: this.snowflakeIdService.generateId(),
+        id: String(this.snowflakeIdService.generateId()),
         name: createProjectDto.name,
         description: createProjectDto.description,
         userOwner: user,
@@ -56,7 +56,7 @@ export class ProjectsService {
     try {
       return this.projectsRepository.findOne({
         where: {
-          id: id,
+          id: String(id),
         },
       })
     } catch (error) {
