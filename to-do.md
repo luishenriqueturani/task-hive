@@ -5,6 +5,7 @@
 - Módulo de Projetos
   - Colunas de projetos (project stages)
   - CRUD de tarefas
+  - Update de tarefas para preenchimento de todos os campos
   - CRUD de membros
     - Sistema de amizades
   - CRUD de subtarefas
@@ -21,6 +22,8 @@
 - Lógica para Usuário empresa
   - Ter empresa como dona de projeto
   - Empresa poder linkar membros aos projetos
+  - Sessão por empresa? (talvez ter um usuário CEO da empresa)
+  - Permissionamento nas rotas da empresa, elas estão liberadas
 
 ## Locais com disparo de notificações e envio de emails
 - to-do.service/create
