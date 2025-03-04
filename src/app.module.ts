@@ -11,6 +11,7 @@ import { ProjectsModule } from './projects/projects.module';
 import { CompaniesModule } from './companies/companies.module';
 import { ProjectStagesModule } from './project-stages/project-stages.module';
 import { TasksModule } from './tasks/tasks.module';
+import { SubtasksModule } from './subtasks/subtasks.module';
 
 
 
@@ -27,6 +28,7 @@ import { TasksModule } from './tasks/tasks.module';
     CompaniesModule,
     ProjectStagesModule,
     TasksModule,
+    SubtasksModule,
   ],
   controllers: [AppController],
   providers: [

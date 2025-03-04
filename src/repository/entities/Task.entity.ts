@@ -3,6 +3,7 @@ import { BeforeInsert, Column, CreateDateColumn, DeleteDateColumn, Entity, ManyT
 import { TaskTimeTrak } from "./TaskTimeTrak.entity";
 import { ProjectStage } from "./ProjectStage.entity";
 import { User } from "./User.entity";
+import { Subtask } from "./subtask.entity";
 
 @Entity()
 export class Task {
@@ -24,6 +25,9 @@ export class Task {
 
   @OneToMany(() => TaskTimeTrak, timeTrack => timeTrack.task)
   timeTrack: TaskTimeTrak[]
+
+  @OneToMany(() => Subtask, subtask => subtask.task)
+  subtask: Subtask[]
 
   @ManyToOne(() => ProjectStage, stage => stage.tasks)
   stage: ProjectStage

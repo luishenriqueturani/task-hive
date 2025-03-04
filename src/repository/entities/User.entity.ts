@@ -6,6 +6,7 @@ import { ToDo } from "./ToDo.entity";
 import { Session } from "./Session.entity";
 import { ForgetPassword } from "./ForgetPassword.entity";
 import { Task } from "./Task.entity";
+import { Subtask } from "./subtask.entity";
 
 @Entity()
 export class User {
@@ -57,4 +58,7 @@ export class User {
 
   @OneToMany(() => Task, task => task.user)
   tasks: Task[]
+
+  @OneToMany(() => Subtask, subtask => subtask.responsible)
+  subtask: Subtask[]
 }
