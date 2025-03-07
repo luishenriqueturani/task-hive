@@ -1,6 +1,6 @@
 import { DataSource } from "typeorm";
 import { PostgreSQLTokens } from "../postgresql.enums";
-import { Company } from "../entities/Company.entity";
+import { Company } from "../../companies/entities/Company.entity";
 
 
 export const companyProvider = [

@@ -3,9 +3,9 @@ import { CreateSubtaskDto } from './dto/create-subtask.dto';
 import { UpdateSubtaskDto } from './dto/update-subtask.dto';
 import { PostgreSQLTokens } from 'src/repository/postgresql.enums';
 import { Repository } from 'typeorm';
-import { Subtask } from 'src/repository/entities/subtask.entity';
+import { Subtask } from 'src/subtasks/entities/subtask.entity';
 import { SnowflakeIdService } from 'src/snowflakeid/snowflakeid.service';
-import { User } from 'src/repository/entities/User.entity';
+import { User } from 'src/users/entities/User.entity';
 import { TasksService } from 'src/tasks/tasks.service';
 
 @Injectable()

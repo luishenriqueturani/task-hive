@@ -1,7 +1,7 @@
 import { BeforeInsert, Column, Entity, ManyToOne, PrimaryColumn } from "typeorm"
-import { Task } from "./Task.entity"
-import { User } from "./User.entity"
+import { Task } from "../../tasks/entities/Task.entity"
 import { SnowflakeIdService } from "src/snowflakeid/snowflakeid.service"
+import { User } from "src/users/entities/User.entity"
 
 @Entity()
 export class TaskTimeTrak {

@@ -1,8 +1,8 @@
 import { SnowflakeIdService } from "src/snowflakeid/snowflakeid.service";
 import { BeforeInsert, Column, CreateDateColumn, DeleteDateColumn, Entity, JoinTable, ManyToMany, ManyToOne, OneToMany, PrimaryColumn, UpdateDateColumn } from "typeorm";
-import { User } from "./User.entity";
-import { Company } from "./Company.entity";
-import { ProjectStage } from "./ProjectStage.entity";
+import { User } from "../../users/entities/User.entity";
+import { Company } from "../../companies/entities/Company.entity";
+import { ProjectStage } from "src/project-stages/entities/ProjectStage.entity";
 
 @Entity()
 export class Project {

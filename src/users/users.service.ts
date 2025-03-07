@@ -2,7 +2,7 @@ import { BadRequestException, HttpException, HttpStatus, Inject, Injectable } fr
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { Repository } from 'typeorm';
-import { User } from 'src/repository/entities/User.entity';
+import { User } from 'src/users/entities/User.entity';
 import { PostgreSQLTokens } from 'src/repository/postgresql.enums';
 import { Crypt } from 'src/utils/crypt';
 import { ExceptionsHandler } from '@nestjs/core/exceptions/exceptions-handler';

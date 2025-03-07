@@ -1,8 +1,8 @@
 import { BeforeInsert, Column, CreateDateColumn, DeleteDateColumn, Entity, ManyToOne, OneToMany, PrimaryColumn, UpdateDateColumn } from "typeorm";
-import { ToDoCompleted } from "./ToDoCompleted.entity";
-import { RecurringTypes, ToDoStatus, ToDoTypes } from "../postgresql.enums";
 import { SnowflakeIdService } from "src/snowflakeid/snowflakeid.service";
-import { User } from "./User.entity";
+import { RecurringTypes, ToDoStatus, ToDoTypes } from "src/repository/postgresql.enums";
+import { User } from "src/users/entities/User.entity";
+import { ToDoCompleted } from "./ToDoCompleted.entity";
 
 @Entity()
 export class ToDo {

@@ -1,6 +1,6 @@
 import { DataSource } from "typeorm";
 import { PostgreSQLTokens } from "../postgresql.enums";
-import { ProjectStage } from "../entities/ProjectStage.entity";
+import { ProjectStage } from "src/project-stages/entities/ProjectStage.entity";
 
 export const projectStageProviders = [
   {

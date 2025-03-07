@@ -1,15 +1,16 @@
 import { Column, CreateDateColumn, DeleteDateColumn, Entity, ManyToMany, ManyToOne, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
-import { Project } from "./Project.entity";
-import { TaskTimeTrak } from "./TaskTimeTrak.entity";
+import { Project } from "../../projects/entities/Project.entity";
+import { Task } from "../../tasks/entities/Task.entity";
+import { Subtask } from "../../subtasks/entities/subtask.entity";
+import { ToDo } from "src/to-do/entities/ToDo.entity";
+import { TaskTimeTrak } from "src/tasks/entities/TaskTimeTrak.entity";
 import { UserFriendship } from "./UserFriendship.entity";
-import { ToDo } from "./ToDo.entity";
-import { Session } from "./Session.entity";
-import { ForgetPassword } from "./ForgetPassword.entity";
-import { Task } from "./Task.entity";
-import { Subtask } from "./subtask.entity";
+import { Session } from "src/auth/entities/Session.entity";
+import { ForgetPassword } from "src/auth/entities/ForgetPassword.entity";
 
 @Entity()
 export class User {
+
   @PrimaryGeneratedColumn("uuid")
   id: string;
 

@@ -1,6 +1,6 @@
 import { SnowflakeIdService } from "src/snowflakeid/snowflakeid.service";
 import { BeforeInsert, CreateDateColumn, DeleteDateColumn, Entity, ManyToOne, PrimaryColumn, UpdateDateColumn } from "typeorm";
-import { User } from "./User.entity";
+import { User } from "../../users/entities/User.entity";
 
 @Entity()
 export class UserFriendship {

@@ -3,11 +3,11 @@ import { CreateTaskDto } from './dto/create-task.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
 import { SnowflakeIdService } from 'src/snowflakeid/snowflakeid.service';
 import { Repository } from 'typeorm';
-import { Task } from 'src/repository/entities/Task.entity';
+import { Task } from 'src/tasks/entities/Task.entity';
 import { PostgreSQLTokens } from 'src/repository/postgresql.enums';
 import { ProjectStagesService } from 'src/project-stages/project-stages.service';
-import { User } from 'src/repository/entities/User.entity';
-import { ProjectStage } from 'src/repository/entities/ProjectStage.entity';
+import { User } from 'src/users/entities/User.entity';
+import { ProjectStage } from 'src/project-stages/entities/ProjectStage.entity';
 
 @Injectable()
 export class TasksService {

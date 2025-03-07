@@ -3,7 +3,7 @@ import { ProjectsService } from './projects.service';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
 import { User } from 'src/decorators/user.decorator';
-import { User as UserEntity } from 'src/repository/entities/User.entity';
+import { User as UserEntity } from 'src/users/entities/User.entity';
 import { AuthGuard } from 'src/guards/auth.guard';
 
 @UseGuards(AuthGuard)

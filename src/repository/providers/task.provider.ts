@@ -1,6 +1,6 @@
 import { DataSource } from "typeorm";
 import { PostgreSQLTokens } from "../postgresql.enums";
-import { Task } from "../entities/Task.entity";
+import { Task } from "../../tasks/entities/Task.entity";
 
 export const taskProviders = [
   {

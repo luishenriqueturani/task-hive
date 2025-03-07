@@ -1,5 +1,5 @@
 import { Column, CreateDateColumn, DeleteDateColumn, Entity, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
-import { Project } from "./Project.entity";
+import { Project } from "../../projects/entities/Project.entity";
 
 @Entity()
 export class Company {

@@ -1,5 +1,5 @@
+import { User } from "src/users/entities/User.entity";
 import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
-import { User } from "./User.entity";
 
 @Entity()
 export class ForgetPassword {

@@ -1,11 +1,11 @@
 import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 import { CreateToDoDto } from './dto/create-to-do.dto';
 import { UpdateToDoDto } from './dto/update-to-do.dto';
-import { User } from 'src/repository/entities/User.entity';
+import { User } from 'src/users/entities/User.entity';
 import { PostgreSQLTokens, RecurringTypes, ToDoStatus, ToDoTypes } from 'src/repository/postgresql.enums';
-import { ToDo } from 'src/repository/entities/ToDo.entity';
 import { Repository } from 'typeorm';
 import { SnowflakeIdService } from 'src/snowflakeid/snowflakeid.service';
+import { ToDo } from './entities/ToDo.entity';
 
 @Injectable()
 export class ToDoService {

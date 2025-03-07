@@ -1,5 +1,5 @@
 import { DataSource } from "typeorm";
-import { User } from "../entities/User.entity";
+import { User } from "../../users/entities/User.entity";
 import { PostgreSQLTokens } from "../postgresql.enums";
 
 export const userProviders = [

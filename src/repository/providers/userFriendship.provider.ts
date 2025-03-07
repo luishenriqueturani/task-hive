@@ -1,6 +1,6 @@
 import { DataSource } from "typeorm";
 import { PostgreSQLTokens } from "../postgresql.enums";
-import { UserFriendship } from "../entities/UserFriendship.entity";
+import { UserFriendship } from "src/users/entities/UserFriendship.entity";
 
 export const userFriendshipProviders = [
   {

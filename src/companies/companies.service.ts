@@ -2,7 +2,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import { CreateCompanyDto } from './dto/create-company.dto';
 import { UpdateCompanyDto } from './dto/update-company.dto';
 import { Repository } from 'typeorm';
-import { Company } from 'src/repository/entities/Company.entity';
+import { Company } from 'src/companies/entities/Company.entity';
 import { PostgreSQLTokens } from 'src/repository/postgresql.enums';
 
 @Injectable()

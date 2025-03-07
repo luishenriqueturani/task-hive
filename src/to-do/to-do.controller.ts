@@ -4,7 +4,7 @@ import { CreateToDoDto } from './dto/create-to-do.dto';
 import { UpdateToDoDto } from './dto/update-to-do.dto';
 import { AuthGuard } from 'src/guards/auth.guard';
 import { User } from 'src/decorators/user.decorator';
-import { User as UserEntity } from 'src/repository/entities/User.entity';
+import { User as UserEntity } from 'src/users/entities/User.entity';
 import { ChangeTaskStatusDto } from './dto/changeTaskStatus.dto';
 
 

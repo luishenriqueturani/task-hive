@@ -1,13 +1,13 @@
 import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 import { JwtService, JwtVerifyOptions } from '@nestjs/jwt';
-import { ForgetPassword } from 'src/repository/entities/ForgetPassword.entity';
-import { User } from 'src/repository/entities/User.entity';
+import { User } from 'src/users/entities/User.entity';
 import { PostgreSQLTokens } from 'src/repository/postgresql.enums';
 import { Crypt } from 'src/utils/crypt';
 import { Repository } from 'typeorm';
 import { JWTAudience } from './auth.enums';
-import { Session } from 'src/repository/entities/Session.entity';
 import { ConfigService } from '@nestjs/config';
+import { ForgetPassword } from './entities/ForgetPassword.entity';
+import { Session } from './entities/Session.entity';
 
 
 export interface SessionResponse {

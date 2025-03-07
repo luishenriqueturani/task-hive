@@ -1,6 +1,6 @@
 import { DataSource } from "typeorm";
 import { PostgreSQLTokens } from "../postgresql.enums";
-import { Subtask } from "../entities/subtask.entity";
+import { Subtask } from "../../subtasks/entities/subtask.entity";
 
 export const subtaskProviders = [
   {

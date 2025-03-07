@@ -1,6 +1,6 @@
 import { DataSource } from "typeorm";
 import { PostgreSQLTokens } from "../postgresql.enums";
-import { TaskTimeTrak } from "../entities/TaskTimeTrak.entity";
+import { TaskTimeTrak } from "src/tasks/entities/TaskTimeTrak.entity";
 
 export const taskTimetrackProviders = [
   {

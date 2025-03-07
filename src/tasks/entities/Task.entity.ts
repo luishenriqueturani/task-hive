@@ -1,9 +1,9 @@
 import { SnowflakeIdService } from "src/snowflakeid/snowflakeid.service";
 import { BeforeInsert, Column, CreateDateColumn, DeleteDateColumn, Entity, ManyToOne, OneToMany, PrimaryColumn, UpdateDateColumn } from "typeorm";
+import { User } from "../../users/entities/User.entity";
+import { Subtask } from "../../subtasks/entities/subtask.entity";
 import { TaskTimeTrak } from "./TaskTimeTrak.entity";
-import { ProjectStage } from "./ProjectStage.entity";
-import { User } from "./User.entity";
-import { Subtask } from "./subtask.entity";
+import { ProjectStage } from "src/project-stages/entities/ProjectStage.entity";
 
 @Entity()
 export class Task {

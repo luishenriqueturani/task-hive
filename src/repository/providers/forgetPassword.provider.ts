@@ -1,6 +1,6 @@
 import { DataSource } from "typeorm";
 import { PostgreSQLTokens } from "../postgresql.enums";
-import { ForgetPassword } from "../entities/ForgetPassword.entity";
+import { ForgetPassword } from "src/auth/entities/ForgetPassword.entity";
 
 
 export const forgetPasswordProviders = [

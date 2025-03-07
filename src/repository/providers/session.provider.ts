@@ -1,6 +1,6 @@
 import { DataSource } from "typeorm";
 import { PostgreSQLTokens } from "../postgresql.enums";
-import { Session } from "../entities/Session.entity";
+import { Session } from "src/auth/entities/Session.entity";
 
 
 export const sessionProviders = [

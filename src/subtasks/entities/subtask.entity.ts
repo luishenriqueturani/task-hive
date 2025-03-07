@@ -1,6 +1,6 @@
 import { Column, CreateDateColumn, DeleteDateColumn, Entity, ManyToOne, PrimaryColumn, UpdateDateColumn } from "typeorm"
-import { Task } from "./Task.entity"
-import { User } from "./User.entity"
+import { Task } from "../../tasks/entities/Task.entity"
+import { User } from "../../users/entities/User.entity"
 
 @Entity()
 export class Subtask {

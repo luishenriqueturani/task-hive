@@ -1,11 +1,11 @@
 import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 import { CreateProjectStageDto } from './dto/create-project-stage.dto';
 import { UpdateProjectStageDto } from './dto/update-project-stage.dto';
-import { ProjectStage } from 'src/repository/entities/ProjectStage.entity';
 import { Repository } from 'typeorm';
 import { PostgreSQLTokens } from 'src/repository/postgresql.enums';
 import { SnowflakeIdService } from 'src/snowflakeid/snowflakeid.service';
 import { ProjectsService } from 'src/projects/projects.service';
+import { ProjectStage } from './entities/ProjectStage.entity';
 
 @Injectable()
 export class ProjectStagesService {

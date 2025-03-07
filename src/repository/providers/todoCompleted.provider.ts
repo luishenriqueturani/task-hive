@@ -1,6 +1,6 @@
 import { DataSource } from "typeorm";
 import { PostgreSQLTokens } from "../postgresql.enums";
-import { ToDoCompleted } from "../entities/ToDoCompleted.entity";
+import { ToDoCompleted } from "../../to-do/entities/ToDoCompleted.entity";
 
 export const todoCompletedProviders = [
   {

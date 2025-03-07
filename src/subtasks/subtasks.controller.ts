@@ -4,7 +4,7 @@ import { CreateSubtaskDto } from './dto/create-subtask.dto';
 import { UpdateSubtaskDto } from './dto/update-subtask.dto';
 import { AuthGuard } from 'src/guards/auth.guard';
 import { User } from 'src/decorators/user.decorator';
-import { User as UserEntity } from 'src/repository/entities/User.entity';
+import { User as UserEntity } from 'src/users/entities/User.entity';
 
 @UseGuards(AuthGuard)
 @Controller('subtasks')

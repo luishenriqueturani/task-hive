@@ -4,7 +4,7 @@ import { CreateTaskDto } from './dto/create-task.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
 import { AuthGuard } from 'src/guards/auth.guard';
 import { User } from 'src/decorators/user.decorator';
-import { User as UserEntity } from 'src/repository/entities/User.entity';
+import { User as UserEntity } from 'src/users/entities/User.entity';
 
 @UseGuards(AuthGuard)
 @Controller('tasks')
