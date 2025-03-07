@@ -3,7 +3,6 @@
 
 ## Por fazer
 - Módulo de Projetos
-  - CRUD de subtarefas
   - Sistema de timetrak
   - CRUD de membros
     - Sistema de amizades
@@ -31,6 +30,7 @@
 
 ## Feito
 - Módulo de Projetos
+  - CRUD de subtarefas
   - CRUD de projetos
   - Colunas de projetos (project stages)
   - CRUD de tarefas

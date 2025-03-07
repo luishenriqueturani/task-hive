@@ -38,6 +38,15 @@ export class SubtasksController {
     }
   }
 
+  @Get('task/:taskId')
+  findByTaskId(@Param('taskId') taskId: string) {
+    try {
+      return this.subtasksService.findByTaskId(taskId);
+    } catch (error) {
+      throw error
+    }
+  }
+
   @Patch(':id')
   update(@Param('id') id: string, @Body() updateSubtaskDto: UpdateSubtaskDto, @User() user: UserEntity) {
     try {

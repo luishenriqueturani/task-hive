@@ -59,6 +59,27 @@ export class SubtasksService {
     }
   }
 
+  async findByTaskId(taskId: string) {
+    try {
+
+      const task = await this.tasksService.findOne(BigInt(taskId))
+
+      if (!task) {
+        throw new BadRequestException(`Task not found`)
+      }
+
+      return await this.subtasksRepository.find({
+        where: {
+          task: {
+            id: taskId
+          }
+        }
+      })
+    } catch (error) {
+      throw error;
+    }
+  }
+
   async update(id: string, updateSubtaskDto: UpdateSubtaskDto, user: User) {
     try {
       
