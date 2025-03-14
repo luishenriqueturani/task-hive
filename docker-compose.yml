@@ -1,0 +1,11 @@
+version: '3.8'
+services:
+  nestjs-app:
+    container_name: task-hive-back
+    build: .
+    ports:
+      - "3333:3333"
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=postgresql://usuario_taskhive:2]#Pe4?M1+50@host.docker.internal:5432/task_hive
+    restart: unless-stopped
