@@ -16,7 +16,7 @@ services:
     container_name: task-hive-nginx
     restart: always
     ports:
-      - "80:80"
+      - "8090:8090"
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf:ro
     depends_on:
