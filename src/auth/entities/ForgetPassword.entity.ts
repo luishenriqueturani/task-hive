@@ -6,7 +6,7 @@ export class ForgetPassword {
   @PrimaryGeneratedColumn("uuid")
   id: string;
 
-  @ManyToOne(() => User, user => user.toDoTaks)
+  @ManyToOne(() => User, user => user.forgetPassword)
   user: User
 
   @Column()
