@@ -1,4 +1,5 @@
 import { Body, Controller, Post, UseGuards } from '@nestjs/common';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import { AuthLoginDto } from './dto/authLogin.dto';
 import { AuthForgetPasswordDto } from './dto/authForgetPassword.dto';
@@ -7,6 +8,7 @@ import { AuthResetPasswordDto } from './dto/authResetPassword.dto';
 import { AuthGuard } from 'src/guards/auth.guard';
 import { RequestToken } from 'src/decorators/requestToken.decorator';
 
+@ApiTags('auth')
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
@@ -20,6 +22,7 @@ export class AuthController {
     }
   }
 
+  @ApiBearerAuth()
   @UseGuards(AuthGuard)
   @Post('logout')
   async logout(@RequestToken() token: string) {

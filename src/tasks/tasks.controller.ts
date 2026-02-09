@@ -1,4 +1,5 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards } from '@nestjs/common';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { TasksService } from './tasks.service';
 import { CreateTaskDto } from './dto/create-task.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
@@ -6,6 +7,8 @@ import { AuthGuard } from 'src/guards/auth.guard';
 import { User } from 'src/decorators/user.decorator';
 import { User as UserEntity } from 'src/users/entities/User.entity';
 
+@ApiTags('tasks')
+@ApiBearerAuth()
 @UseGuards(AuthGuard)
 @Controller('tasks')
 export class TasksController {

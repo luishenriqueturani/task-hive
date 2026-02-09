@@ -1,9 +1,12 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards } from '@nestjs/common';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { ProjectStagesService } from './project-stages.service';
 import { CreateProjectStageDto } from './dto/create-project-stage.dto';
 import { UpdateProjectStageDto } from './dto/update-project-stage.dto';
 import { AuthGuard } from 'src/guards/auth.guard';
 
+@ApiTags('project-stages')
+@ApiBearerAuth()
 @UseGuards(AuthGuard)
 @Controller('project-stages')
 export class ProjectStagesController {

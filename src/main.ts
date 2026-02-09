@@ -8,9 +8,17 @@ async function bootstrap() {
 
   const config = new DocumentBuilder()
     .setTitle('Task Hive API')
-    .setDescription('Task Hive API description')
+    .setDescription('API do Task Hive - projetos, tarefas, tarefas avulsas e empresas')
     .setVersion('1.0')
-    .addTag('tasks')
+    .addBearerAuth()
+    .addTag('auth', 'Login, logout, recuperação de senha')
+    .addTag('users', 'CRUD de usuários')
+    .addTag('companies', 'CRUD de empresas')
+    .addTag('projects', 'Projetos e colunas (stages)')
+    .addTag('project-stages', 'Colunas do kanban')
+    .addTag('tasks', 'Tarefas de projeto')
+    .addTag('subtasks', 'Subtarefas')
+    .addTag('to-do', 'Tarefas avulsas (recorrentes ou pontuais)')
     .build();
   const documentFactory = () => SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, documentFactory);

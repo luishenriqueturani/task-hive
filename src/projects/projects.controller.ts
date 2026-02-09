@@ -1,4 +1,5 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards } from '@nestjs/common';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { ProjectsService } from './projects.service';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
@@ -6,6 +7,8 @@ import { User } from 'src/decorators/user.decorator';
 import { User as UserEntity } from 'src/users/entities/User.entity';
 import { AuthGuard } from 'src/guards/auth.guard';
 
+@ApiTags('projects')
+@ApiBearerAuth()
 @UseGuards(AuthGuard)
 @Controller('projects')
 export class ProjectsController {

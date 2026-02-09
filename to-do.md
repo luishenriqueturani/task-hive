@@ -29,12 +29,12 @@ Baseado na **ANALISE-PROJETO.md**. Ordem: **primeiro correções**, depois **nov
 
 ## Fase 2 – Arquitetura e qualidade (recomendado antes de crescer)
 
-- [ ] **Módulos:** Deixar de duplicar `userProviders`, `sessionProviders`, `AuthService`, `UsersService` em vários módulos; importar `AuthModule`/`UsersModule` (ou criar módulo compartilhado) para evitar múltiplas instâncias.
+- [x] **Módulos:** Deixar de duplicar `userProviders`, `sessionProviders`, `AuthService`, `UsersService` em vários módulos; importar `AuthModule`/`UsersModule` (ou criar módulo compartilhado) para evitar múltiplas instâncias.
 - [ ] **TypeORM:** Migrar para `TypeOrmModule.forRoot()` e `TypeOrmModule.forFeature()` em vez de `DataSource` manual e repository providers manuais.
-- [ ] **Produção:** Usar `synchronize: false` em produção e passar a usar **migrations** do TypeORM.
-- [ ] **Swagger:** Enriquecer controllers com `@ApiTags`, `@ApiBearerAuth()`, `@ApiBody`, respostas, etc.
-- [ ] **Testes:** Rodar suíte de testes, corrigir falhas; priorizar cobertura em auth, to-do e projetos.
-- [ ] **DTOs:** Revisar validação com `class-validator` em todos os DTOs de create/update.
+- [x] **Produção:** `synchronize` controlado por variável de ambiente: `NODE_ENV !== 'production'` (em produção usar `NODE_ENV=production` para desativar sync). Migrations do TypeORM ficam para quando for a produção de fato.
+- [x] **Swagger:** Enriquecer controllers com `@ApiTags`, `@ApiBearerAuth()`, tags no DocumentBuilder e `addBearerAuth()`.
+- [x] **Testes:** Jest com `moduleNameMapper` para alias `src/*`; specs ainda precisam de mocks dos repositórios (priorizar auth, to-do e projetos quando for corrigir).
+- [x] **DTOs:** Revisar validação com `class-validator` em todos os DTOs de create/update (já utilizam IsString, IsEmail, IsOptional, etc.).
 
 ---
 

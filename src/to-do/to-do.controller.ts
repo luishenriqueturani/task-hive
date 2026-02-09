@@ -1,4 +1,5 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Put } from '@nestjs/common';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { ToDoService } from './to-do.service';
 import { CreateToDoDto } from './dto/create-to-do.dto';
 import { UpdateToDoDto } from './dto/update-to-do.dto';
@@ -7,7 +8,8 @@ import { User } from 'src/decorators/user.decorator';
 import { User as UserEntity } from 'src/users/entities/User.entity';
 import { ChangeTaskStatusDto } from './dto/changeTaskStatus.dto';
 
-
+@ApiTags('to-do')
+@ApiBearerAuth()
 @UseGuards(AuthGuard)
 @Controller('to-do')
 export class ToDoController {

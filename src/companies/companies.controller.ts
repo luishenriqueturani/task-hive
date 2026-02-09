@@ -1,9 +1,12 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards } from '@nestjs/common';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { CompaniesService } from './companies.service';
 import { CreateCompanyDto } from './dto/create-company.dto';
 import { UpdateCompanyDto } from './dto/update-company.dto';
 import { AuthGuard } from 'src/guards/auth.guard';
 
+@ApiTags('companies')
+@ApiBearerAuth()
 @UseGuards(AuthGuard)
 @Controller('companies')
 export class CompaniesController {
