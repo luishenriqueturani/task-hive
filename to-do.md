@@ -52,8 +52,8 @@ Baseado na **ANALISE-PROJETO.md**. Ordem: **primeiro correções**, depois **nov
 
 ## Fase 4 – Participantes e acesso ao projeto
 
-- [ ] **CRUD de participantes:** Implementar adicionar/remover/listar participantes do projeto (`Project.participants`); endpoints no módulo de projetos (ou dedicado).
-- [ ] **Regras:** Usar "dono ou participante" em todas as verificações de "tem acesso ao projeto?" (projetos, stages, tarefas).
+- [x] **CRUD de participantes:** Implementar adicionar/remover/listar participantes do projeto (`Project.participants`); endpoints no módulo de projetos (ou dedicado).
+- [x] **Regras:** Usar "dono ou participante" em todas as verificações de "tem acesso ao projeto?" (projetos, stages, tarefas).
 - [ ] **(Opcional) Sistema de amizades:** Entidade `UserFriendship` e provider existem; implementar módulo/serviço/controller se fizer parte do escopo (ex.: convite para participar por amizade).
 
 ---

@@ -8,7 +8,7 @@ import { SnowflakeIdService } from 'src/snowflakeid/snowflakeid.service';
 import { User } from 'src/users/entities/User.entity';
 import { CompaniesService } from 'src/companies/companies.service';
 import { Company } from 'src/companies/entities/Company.entity';
-import { canManageProject } from './project-permissions.helper';
+import { canManageProject, canAccessProject } from './project-permissions.helper';
 
 @Injectable()
 export class ProjectsService {
@@ -17,9 +17,12 @@ export class ProjectsService {
     @Inject(PostgreSQLTokens.PROJECT_REPOSITORY)
     private projectsRepository: Repository<Project>,
 
+    @Inject(PostgreSQLTokens.USER_REPOSITORY)
+    private userRepository: Repository<User>,
+
     private companiesService: CompaniesService,
     private snowflakeIdService: SnowflakeIdService,
-  ) { }
+  ) {}
 
 
   async create(createProjectDto: CreateProjectDto, user: User) {
@@ -114,5 +117,72 @@ export class ProjectsService {
     } catch (error) {
       throw new InternalServerErrorException('Erro ao remover o projeto');
     }
+  }
+
+  async listParticipants(projectId: bigint, user: User) {
+    const project = await this.findOneWithOwnerAndParticipants(projectId);
+    if (!project) {
+      throw new NotFoundException('Projeto não encontrado');
+    }
+    if (!canAccessProject(project, user)) {
+      throw new ForbiddenException('Sem permissão para listar participantes deste projeto');
+    }
+    const withParticipants = await this.projectsRepository.findOne({
+      where: { id: String(projectId) },
+      relations: ['participants'],
+    });
+    const participants = withParticipants?.participants ?? [];
+    return participants.map((p) => ({
+      id: p.id,
+      name: p.name,
+      email: p.email,
+      avatar: p.avatar,
+      role: p.role,
+    }));
+  }
+
+  async addParticipant(projectId: bigint, userId: string, user: User) {
+    const project = await this.findOneWithOwnerAndParticipants(projectId);
+    if (!project) {
+      throw new NotFoundException('Projeto não encontrado');
+    }
+    if (!canManageProject(project, user)) {
+      throw new ForbiddenException('Sem permissão para adicionar participantes');
+    }
+    const userToAdd = await this.userRepository.findOne({
+      where: { id: userId },
+    });
+    if (!userToAdd) {
+      throw new NotFoundException('Usuário não encontrado');
+    }
+    const currentIds = (project.participants ?? []).map((p) => p.id);
+    if (currentIds.includes(userId)) {
+      throw new BadRequestException('Usuário já é participante do projeto');
+    }
+    if (project.userOwner?.id === userId) {
+      throw new BadRequestException('O dono do projeto já tem acesso total');
+    }
+    const updatedParticipants = [...(project.participants ?? []), userToAdd];
+    await this.projectsRepository.save({
+      ...project,
+      participants: updatedParticipants,
+    });
+    return this.listParticipants(projectId, user);
+  }
+
+  async removeParticipant(projectId: bigint, participantUserId: string, user: User) {
+    const project = await this.findOneWithOwnerAndParticipants(projectId);
+    if (!project) {
+      throw new NotFoundException('Projeto não encontrado');
+    }
+    if (!canManageProject(project, user)) {
+      throw new ForbiddenException('Sem permissão para remover participantes');
+    }
+    const updatedParticipants = (project.participants ?? []).filter((p) => p.id !== participantUserId);
+    await this.projectsRepository.save({
+      ...project,
+      participants: updatedParticipants,
+    });
+    return this.listParticipants(projectId, user);
   }
 }
