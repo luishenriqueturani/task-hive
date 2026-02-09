@@ -3,6 +3,8 @@ import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { AuthGuard } from 'src/guards/auth.guard';
+import { User } from 'src/decorators/user.decorator';
+import { User as UserEntity } from 'src/users/entities/User.entity';
 
 @Controller('users')
 export class UsersController {
@@ -59,9 +61,9 @@ export class UsersController {
 
   @UseGuards(AuthGuard)
   @Delete(':id')
-  remove(@Param('id') id: string) {
+  remove(@Param('id') id: string, @User() user: UserEntity) {
     try {
-      return this.usersService.remove(id);
+      return this.usersService.remove(id, user?.id);
     } catch (error) {
       return error
     }

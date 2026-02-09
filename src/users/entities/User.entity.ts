@@ -43,7 +43,7 @@ export class User {
   toDoTaks: ToDo[]
 
   @OneToMany(() => TaskTimeTrak, taskTimeTrak => taskTimeTrak.user)
-  taskTimeTrack: TaskTimeTrak
+  taskTimeTrack: TaskTimeTrak[]
 
   @OneToMany(() => UserFriendship, friendship => friendship.user1)
   friendship1: UserFriendship

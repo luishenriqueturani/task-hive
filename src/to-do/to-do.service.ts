@@ -118,7 +118,7 @@ export class ToDoService {
 
   async update(id: bigint, updateToDoDto: UpdateToDoDto, user: User) {
     try {
-      const todo = await this.toDoRepository.find({
+      const todo = await this.toDoRepository.findOne({
         where: {
           id: String(id),
         },
@@ -144,7 +144,7 @@ export class ToDoService {
 
   async remove(id: bigint, user: User) {
     try {
-      const todo = await this.toDoRepository.find({
+      const todo = await this.toDoRepository.findOne({
         where: {
           id: String(id),
         },
@@ -165,7 +165,7 @@ export class ToDoService {
 
   async endTask(id: bigint, user: User) {
     try {
-      const todo = await this.toDoRepository.find({
+      const todo = await this.toDoRepository.findOne({
         where: {
           id: String(id),
         },
@@ -192,7 +192,7 @@ export class ToDoService {
 
   async changeTaskStatus(id: bigint, status: ToDoStatus, user: User) {
     try {
-      const todo = await this.toDoRepository.find({
+      const todo = await this.toDoRepository.findOne({
         where: {
           id: String(id),
         },

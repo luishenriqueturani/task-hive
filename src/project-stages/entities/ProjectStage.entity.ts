@@ -1,7 +1,6 @@
 import { Project } from "src/projects/entities/Project.entity";
-import { SnowflakeIdService } from "src/snowflakeid/snowflakeid.service";
 import { Task } from "src/tasks/entities/Task.entity";
-import { BeforeInsert, Column, CreateDateColumn, DeleteDateColumn, Entity, JoinColumn, ManyToOne, OneToMany, OneToOne, PrimaryColumn, UpdateDateColumn } from "typeorm";
+import { Column, CreateDateColumn, DeleteDateColumn, Entity, JoinColumn, ManyToOne, OneToMany, OneToOne, PrimaryColumn, UpdateDateColumn } from "typeorm";
 
 @Entity()
 export class ProjectStage {
@@ -37,16 +36,5 @@ export class ProjectStage {
 
   @DeleteDateColumn()
   deletedAt: Date;
-
-
-  constructor(
-    private snowflakeIdService: SnowflakeIdService
-  ) {}
-
-
-  @BeforeInsert()
-  async generateId() {
-    this.id = String(this.snowflakeIdService.generateId());
-  }
 }
 

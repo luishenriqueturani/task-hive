@@ -16,13 +16,13 @@ export class TasksService {
     @Inject(PostgreSQLTokens.TASK_REPOSITORY)
     private readonly tasksRepository: Repository<Task>,
     private snowflakeIdService: SnowflakeIdService,
-    private poujectStagesService: ProjectStagesService,
+    private projectStagesService: ProjectStagesService,
   ) { }
 
   async create(createTaskDto: CreateTaskDto, user: User) {
     try {
       
-      const stage = await this.poujectStagesService.findOne(BigInt(createTaskDto.stageId))
+      const stage = await this.projectStagesService.findOne(BigInt(createTaskDto.stageId))
 
       if (!stage) {
         throw new BadRequestException(`Stage not found`)
@@ -106,7 +106,7 @@ export class TasksService {
       let stage : ProjectStage | undefined
 
       if(updateTaskDto.stageId) {
-        stage = await this.poujectStagesService.findOne(BigInt(updateTaskDto.stageId))
+        stage = await this.projectStagesService.findOne(BigInt(updateTaskDto.stageId))
         //console.log(stage)
         if(!stage) {
           throw new BadRequestException(`Stage not found`)
@@ -145,7 +145,7 @@ export class TasksService {
         throw new UnauthorizedException(`You are not the owner of this task`)
       }
 
-      const stage = await this.poujectStagesService.findOne(BigInt(task.stage.id))
+      const stage = await this.projectStagesService.findOne(BigInt(task.stage.id))
 
       if(!stage.prevStage) {
         throw new BadRequestException(`Stage not found`)
@@ -178,7 +178,7 @@ export class TasksService {
         throw new UnauthorizedException(`You are not the owner of this task`)
       }
 
-      const stage = await this.poujectStagesService.findOne(BigInt(task.stage.id))
+      const stage = await this.projectStagesService.findOne(BigInt(task.stage.id))
 
       if(!stage.nextStage) {
         throw new BadRequestException(`Stage not found`)

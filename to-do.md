@@ -7,16 +7,16 @@ Baseado na **ANALISE-PROJETO.md**. Ordem: **primeiro correções**, depois **nov
 ## Fase 1 – Correções (bugs e segurança)
 
 ### 1.1 Bugs críticos
-- [ ] **to-do.service:** Trocar `find` por `findOne` em `update`, `remove`, `endTask` e `changeTaskStatus`; corrigir verificação de "tarefa não encontrada" (array vazio é truthy).
-- [ ] **auth.service:** Em `resetPassword`, usar `await this.checkTokenResetPassword(token)`; no `findOne` de ForgetPassword, adicionar `relations: ['user']` para não quebrar em `fp.user.id`.
-- [ ] **auth.service:** Corrigir `expiresIn` do JWT em `forgetPassword` (usar `'24h'` ou segundos; não milissegundos como string).
-- [ ] **Entidades:** Remover `SnowflakeIdService` e `@BeforeInsert` que dependem dele das entidades Project, Task, TaskTimeTrak, ToDo, ProjectStage; manter geração de ID apenas nos services.
-- [ ] **User.entity:** Corrigir tipo da relação `taskTimeTrack` para `TaskTimeTrak[]` (hoje está como único).
-- [ ] **tasks.service:** Corrigir typo `poujectStagesService` → `projectStagesService`.
+- [x] **to-do.service:** Trocar `find` por `findOne` em `update`, `remove`, `endTask` e `changeTaskStatus`; corrigir verificação de "tarefa não encontrada" (array vazio é truthy).
+- [x] **auth.service:** Em `resetPassword`, usar `await this.checkTokenResetPassword(token)`; no `findOne` de ForgetPassword, adicionar `relations: ['user']` para não quebrar em `fp.user.id`.
+- [x] **auth.service:** Corrigir `expiresIn` do JWT em `forgetPassword` (usar `'24h'` ou segundos; não milissegundos como string).
+- [x] **Entidades:** Remover `SnowflakeIdService` e `@BeforeInsert` que dependem dele das entidades Project, Task, TaskTimeTrak, ToDo, ProjectStage; manter geração de ID apenas nos services.
+- [x] **User.entity:** Corrigir tipo da relação `taskTimeTrack` para `TaskTimeTrak[]` (hoje está como único).
+- [x] **tasks.service:** Corrigir typo `poujectStagesService` → `projectStagesService`.
 
 ### 1.2 Segurança urgente
-- [ ] **Companies:** Adicionar `AuthGuard` nas rotas do `CompaniesController`; definir quem pode criar/editar/remover empresa (ex.: apenas autenticado, depois por role/dono).
-- [ ] **Remoção de usuário:** Na rota de delete de usuário, restringir a **ADMIN_GOD** (e considerar impedir auto-delete) **ou** trocar para soft delete; hoje qualquer autenticado pode hard delete qualquer usuário.
+- [x] **Companies:** Adicionar `AuthGuard` nas rotas do `CompaniesController`; definir quem pode criar/editar/remover empresa (ex.: apenas autenticado, depois por role/dono).
+- [x] **Remoção de usuário:** Na rota de delete de usuário, restringir a **ADMIN_GOD** (e considerar impedir auto-delete) **ou** trocar para soft delete; hoje qualquer autenticado pode hard delete qualquer usuário.
 
 ### 1.3 Ajustes de API e configuração
 - [ ] **projects.service (e outros):** Quando a API precisar devolver o recurso atualizado após `update`, usar `findOne` após o `update` ou `save` em vez de retornar apenas `UpdateResult`.

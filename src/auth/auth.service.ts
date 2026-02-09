@@ -133,13 +133,13 @@ export class AuthService {
       throw new BadRequestException('Usuário não cadastrado')
     }
 
-    const expiresIn = new Date()
-
-    expiresIn.setDate(expiresIn.getDate() + 1)
+    const expiresAt = new Date()
+    expiresAt.setDate(expiresAt.getDate() + 1)
 
     const res = await this.forgetPasswordRepository.save({
       user,
-      token: await this.createToken(user, JWTAudience.FORGET_PASSWORD, expiresIn.getTime().toString()),
+      token: await this.createToken(user, JWTAudience.FORGET_PASSWORD, '24h'),
+      expiresAt,
     })
 
     // enviar email
@@ -155,7 +155,7 @@ export class AuthService {
    */
   async resetPassword(password: string, token: string) {
 
-    const check = this.checkTokenResetPassword(token)
+    const check = await this.checkTokenResetPassword(token)
 
     if (!check) {
       throw new BadRequestException('Token inválido')
@@ -165,6 +165,7 @@ export class AuthService {
       where: {
         token,
       },
+      relations: ['user'],
     })
 
     if (!fp) {

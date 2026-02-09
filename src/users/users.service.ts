@@ -50,11 +50,21 @@ export class UsersService {
     });
   }
 
-  async remove(id: string) {
-    if(!await this.findOne(id)) {
+  /**
+   * Soft delete: marca deletedAt. Hard delete restrito a ADMIN_GOD (Fase 3).
+   * Impede auto-delete: usuário não pode remover a si mesmo.
+   */
+  async remove(id: string, currentUserId?: string) {
+    const user = await this.findOne(id);
+    if (!user) {
       throw new HttpException('User not found', HttpStatus.NOT_FOUND);
     }
-    return this.userRepository.delete(id);
+    if (currentUserId && id === currentUserId) {
+      throw new HttpException('Não é permitido remover a própria conta', HttpStatus.FORBIDDEN);
+    }
+    return this.userRepository.update(id, {
+      deletedAt: new Date(),
+    });
   }
 
   findByEmail(email: string) {

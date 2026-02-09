@@ -1,5 +1,4 @@
-import { BeforeInsert, Column, CreateDateColumn, DeleteDateColumn, Entity, ManyToOne, OneToMany, PrimaryColumn, UpdateDateColumn } from "typeorm";
-import { SnowflakeIdService } from "src/snowflakeid/snowflakeid.service";
+import { Column, CreateDateColumn, DeleteDateColumn, Entity, ManyToOne, OneToMany, PrimaryColumn, UpdateDateColumn } from "typeorm";
 import { RecurringTypes, ToDoStatus, ToDoTypes } from "src/repository/postgresql.enums";
 import { User } from "src/users/entities/User.entity";
 import { ToDoCompleted } from "./ToDoCompleted.entity";
@@ -51,19 +50,5 @@ export class ToDo {
 
   @OneToMany(() => ToDoCompleted, (toDoCompleted) => toDoCompleted.toDo)
   completed: ToDoCompleted[];
-
-
-  constructor(
-    private snowflakeIdService: SnowflakeIdService
-  ) {}
-
-
-  @BeforeInsert()
-  async generateId() {
-    const sfid = this.snowflakeIdService.generateId();
-    //console.log(sfid)
-    this.id = String(sfid)
-  }
-
 }
 

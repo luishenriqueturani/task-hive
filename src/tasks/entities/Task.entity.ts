@@ -1,5 +1,4 @@
-import { SnowflakeIdService } from "src/snowflakeid/snowflakeid.service";
-import { BeforeInsert, Column, CreateDateColumn, DeleteDateColumn, Entity, ManyToOne, OneToMany, PrimaryColumn, UpdateDateColumn } from "typeorm";
+import { Column, CreateDateColumn, DeleteDateColumn, Entity, ManyToOne, OneToMany, PrimaryColumn, UpdateDateColumn } from "typeorm";
 import { User } from "../../users/entities/User.entity";
 import { Subtask } from "../../subtasks/entities/subtask.entity";
 import { TaskTimeTrak } from "./TaskTimeTrak.entity";
@@ -40,15 +39,4 @@ export class Task {
 
   @DeleteDateColumn()
   deletedAt: Date;
-
-  constructor(
-    private snowflakeIdService: SnowflakeIdService
-  ) {}
-
-
-  @BeforeInsert()
-  async generateId() {
-    this.id = String(this.snowflakeIdService.generateId());
-  }
-
 }
