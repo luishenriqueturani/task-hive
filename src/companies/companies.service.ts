@@ -1,4 +1,4 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { CreateCompanyDto } from './dto/create-company.dto';
 import { UpdateCompanyDto } from './dto/update-company.dto';
 import { Repository } from 'typeorm';
@@ -13,70 +13,61 @@ export class CompaniesService {
     private companyRepository: Repository<Company>,
   ) { }
 
-  create(createCompanyDto: CreateCompanyDto) {
+  async create(createCompanyDto: CreateCompanyDto) {
     try {
       return this.companyRepository.save({
         name: createCompanyDto.name,
-      })
-      
+      });
     } catch (error) {
-      console.log(error)
-      throw new Error('Erro ao criar a Empresa')
+      throw new InternalServerErrorException('Erro ao criar a Empresa');
     }
   }
 
-  findAll() {
+  async findAll() {
     try {
-      return this.companyRepository.find()
+      return this.companyRepository.find();
     } catch (error) {
-      console.log(error)
-      throw new Error('Erro ao buscar todas as empresas')
+      throw new InternalServerErrorException('Erro ao buscar todas as empresas');
     }
   }
 
-  findOne(id: string) {
+  async findOne(id: string) {
     try {
       return this.companyRepository.findOne({
-        where: {
-          id,
-        },
-      })
+        where: { id },
+      });
     } catch (error) {
-      console.log(error)
-      throw new Error('Erro ao buscar a empresa')
+      throw new InternalServerErrorException('Erro ao buscar a empresa');
     }
   }
 
-  update(id: string, updateCompanyDto: UpdateCompanyDto) {
+  async update(id: string, updateCompanyDto: UpdateCompanyDto) {
+    const company = await this.findOne(id);
+    if (!company) {
+      throw new NotFoundException('Empresa não encontrada');
+    }
     try {
-      return this.companyRepository.update(id, {
+      await this.companyRepository.update(id, {
         name: updateCompanyDto.name,
-      })
+      });
+      return this.findOne(id);
     } catch (error) {
-      console.log(error)
-      throw new Error('Erro ao atualizar a empresa')
+      throw new InternalServerErrorException('Erro ao atualizar a empresa');
     }
   }
 
   async remove(id: string) {
+    const company = await this.findOne(id);
+    if (!company) {
+      throw new NotFoundException('Empresa não encontrada');
+    }
     try {
-      const company = await this.companyRepository.findOne({
-        where: {
-          id,
-        },
-      })
-
-      if(!company) {
-        throw new Error('Empresa não encontrada')
-      }
-
-      return this.companyRepository.update(id, {
+      await this.companyRepository.update(id, {
         deletedAt: new Date(),
-      })
-
+      });
+      return company;
     } catch (error) {
-      console.log(error)
-      throw new Error('Erro ao remover a empresa')
+      throw new InternalServerErrorException('Erro ao remover a empresa');
     }
   }
 }

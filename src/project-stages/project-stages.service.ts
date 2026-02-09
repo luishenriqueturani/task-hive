@@ -1,4 +1,4 @@
-import { BadRequestException, Inject, Injectable } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable, InternalServerErrorException } from '@nestjs/common';
 import { CreateProjectStageDto } from './dto/create-project-stage.dto';
 import { UpdateProjectStageDto } from './dto/update-project-stage.dto';
 import { Repository } from 'typeorm';
@@ -64,49 +64,40 @@ export class ProjectStagesService {
       return newStage
 
     } catch (error) {
-      console.log(error);
-      throw new Error(error);
+      if (error instanceof BadRequestException) throw error;
+      throw new InternalServerErrorException('Erro ao criar coluna do projeto');
     }
   }
 
-  findAll() {
+  async findAll() {
     try {
       return this.projectStagesRepository.find();
     } catch (error) {
-      console.log(error);
-      throw new Error(error);
+      throw new InternalServerErrorException('Erro ao buscar colunas');
     }
   }
 
-  findAllByProject(id: string) {
+  async findAllByProject(id: string) {
     try {
       return this.projectStagesRepository.find({
         where: {
-          project: {
-            id: id,
-          },
+          project: { id },
         },
-        order: {
-          order: 'ASC',
-        }
+        order: { order: 'ASC' },
       });
     } catch (error) {
-      console.log(error);
-      throw new Error(error);
+      throw new InternalServerErrorException('Erro ao buscar colunas do projeto');
     }
   }
 
-  findOne(id: bigint) {
+  async findOne(id: bigint) {
     try {
       return this.projectStagesRepository.findOne({
-        where: {
-          id: String(id),
-        },
-        relations: ['project', 'tasks', 'nextStage', 'prevStage']
+        where: { id: String(id) },
+        relations: ['project', 'tasks', 'nextStage', 'prevStage'],
       });
     } catch (error) {
-      console.log(error);
-      throw new Error(error);
+      throw new InternalServerErrorException('Erro ao buscar coluna');
     }
   }
 
@@ -142,33 +133,31 @@ export class ProjectStagesService {
         }
       }
 
-      return await this.projectStagesRepository.update(id.toString(), {
+      await this.projectStagesRepository.update(id.toString(), {
         name: updateProjectStageDto.name,
         order: updateProjectStageDto.order,
         nextStage: nextStage,
         prevStage: prevStage,
       });
-
+      return this.findOne(id);
     } catch (error) {
-      console.log(error);
-      throw new Error(error);
+      if (error instanceof BadRequestException) throw error;
+      throw new InternalServerErrorException('Erro ao atualizar coluna');
     }
   }
 
   async remove(id: bigint) {
+    const projectStage = await this.findOne(id);
+    if (!projectStage) {
+      throw new BadRequestException('Project stage not found');
+    }
     try {
-      const projectStage = await this.findOne(id);
-
-      if (!projectStage) {
-        throw new BadRequestException('Project stage not found');
-      }
-
-      return await this.projectStagesRepository.update(id.toString(), {
+      await this.projectStagesRepository.update(id.toString(), {
         deletedAt: new Date(),
       });
+      return projectStage;
     } catch (error) {
-      console.log(error);
-      throw new Error(error);
+      throw new InternalServerErrorException('Erro ao remover coluna');
     }
   }
 }

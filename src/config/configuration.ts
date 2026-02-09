@@ -1,6 +1,5 @@
-
 export default () => ({
-  port: process.env.PORT || 3000,
+  port: process.env.APP_PORT || 3001,
   cryptSault: process.env.CRYPT_SALT,
   jwtSecret: process.env.JWT_SECRET,
   db: {

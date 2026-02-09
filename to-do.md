@@ -19,11 +19,11 @@ Baseado na **ANALISE-PROJETO.md**. Ordem: **primeiro correções**, depois **nov
 - [x] **Remoção de usuário:** Na rota de delete de usuário, restringir a **ADMIN_GOD** (e considerar impedir auto-delete) **ou** trocar para soft delete; hoje qualquer autenticado pode hard delete qualquer usuário.
 
 ### 1.3 Ajustes de API e configuração
-- [ ] **projects.service (e outros):** Quando a API precisar devolver o recurso atualizado após `update`, usar `findOne` após o `update` ou `save` em vez de retornar apenas `UpdateResult`.
-- [ ] **Porta:** Unificar variável de porta (ex.: `APP_PORT`) e valor default (ex.: 3001) em `main.ts` e `configuration.ts`.
-- [ ] **postgresql.enums:** Remover ou documentar `TODO_TYPE_REPOSITORY` se não houver entidade/provider correspondente.
-- [ ] **Tratamento de erros:** Evitar `throw new Error('mensagem genérica')` nos services; usar exceções HTTP do Nest (`BadRequestException`, `NotFoundException`, etc.) para não perder contexto.
-- [ ] **Soft delete:** Garantir que consultas (`find`, `findOne`) não retornem registros com `deletedAt` preenchido onde for o caso, ou usar `@DeleteDateColumn` e `withDeleted` de forma consistente.
+- [x] **projects.service (e outros):** Quando a API precisar devolver o recurso atualizado após `update`, usar `findOne` após o `update` ou `save` em vez de retornar apenas `UpdateResult`.
+- [x] **Porta:** Unificar variável de porta (ex.: `APP_PORT`) e valor default (ex.: 3001) em `main.ts` e `configuration.ts`.
+- [x] **postgresql.enums:** Remover ou documentar `TODO_TYPE_REPOSITORY` se não houver entidade/provider correspondente.
+- [x] **Tratamento de erros:** Evitar `throw new Error('mensagem genérica')` nos services; usar exceções HTTP do Nest (`BadRequestException`, `NotFoundException`, etc.) para não perder contexto.
+- [x] **Soft delete:** Garantir que consultas (`find`, `findOne`) não retornem registros com `deletedAt` preenchido onde for o caso, ou usar `@DeleteDateColumn` e `withDeleted` de forma consistente.
 
 ---
 

@@ -1,4 +1,4 @@
-import { BadRequestException, Inject, Injectable } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
 import { Repository } from 'typeorm';
@@ -38,65 +38,59 @@ export class ProjectsService {
       })
 
     } catch (error) {
-      console.log(error)
-      throw new Error('Erro ao criar o projeto')
+      if (error instanceof BadRequestException || error instanceof NotFoundException) throw error;
+      throw new InternalServerErrorException('Erro ao criar o projeto');
     }
   }
 
-  findAll() {
+  async findAll() {
     try {
-      return this.projectsRepository.find()
+      return this.projectsRepository.find();
     } catch (error) {
-      console.log(error)
-      throw new Error('Erro ao buscar todos os projetos')
+      throw new InternalServerErrorException('Erro ao buscar todos os projetos');
     }
   }
 
-  findOne(id: bigint) {
+  async findOne(id: bigint) {
     try {
       return this.projectsRepository.findOne({
         where: {
           id: String(id),
         },
-      })
+      });
     } catch (error) {
-      console.log(error)
-      throw new Error('Erro ao buscar o projeto')
+      throw new InternalServerErrorException('Erro ao buscar o projeto');
     }
   }
 
   async update(id: bigint, updateProjectDto: UpdateProjectDto) {
+    const project = await this.findOne(id);
+    if (!project) {
+      throw new NotFoundException('Projeto não encontrado');
+    }
     try {
-      const project = await this.findOne(id)
-
-      if(!project) {
-        throw new BadRequestException('Projeto não encontrado')
-      }
-
-      return await this.projectsRepository.update(id.toString(), {
+      await this.projectsRepository.update(id.toString(), {
         name: updateProjectDto.name,
         description: updateProjectDto.description,
-      })
+      });
+      return this.findOne(id);
     } catch (error) {
-      console.log(error)
-      throw new Error('Erro ao atualizar o projeto')
+      throw new InternalServerErrorException('Erro ao atualizar o projeto');
     }
   }
 
   async remove(id: bigint) {
+    const project = await this.findOne(id);
+    if (!project) {
+      throw new NotFoundException('Projeto não encontrado');
+    }
     try {
-      const project = await this.findOne(id)
-
-      if(!project) {
-        throw new BadRequestException('Projeto não encontrado')
-      }
-
-      return await this.projectsRepository.update(id.toString(), {
+      await this.projectsRepository.update(id.toString(), {
         deletedAt: new Date(),
-      })
+      });
+      return project;
     } catch (error) {
-      console.log(error)
-      throw new Error('Erro ao remover o projeto')
+      throw new InternalServerErrorException('Erro ao remover o projeto');
     }
   }
 }
