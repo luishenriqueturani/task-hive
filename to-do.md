@@ -40,16 +40,13 @@ Baseado na **ANALISE-PROJETO.md**. Ordem: **primeiro correções**, depois **nov
 
 ## Fase 3 – Níveis de usuário e permissionamento
 
-- [ ] **Modelo:** Adicionar campo `role` em `User` (enum ex.: `ADMIN_GOD`, `ADMIN_COLLABORATOR`, `CLIENT`) e incluir no payload do JWT e na sessão.
-- [ ] **Guards:** Implementar `RolesGuard` (ou equivalente) para rotas que exijam role específica (ex.: apenas ADMIN_GOD em hard delete).
-- [ ] **Helpers:** Criar serviço ou helpers de permissão por recurso: "é dono do projeto?", "é participante?", "tem acesso ao projeto?", "é dono da tarefa?".
-- [ ] **Projetos:** Em `update` e `remove`, exigir que o usuário seja dono (ou participante, conforme regra) ou admin; em `findAll`, filtrar por projetos em que o usuário é dono ou participante.
-- [ ] **Project-stages:** Em `create`, `update` e `remove`, verificar se o usuário é dono do projeto (ou admin); repassar `user` do controller para o service.
-- [ ] **Tarefas:**
-  - `create`: permitir apenas se o usuário tem acesso ao projeto da stage (dono ou participante).
-  - `update`: se **dono** da tarefa → pode tudo (incluindo mudar coluna); se **participante (não dono)** → pode apenas nome, descrição, finishDate; **bloquear** alteração de `stage` e endpoints `toNextStage`/`toPreviousStage`.
-  - `remove`: apenas dono da tarefa ou admin.
-- [ ] **Hard delete:** Manter soft delete como padrão; se existir endpoint de remoção definitiva, restringir a ADMIN_GOD. Colaborador não pode hard delete.
+- [x] **Modelo:** Adicionar campo `role` em `User` (enum `ADMIN_GOD`, `ADMIN_COLLABORATOR`, `CLIENT`) e incluir no payload do JWT e na sessão.
+- [x] **Guards:** Implementar `RolesGuard` e decorator `@Roles()` para rotas que exijam role (ex.: futuro hard delete só ADMIN_GOD).
+- [x] **Helpers:** Helpers de permissão em `project-permissions.helper.ts`: `isProjectOwner`, `isProjectParticipant`, `canAccessProject`, `canManageProject`, `isTaskOwner`, `canMoveOrRemoveTask`.
+- [x] **Projetos:** Em `update` e `remove`, exigir `canManageProject` (dono ou admin); em `findAll`, filtrar por dono ou participante.
+- [x] **Project-stages:** Em `create`, `update` e `remove`, verificar `canManageProject` no projeto; `user` repassado do controller para o service.
+- [x] **Tarefas:** `create` só se `canAccessProject`; `update`: dono/admin podem tudo (inclusive stageId), participante só nome/descrição/finishDate; `toNextStage`/`toPreviousStage` e `remove` só `canMoveOrRemoveTask` (dono ou admin).
+- [x] **Hard delete:** Soft delete mantido como padrão; quando houver endpoint de remoção definitiva, usar `@Roles(UserRole.ADMIN_GOD)`.
 
 ---
 

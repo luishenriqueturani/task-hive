@@ -29,7 +29,7 @@ export class ProjectsController {
   @Get()
   findAll(@User() user: UserEntity) {
     try {
-      return this.projectsService.findAll();
+      return this.projectsService.findAll(user);
     } catch (error) {
       console.log(error)
       throw error
@@ -49,7 +49,7 @@ export class ProjectsController {
   @Patch(':id')
   update(@Param('id') id: string, @Body() updateProjectDto: UpdateProjectDto, @User() user: UserEntity) {
     try {
-      return this.projectsService.update(BigInt(id), updateProjectDto);
+      return this.projectsService.update(BigInt(id), updateProjectDto, user);
     } catch (error) {
       console.log(error)
       throw error
@@ -59,7 +59,7 @@ export class ProjectsController {
   @Delete(':id')
   remove(@Param('id') id: string, @User() user: UserEntity) {
     try {
-      return this.projectsService.remove(BigInt(id));
+      return this.projectsService.remove(BigInt(id), user);
     } catch (error) {
       console.log(error)
       throw error

@@ -40,12 +40,14 @@ export class AuthService {
    * @returns string
    */
   async createToken(user: User, audience: JWTAudience, expiresIn: string = '90d') {
-    //console.log(user)
-    return this.jwtService.sign({
-      id: user.id,
-      name: user.name,
-      email: user.email,
-    },{
+    return this.jwtService.sign(
+      {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+      },
+      {
       subject: user.id,
       issuer: 'TaskHive',
       audience: audience, // Nível do usuário
@@ -252,9 +254,10 @@ export class AuthService {
           name: true,
           email: true,
           avatar: true,
+          role: true,
           createdAt: true,
           updatedAt: true,
-        }
+        },
       },
       relations: ['user'],
       withDeleted: false,

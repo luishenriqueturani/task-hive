@@ -18,5 +18,6 @@ import { AuthModule } from 'src/auth/auth.module';
     ProjectsService,
   ],
   imports: [AuthModule, DatabaseModule],
+  exports: [ProjectsService],
 })
 export class ProjectsModule {}

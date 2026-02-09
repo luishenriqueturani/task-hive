@@ -1,4 +1,4 @@
-import { BadRequestException, Inject, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Inject, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
 import { Repository } from 'typeorm';
@@ -8,6 +8,7 @@ import { SnowflakeIdService } from 'src/snowflakeid/snowflakeid.service';
 import { User } from 'src/users/entities/User.entity';
 import { CompaniesService } from 'src/companies/companies.service';
 import { Company } from 'src/companies/entities/Company.entity';
+import { canManageProject } from './project-permissions.helper';
 
 @Injectable()
 export class ProjectsService {
@@ -43,9 +44,15 @@ export class ProjectsService {
     }
   }
 
-  async findAll() {
+  async findAll(user: User) {
     try {
-      return this.projectsRepository.find();
+      return this.projectsRepository
+        .createQueryBuilder('project')
+        .leftJoinAndSelect('project.userOwner', 'owner')
+        .leftJoinAndSelect('project.participants', 'participants')
+        .where('owner.id = :userId', { userId: user.id })
+        .orWhere('participants.id = :userId', { userId: user.id })
+        .getMany();
     } catch (error) {
       throw new InternalServerErrorException('Erro ao buscar todos os projetos');
     }
@@ -54,19 +61,31 @@ export class ProjectsService {
   async findOne(id: bigint) {
     try {
       return this.projectsRepository.findOne({
-        where: {
-          id: String(id),
-        },
+        where: { id: String(id) },
       });
     } catch (error) {
       throw new InternalServerErrorException('Erro ao buscar o projeto');
     }
   }
 
-  async update(id: bigint, updateProjectDto: UpdateProjectDto) {
-    const project = await this.findOne(id);
+  async findOneWithOwnerAndParticipants(id: bigint) {
+    try {
+      return this.projectsRepository.findOne({
+        where: { id: String(id) },
+        relations: ['userOwner', 'participants'],
+      });
+    } catch (error) {
+      throw new InternalServerErrorException('Erro ao buscar o projeto');
+    }
+  }
+
+  async update(id: bigint, updateProjectDto: UpdateProjectDto, user: User) {
+    const project = await this.findOneWithOwnerAndParticipants(id);
     if (!project) {
       throw new NotFoundException('Projeto não encontrado');
+    }
+    if (!canManageProject(project, user)) {
+      throw new ForbiddenException('Sem permissão para editar este projeto');
     }
     try {
       await this.projectsRepository.update(id.toString(), {
@@ -79,10 +98,13 @@ export class ProjectsService {
     }
   }
 
-  async remove(id: bigint) {
-    const project = await this.findOne(id);
+  async remove(id: bigint, user: User) {
+    const project = await this.findOneWithOwnerAndParticipants(id);
     if (!project) {
       throw new NotFoundException('Projeto não encontrado');
+    }
+    if (!canManageProject(project, user)) {
+      throw new ForbiddenException('Sem permissão para remover este projeto');
     }
     try {
       await this.projectsRepository.update(id.toString(), {

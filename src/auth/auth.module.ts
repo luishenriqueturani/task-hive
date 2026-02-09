@@ -6,6 +6,7 @@ import { DatabaseModule } from 'src/repository/database.module';
 import { UsersModule } from 'src/users/users.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { AuthGuard } from 'src/guards/auth.guard';
+import { RolesGuard } from 'src/guards/roles.guard';
 
 @Module({
   imports: [
@@ -22,7 +23,7 @@ import { AuthGuard } from 'src/guards/auth.guard';
     forwardRef(() => UsersModule),
   ],
   controllers: [AuthController],
-  providers: [AuthService, AuthGuard],
-  exports: [JwtModule, AuthService, AuthGuard],
+  providers: [AuthService, AuthGuard, RolesGuard],
+  exports: [JwtModule, AuthService, AuthGuard, RolesGuard],
 })
 export class AuthModule {}

@@ -7,6 +7,7 @@ import { TaskTimeTrak } from "src/tasks/entities/TaskTimeTrak.entity";
 import { UserFriendship } from "./UserFriendship.entity";
 import { Session } from "src/auth/entities/Session.entity";
 import { ForgetPassword } from "src/auth/entities/ForgetPassword.entity";
+import { UserRole } from "../user-role.enum";
 
 @Entity()
 export class User {
@@ -20,11 +21,14 @@ export class User {
   @Column({ unique: true, type: 'varchar', length: 255 })
   email: string;
 
-  @Column({type: 'varchar', length: 255})
+  @Column({ type: 'varchar', length: 255 })
   password: string;
 
   @Column({ nullable: true })
   avatar: string;
+
+  @Column({ type: 'varchar', length: 32, default: UserRole.CLIENT })
+  role: UserRole;
 
   @CreateDateColumn({ type: "timestamp", default: () => "CURRENT_TIMESTAMP()" })
   createdAt: Date;

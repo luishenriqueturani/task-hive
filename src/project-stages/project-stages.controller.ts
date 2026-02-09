@@ -4,6 +4,8 @@ import { ProjectStagesService } from './project-stages.service';
 import { CreateProjectStageDto } from './dto/create-project-stage.dto';
 import { UpdateProjectStageDto } from './dto/update-project-stage.dto';
 import { AuthGuard } from 'src/guards/auth.guard';
+import { User } from 'src/decorators/user.decorator';
+import { User as UserEntity } from 'src/users/entities/User.entity';
 
 @ApiTags('project-stages')
 @ApiBearerAuth()
@@ -13,9 +15,9 @@ export class ProjectStagesController {
   constructor(private readonly projectStagesService: ProjectStagesService) {}
 
   @Post()
-  create(@Body() createProjectStageDto: CreateProjectStageDto) {
+  create(@Body() createProjectStageDto: CreateProjectStageDto, @User() user: UserEntity) {
     try {
-      return this.projectStagesService.create(createProjectStageDto);
+      return this.projectStagesService.create(createProjectStageDto, user);
     } catch (error) {
       console.log(error);
       throw error;
@@ -53,9 +55,9 @@ export class ProjectStagesController {
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateProjectStageDto: UpdateProjectStageDto) {
+  update(@Param('id') id: string, @Body() updateProjectStageDto: UpdateProjectStageDto, @User() user: UserEntity) {
     try {
-      return this.projectStagesService.update(BigInt(id), updateProjectStageDto);
+      return this.projectStagesService.update(BigInt(id), updateProjectStageDto, user);
     } catch (error) {
       console.log(error);
       throw error;
@@ -63,9 +65,9 @@ export class ProjectStagesController {
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
+  remove(@Param('id') id: string, @User() user: UserEntity) {
     try {
-      return this.projectStagesService.remove(BigInt(id));
+      return this.projectStagesService.remove(BigInt(id), user);
     } catch (error) {
       console.log(error);
       throw error;

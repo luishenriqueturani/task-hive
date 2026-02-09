@@ -1,4 +1,4 @@
-import { BadRequestException, Inject, Injectable, InternalServerErrorException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Inject, Injectable, InternalServerErrorException } from '@nestjs/common';
 import { CreateProjectStageDto } from './dto/create-project-stage.dto';
 import { UpdateProjectStageDto } from './dto/update-project-stage.dto';
 import { Repository } from 'typeorm';
@@ -6,6 +6,8 @@ import { PostgreSQLTokens } from 'src/repository/postgresql.enums';
 import { SnowflakeIdService } from 'src/snowflakeid/snowflakeid.service';
 import { ProjectsService } from 'src/projects/projects.service';
 import { ProjectStage } from './entities/ProjectStage.entity';
+import { User } from 'src/users/entities/User.entity';
+import { canManageProject } from 'src/projects/project-permissions.helper';
 
 @Injectable()
 export class ProjectStagesService {
@@ -17,15 +19,17 @@ export class ProjectStagesService {
     private projectsService: ProjectsService,
   ) { }
 
-  async create(createProjectStageDto: CreateProjectStageDto) {
+  async create(createProjectStageDto: CreateProjectStageDto, user: User) {
     try {
-      const project = await this.projectsService.findOne(BigInt(createProjectStageDto.projectId))
-
-      if(!project) {
+      const project = await this.projectsService.findOneWithOwnerAndParticipants(BigInt(createProjectStageDto.projectId));
+      if (!project) {
         throw new BadRequestException('Project not found');
       }
+      if (!canManageProject(project, user)) {
+        throw new ForbiddenException('Sem permissão para criar coluna neste projeto');
+      }
 
-      let nextStage : ProjectStage | undefined
+      let nextStage: ProjectStage | undefined;
 
       if(createProjectStageDto.nextStageId) {
         nextStage = await this.findOne(BigInt(createProjectStageDto.nextStageId))
@@ -101,15 +105,18 @@ export class ProjectStagesService {
     }
   }
 
-  async update(id: bigint, updateProjectStageDto: UpdateProjectStageDto) {
+  async update(id: bigint, updateProjectStageDto: UpdateProjectStageDto, user: User) {
     try {
       const projectStage = await this.findOne(id);
-
       if (!projectStage) {
         throw new BadRequestException('Project stage not found');
       }
+      const project = await this.projectsService.findOneWithOwnerAndParticipants(BigInt(projectStage.project.id));
+      if (!project || !canManageProject(project, user)) {
+        throw new ForbiddenException('Sem permissão para editar esta coluna');
+      }
 
-      let nextStage : ProjectStage | undefined
+      let nextStage: ProjectStage | undefined;
 
       if(updateProjectStageDto.nextStageId) {
         nextStage = await this.findOne(BigInt(updateProjectStageDto.nextStageId))
@@ -146,10 +153,14 @@ export class ProjectStagesService {
     }
   }
 
-  async remove(id: bigint) {
+  async remove(id: bigint, user: User) {
     const projectStage = await this.findOne(id);
     if (!projectStage) {
       throw new BadRequestException('Project stage not found');
+    }
+    const project = await this.projectsService.findOneWithOwnerAndParticipants(BigInt(projectStage.project.id));
+    if (!project || !canManageProject(project, user)) {
+      throw new ForbiddenException('Sem permissão para remover esta coluna');
     }
     try {
       await this.projectStagesRepository.update(id.toString(), {
