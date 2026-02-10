@@ -61,8 +61,8 @@ Baseado na **ANALISE-PROJETO.md**. Ordem: **primeiro correções**, depois **nov
 ## Fase 5 – Novas funcionalidades do produto
 
 ### Módulo de projetos
-- [ ] **Sistema de timetrack:** CRUD e endpoints para `TaskTimeTrak`; regras de negócio (quem pode registrar, início/fim, etc.).
-- [ ] **WebSocket:** Atualizações em tempo real do timetrack (gateway e integração com o serviço de timetrack).
+- [x] **Sistema de timetrack:** CRUD e endpoints para `TaskTimeTrak`; regras de negócio (quem pode registrar, início/fim, etc.).
+- [x] **WebSocket:** Atualizações em tempo real do timetrack (gateway e integração com o serviço de timetrack).
 
 ### Tarefas avulsas (to-do)
 - [ ] **Cronjobs:** Implementar agendamento (ex.: `@nestjs/schedule`); o cron roda no horário, a execução das tarefas pode ser delegada ao Kafka.

@@ -1,8 +1,11 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { TasksService } from './tasks.service';
+import { TimetrackService } from './timetrack.service';
 import { CreateTaskDto } from './dto/create-task.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
+import { CreateTimetrackDto } from './dto/create-timetrack.dto';
+import { UpdateTimetrackDto } from './dto/update-timetrack.dto';
 import { AuthGuard } from 'src/guards/auth.guard';
 import { User } from 'src/decorators/user.decorator';
 import { User as UserEntity } from 'src/users/entities/User.entity';
@@ -12,7 +15,10 @@ import { User as UserEntity } from 'src/users/entities/User.entity';
 @UseGuards(AuthGuard)
 @Controller('tasks')
 export class TasksController {
-  constructor(private readonly tasksService: TasksService) {}
+  constructor(
+    private readonly tasksService: TasksService,
+    private readonly timetrackService: TimetrackService,
+  ) {}
 
   @Post()
   create(@Body() createTaskDto: CreateTaskDto, @User() user: UserEntity) {
@@ -39,6 +45,48 @@ export class TasksController {
     } catch (error) {
       throw error;
     }
+  }
+
+  @Get(':taskId/timetrack')
+  listTimetrack(@Param('taskId') taskId: string, @User() user: UserEntity) {
+    return this.timetrackService.list(BigInt(taskId), user);
+  }
+
+  @Post(':taskId/timetrack/start')
+  startTimetrack(
+    @Param('taskId') taskId: string,
+    @Body() dto: CreateTimetrackDto,
+    @User() user: UserEntity,
+  ) {
+    return this.timetrackService.start(BigInt(taskId), user, dto);
+  }
+
+  @Patch(':taskId/timetrack/:id/stop')
+  stopTimetrack(
+    @Param('taskId') taskId: string,
+    @Param('id') id: string,
+    @User() user: UserEntity,
+  ) {
+    return this.timetrackService.stop(BigInt(taskId), id, user);
+  }
+
+  @Patch(':taskId/timetrack/:id')
+  updateTimetrack(
+    @Param('taskId') taskId: string,
+    @Param('id') id: string,
+    @Body() dto: UpdateTimetrackDto,
+    @User() user: UserEntity,
+  ) {
+    return this.timetrackService.update(BigInt(taskId), id, user, dto);
+  }
+
+  @Delete(':taskId/timetrack/:id')
+  removeTimetrack(
+    @Param('taskId') taskId: string,
+    @Param('id') id: string,
+    @User() user: UserEntity,
+  ) {
+    return this.timetrackService.remove(BigInt(taskId), id, user);
   }
 
   @Get(':id')
