@@ -84,16 +84,15 @@ export class SubtasksService {
     try {
       
       const subtask = await this.subtasksRepository.findOne({
-        where: {
-          id: id
-        }
+        where: { id },
+        relations: ['responsible'],
       })
 
       if (!subtask) {
         throw new BadRequestException(`Subtask not found`)
       }
 
-      if (subtask.responsible.id !== user.id) {
+      if (subtask.responsible?.id !== user.id) {
         throw new BadRequestException(`You are not the responsible of this subtask`)
       }
 
@@ -114,16 +113,15 @@ export class SubtasksService {
     try {
       
       const subtask = await this.subtasksRepository.findOne({
-        where: {
-          id: id
-        }
+        where: { id },
+        relations: ['responsible'],
       })
 
       if (!subtask) {
         throw new BadRequestException(`Subtask not found`)
       }
 
-      if (subtask.responsible.id !== user.id) {
+      if (subtask.responsible?.id !== user.id) {
         throw new BadRequestException(`You are not the responsible of this subtask`)
       }
 

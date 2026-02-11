@@ -1,31 +1,47 @@
-import { ApiProperty } from "@nestjs/swagger"
-import { IsNumber, IsOptional, IsString, MaxLength, Min } from "class-validator"
+import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
+import { IsNumber, IsOptional, IsString, MaxLength, Min } from "class-validator";
 
 export class CreateProjectStageDto {
 
-  @ApiProperty()
+  @ApiProperty({
+    description: 'Nome da coluna (stage)',
+    example: 'To Do',
+    maxLength: 255,
+  })
   @IsString()
   @MaxLength(255)
-  name: string
+  name: string;
 
-  @ApiProperty()
+  @ApiProperty({
+    description: 'ID do projeto (bigint) ao qual a coluna pertence',
+    example: '1234567890123456789',
+  })
   @IsString()
-  projectId: string
+  projectId: string;
 
-  @ApiProperty()
+  @ApiProperty({
+    description: 'Ordem de exibição (número >= 0)',
+    example: 0,
+    minimum: 0,
+  })
   @IsNumber()
   @Min(0)
-  order: number
+  order: number;
 
-  @ApiProperty()
+  @ApiPropertyOptional({
+    description: 'ID da coluna seguinte (bigint), para encadear colunas',
+    example: '9876543210987654321',
+  })
   @IsString()
   @IsOptional()
-  nextStageId: string
+  nextStageId: string;
 
-  @ApiProperty()
+  @ApiPropertyOptional({
+    description: 'ID da coluna anterior (bigint), para encadear colunas',
+    example: '9876543210987654320',
+  })
   @IsString()
   @IsOptional()
-  prevStageId: string
-
+  prevStageId: string;
 
 }

@@ -4,7 +4,11 @@ import { ToDoStatus } from "src/repository/postgresql.enums";
 
 export class ChangeTaskStatusDto {
 
-  @ApiProperty()
+  @ApiProperty({
+    description: 'Novo status: TODO, DONE, CANCELLED, PAUSED, CREATED',
+    example: 'DONE',
+    enum: ToDoStatus,
+  })
   @IsEnum(ToDoStatus)
-  status: ToDoStatus
+  status: ToDoStatus;
 }

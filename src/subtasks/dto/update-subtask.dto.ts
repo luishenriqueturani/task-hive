@@ -1,17 +1,15 @@
 import { PartialType } from '@nestjs/mapped-types';
 import { CreateSubtaskDto } from './create-subtask.dto';
 import { IsOptional, IsString } from 'class-validator';
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiPropertyOptional } from '@nestjs/swagger';
 
 export class UpdateSubtaskDto extends PartialType(CreateSubtaskDto) {
 
-  @ApiProperty()
+  @ApiPropertyOptional({
+    description: 'Descrição da subtarefa',
+    example: 'Revisar código e testes unitários',
+  })
   @IsString()
   @IsOptional()
-  description: string
-
-  @ApiProperty()
-  @IsString()
-  @IsOptional()
-  responsibleId: string
+  description: string;
 }

@@ -4,11 +4,18 @@ import { IsEmail, IsStrongPassword } from "class-validator";
 
 export class AuthLoginDto {
 
-  @ApiProperty()
+  @ApiProperty({
+    description: 'Email do usuário',
+    example: 'usuario@email.com',
+  })
   @IsEmail()
   email: string;
 
-  @ApiProperty()
+  @ApiProperty({
+    description: 'Senha (mín. 8 caracteres, 1 maiúscula, 1 minúscula, 1 número, 1 símbolo)',
+    example: 'Senha@123',
+    minLength: 8,
+  })
   @IsStrongPassword({
     minLength: 8,
     minLowercase: 1,

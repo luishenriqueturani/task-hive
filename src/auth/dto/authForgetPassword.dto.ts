@@ -4,7 +4,10 @@ import { IsEmail } from "class-validator";
 
 
 export class AuthForgetPasswordDto {
-  @ApiProperty()
+  @ApiProperty({
+    description: 'Email do usuário para envio do link de redefinição',
+    example: 'usuario@email.com',
+  })
   @IsEmail()
   email: string;
 }
