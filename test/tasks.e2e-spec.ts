@@ -191,4 +191,112 @@ describe('Tasks (e2e)', () => {
       .set(authHeader(u.token))
       .expect(200);
   });
+
+  it('timetrack — 403 sem acesso ao projeto (list e start)', async () => {
+    const owner = await registerUser(app, 'tk_ext_o');
+    const outsider = await registerUser(app, 'tk_ext_x');
+    const { stageId } = await seedProjectWithStage(app, owner.token);
+    const taskRes = await request(app.getHttpServer())
+      .post('/tasks')
+      .set(authHeader(owner.token))
+      .send({ name: 'Isolada', stageId })
+      .expect(201);
+    const taskId = String(taskRes.body.id);
+
+    await request(app.getHttpServer())
+      .get(`/tasks/${taskId}/timetrack`)
+      .set(authHeader(outsider.token))
+      .expect(403);
+    await request(app.getHttpServer())
+      .post(`/tasks/${taskId}/timetrack/start`)
+      .set(authHeader(outsider.token))
+      .send({})
+      .expect(403);
+
+    await request(app.getHttpServer())
+      .delete(`/tasks/${taskId}`)
+      .set(authHeader(owner.token))
+      .expect(200);
+  });
+
+  it('timetrack — 403 stop/update/delete por participante que não é dono do registo nem gestor', async () => {
+    const owner = await registerUser(app, 'tk_pm_o');
+    const participant = await registerUser(app, 'tk_pm_p');
+    const pr = await request(app.getHttpServer())
+      .post('/projects')
+      .set(authHeader(owner.token))
+      .send({ name: 'Part TT', description: 'd' })
+      .expect(201);
+    const projectId = String(pr.body.id);
+    await request(app.getHttpServer())
+      .post(`/projects/${projectId}/participants`)
+      .set(authHeader(owner.token))
+      .send({ userId: participant.id })
+      .expect(201);
+    const st = await request(app.getHttpServer())
+      .post('/project-stages')
+      .set(authHeader(owner.token))
+      .send({ name: 'C', projectId, order: 0 })
+      .expect(201);
+    const taskRes = await request(app.getHttpServer())
+      .post('/tasks')
+      .set(authHeader(owner.token))
+      .send({ name: 'Owner timer', stageId: String(st.body.id) })
+      .expect(201);
+    const taskId = String(taskRes.body.id);
+    const track = await request(app.getHttpServer())
+      .post(`/tasks/${taskId}/timetrack/start`)
+      .set(authHeader(owner.token))
+      .send({})
+      .expect(201);
+    const trackId = String(track.body.id);
+
+    await request(app.getHttpServer())
+      .patch(`/tasks/${taskId}/timetrack/${trackId}/stop`)
+      .set(authHeader(participant.token))
+      .expect(403);
+    await request(app.getHttpServer())
+      .patch(`/tasks/${taskId}/timetrack/${trackId}`)
+      .set(authHeader(participant.token))
+      .send({ end: '2025-06-15T14:30:00.000Z' })
+      .expect(403);
+    await request(app.getHttpServer())
+      .delete(`/tasks/${taskId}/timetrack/${trackId}`)
+      .set(authHeader(participant.token))
+      .expect(403);
+
+    await request(app.getHttpServer())
+      .patch(`/tasks/${taskId}/timetrack/${trackId}/stop`)
+      .set(authHeader(owner.token))
+      .expect(200);
+    await request(app.getHttpServer())
+      .delete(`/tasks/${taskId}`)
+      .set(authHeader(owner.token))
+      .expect(200);
+  });
+
+  it('PATCH nextStage/previousStage — 400 sem coluna seguinte ou anterior', async () => {
+    const u = await registerUser(app, 'tk_edge');
+    const { stageId } = await seedProjectWithStage(app, u.token);
+    const taskRes = await request(app.getHttpServer())
+      .post('/tasks')
+      .set(authHeader(u.token))
+      .send({ name: 'Única coluna', stageId })
+      .expect(201);
+    const taskId = String(taskRes.body.id);
+
+    await request(app.getHttpServer())
+      .patch(`/tasks/nextStage/${taskId}`)
+      .set(authHeader(u.token))
+      .expect(400);
+    await request(app.getHttpServer())
+      .patch(`/tasks/previousStage/${taskId}`)
+      .set(authHeader(u.token))
+      .expect(400);
+
+    await request(app.getHttpServer())
+      .delete(`/tasks/${taskId}`)
+      .set(authHeader(u.token))
+      .expect(200);
+  });
 });

@@ -1,6 +1,7 @@
 export default () => ({
   port: process.env.APP_PORT || 3001,
-  cryptSault: process.env.CRYPT_SALT,
+  /** Rounds bcrypt; CRYPT_SALT preferido (ver também `src/utils/crypt.ts`). */
+  cryptSault: process.env.CRYPT_SALT ?? process.env.CRYPT_SAULT,
   jwtSecret: process.env.JWT_SECRET,
   /** false em produção (NODE_ENV=production); true em desenvolvimento */
   isProduction: process.env.NODE_ENV === 'production',

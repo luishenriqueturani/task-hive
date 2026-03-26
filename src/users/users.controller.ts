@@ -35,11 +35,7 @@ export class UsersController {
   @ApiResponse({ status: 400, description: 'Não foi possível criar o usuário' })
   @ApiResponse({ status: 422, description: 'Email já em uso ou dados inválidos' })
   create(@Body() createUserDto: CreateUserDto) {
-    try {
-      return this.usersService.create(createUserDto);
-    } catch (error) {
-      return error
-    }
+    return this.usersService.create(createUserDto);
   }
 
   @UseGuards(AuthGuard)
@@ -64,11 +60,7 @@ export class UsersController {
   })
   @ApiResponse({ status: 401, description: 'Não autorizado' })
   findAll() {
-    try {
-      return this.usersService.findAll();
-    } catch (error) {
-      return error
-    }
+    return this.usersService.findAll();
   }
 
   @UseGuards(AuthGuard)
@@ -92,11 +84,7 @@ export class UsersController {
   })
   @ApiResponse({ status: 404, description: 'Usuário não encontrado' })
   findOne(@Param('id') id: string) {
-    try {
-      return this.usersService.findOne(id);
-    } catch (error) {
-      return error
-    }
+    return this.usersService.findOne(id);
   }
 
   @UseGuards(AuthGuard)
@@ -130,11 +118,7 @@ export class UsersController {
   @ApiResponse({ status: 404, description: 'Usuário não encontrado' })
   @ApiResponse({ status: 422, description: 'Email já em uso' })
   update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
-    try {
-      return this.usersService.update(id, updateUserDto);
-    } catch (error) {
-      return error
-    }
+    return this.usersService.update(id, updateUserDto);
   }
 
   @UseGuards(AuthGuard)
@@ -154,11 +138,7 @@ export class UsersController {
   })
   @ApiResponse({ status: 404, description: 'Usuário não encontrado' })
   softDelete(@Param('id') id: string) {
-    try {
-      return this.usersService.softDelete(id);
-    } catch (error) {
-      return error
-    }
+    return this.usersService.softDelete(id);
   }
 
   @UseGuards(AuthGuard)
@@ -179,13 +159,6 @@ export class UsersController {
   @ApiResponse({ status: 403, description: 'Não é permitido remover a própria conta' })
   @ApiResponse({ status: 404, description: 'Usuário não encontrado' })
   remove(@Param('id') id: string, @User() user: UserEntity) {
-    try {
-      return this.usersService.remove(id, user?.id);
-    } catch (error) {
-      return error
-    }
+    return this.usersService.remove(id, user?.id);
   }
-
-
 }
-    

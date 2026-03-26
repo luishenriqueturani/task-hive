@@ -3,6 +3,7 @@ import * as request from 'supertest';
 import { createE2eApplication } from './helpers/e2e-app.factory';
 import { E2E_PASSWORD, E2E_PASSWORD_ALT } from './helpers/e2e-constants';
 import { authHeader, registerUser } from './helpers/e2e-auth';
+import { getLatestForgetPasswordToken } from './helpers/e2e-forget-token';
 
 describe('Auth (e2e)', () => {
   let app: INestApplication | undefined;
@@ -88,5 +89,38 @@ describe('Auth (e2e)', () => {
         token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c',
       })
       .expect(422);
+  });
+
+  it('forget-password → check-token → reset-password → login com nova senha', async () => {
+    const u = await registerUser(app, 'auth_reset_flow');
+    await request(app.getHttpServer())
+      .post('/auth/forget-password')
+      .send({ email: u.email })
+      .expect(201);
+
+    const resetJwt = await getLatestForgetPasswordToken(app, u.id);
+
+    const check = await request(app.getHttpServer())
+      .post('/auth/check-token')
+      .send({ token: resetJwt })
+      .expect(201);
+    // superagent pode não popular `body` para JSON primitivo `true`
+    expect(JSON.parse(check.text)).toBe(true);
+
+    const session = await request(app.getHttpServer())
+      .post('/auth/reset-password')
+      .send({
+        password: E2E_PASSWORD_ALT,
+        confirmPassword: E2E_PASSWORD_ALT,
+        token: resetJwt,
+      })
+      .expect(201);
+    expect(session.body.token).toBeDefined();
+    expect(session.body.user.email).toBe(u.email);
+
+    await request(app.getHttpServer())
+      .post('/auth/login')
+      .send({ email: u.email, password: E2E_PASSWORD_ALT })
+      .expect(201);
   });
 });

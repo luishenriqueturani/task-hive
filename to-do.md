@@ -31,16 +31,16 @@ _Tarefas criadas após revisão da cobertura E2E e do doc `docs/e2e-coverage.md`
 
 **Testes E2E (completar cenários)**
 
-- [ ] **Auth — fluxo feliz `check-token` e `reset-password`:** Hoje só há 422/400; para 200 é preciso token JWT de reset guardado em `ForgetPassword`. Opções: (a) helper E2E que injeta `DataSource`/`Repository` e lê o último token do utilizador de teste; (b) endpoint ou flag só em `NODE_ENV=test` que devolva o token no `forget-password` (avaliar risco); (c) teste de integração separado com base já “semeada”.
-- [ ] **Projetos — erros de negócio:** E2E para `POST .../participants` quando o utilizador já é participante (**400**), quando tenta adicionar o dono (**400**), `DELETE .../participants` com **403** (não gestor) se aplicável.
-- [ ] **Timetrack — permissões:** E2E para **403** em list/start/stop/update/delete quando o utilizador não tem acesso ao projeto; stop/update/delete quando não é dono do registo nem gestor do projeto (**403**).
-- [ ] **Tarefas — mover coluna:** E2E para **400** em `nextStage`/`previousStage` quando não há coluna seguinte/anterior.
-- [ ] **WebSocket timetrack:** Após HTTP stop/update/delete, asserções no cliente Socket.IO para `timetrack:stopped`, `timetrack:updated` e `timetrack:deleted` (hoje só `timetrack:started` está coberto).
+- [x] **Auth — fluxo feliz `check-token` e `reset-password`:** Helper [`test/helpers/e2e-forget-token.ts`](test/helpers/e2e-forget-token.ts) lê o JWT em `ForgetPassword`; fluxo em [`test/auth.e2e-spec.ts`](test/auth.e2e-spec.ts) (asserção do boolean JSON via `JSON.parse(res.text)` por limitação do superagent).
+- [x] **Projetos — erros de negócio:** E2E em [`test/projects.e2e-spec.ts`](test/projects.e2e-spec.ts) para participante duplicado e dono como participante (**400**), `DELETE .../participants` com **403** para participante não gestor.
+- [x] **Timetrack — permissões:** E2E em [`test/tasks.e2e-spec.ts`](test/tasks.e2e-spec.ts) para **403** em list/start sem acesso ao projeto e **403** em stop/update/delete quando o participante não é dono do registo nem gestor.
+- [x] **Tarefas — mover coluna:** E2E **400** em `nextStage`/`previousStage` sem coluna seguinte/anterior.
+- [x] **WebSocket timetrack:** Segundo cenário em [`test/timetrack.gateway.e2e-spec.ts`](test/timetrack.gateway.e2e-spec.ts) cobre `timetrack:stopped`, `timetrack:updated` e `timetrack:deleted`.
 
 **Código / consistência (bugs ou dívida técnica)**
 
-- [ ] **`UsersController.create`:** O `catch` devolve `error` em vez de re-lançar (`throw error` ou `HttpException`); em falhas pode responder **200** com corpo estranho. Alinhar ao padrão dos outros controllers.
-- [ ] **`CRYPT_SALT` vs `CRYPT_SAULT`:** `configuration.ts` usa `CRYPT_SALT` e `src/utils/crypt.ts` usa `CRYPT_SAULT`; o Dockerfile usa `CRYPT_SAULT`. Unificar nome da variável e documentar em `.env.example` / README para evitar ambiente mal configurado.
+- [x] **`UsersController.create`:** Handlers passam a delegar ao service sem `catch` que devolvia `error` cru.
+- [x] **`CRYPT_SALT` vs `CRYPT_SAULT`:** `crypt.ts` e `configuration.ts` aceitam `CRYPT_SALT` com fallback `CRYPT_SAULT`; Dockerfile e [`.env.example`](.env.example) documentam `CRYPT_SALT`.
 
 ---
 

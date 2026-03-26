@@ -32,6 +32,8 @@
 $ npm install
 ```
 
+Variáveis de ambiente: veja [`.env.example`](.env.example) (use `CRYPT_SALT` para o custo do bcrypt; `CRYPT_SAULT` continua aceite como alias em [`src/utils/crypt.ts`](src/utils/crypt.ts)).
+
 ## Compile and run the project
 
 ```bash

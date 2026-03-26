@@ -40,9 +40,9 @@ Legenda: **Sim** = há pelo menos um `it` que chama a rota (feliz ou erro). **Pa
 |--------|------|---------|
 | POST | `/auth/login` | Sim (422, 400, 201) |
 | POST | `/auth/logout` | Sim (403, 201 + sessão invalidada) |
-| POST | `/auth/forget-password` | Sim (422, **400** usuário inexistente) |
-| POST | `/auth/check-token` | Parcial (só **422** token inválido; **200** com JWT de reset real não coberto — exigiria ler token da BD) |
-| POST | `/auth/reset-password` | Parcial (**422** confirmPassword; fluxo **200** completo não coberto — mesmo motivo) |
+| POST | `/auth/forget-password` | Sim (422, **400** usuário inexistente, **201** feliz no fluxo de reset) |
+| POST | `/auth/check-token` | Sim (**422** token inválido; **201** com JWT lido de `ForgetPassword` via helper E2E) |
+| POST | `/auth/reset-password` | Sim (**422** confirmPassword; fluxo **201** completo com token da BD) |
 
 ### Users (`/users`)
 
@@ -73,12 +73,12 @@ Legenda: **Sim** = há pelo menos um `it` que chama a rota (feliz ou erro). **Pa
 | GET | `/projects` | Sim |
 | GET | `/projects/:id/participants` | Sim |
 | POST | `/projects/:id/participants` | Sim |
-| DELETE | `/projects/:id/participants/:userId` | Sim |
+| DELETE | `/projects/:id/participants/:userId` | Sim (+ **403** participante não gestor) |
 | GET | `/projects/:id` | Sim |
 | PATCH | `/projects/:id` | Sim (incl. 403 participante) |
 | DELETE | `/projects/:id` | Sim |
 
-**Ainda sem E2E dedicado:** `POST .../participants` quando o utilizador já é participante (**400**), remoção com **403**, e outros erros de negócio.
+**Erros de negócio cobertos:** participante duplicado e dono como participante (**400**); `DELETE .../participants` por participante não gestor (**403**).
 
 ### Project stages (`/project-stages`)
 
@@ -98,18 +98,16 @@ Legenda: **Sim** = há pelo menos um `it` que chama a rota (feliz ou erro). **Pa
 | POST | `/tasks` | Sim |
 | GET | `/tasks` | Sim |
 | GET | `/tasks/stage/:stage` | Sim |
-| GET | `/tasks/:taskId/timetrack` | Sim (+ 404) |
-| POST | `/tasks/:taskId/timetrack/start` | Sim |
-| PATCH | `/tasks/:taskId/timetrack/:id/stop` | Sim |
-| PATCH | `/tasks/:taskId/timetrack/:id` | Sim (correção manual `end`) |
-| DELETE | `/tasks/:taskId/timetrack/:id` | Sim |
+| GET | `/tasks/:taskId/timetrack` | Sim (+ 404, **403** sem acesso ao projeto) |
+| POST | `/tasks/:taskId/timetrack/start` | Sim (+ **403** sem acesso) |
+| PATCH | `/tasks/:taskId/timetrack/:id/stop` | Sim (+ **403** participante que não é dono do registo nem gestor) |
+| PATCH | `/tasks/:taskId/timetrack/:id` | Sim (correção manual `end`; **403** mesmo caso) |
+| DELETE | `/tasks/:taskId/timetrack/:id` | Sim (**403** mesmo caso) |
 | GET | `/tasks/:id` | Sim |
 | PATCH | `/tasks/:id` | Sim |
-| PATCH | `/tasks/nextStage/:id` | Sim |
-| PATCH | `/tasks/previousStage/:id` | Sim |
+| PATCH | `/tasks/nextStage/:id` | Sim (+ **400** sem coluna seguinte) |
+| PATCH | `/tasks/previousStage/:id` | Sim (+ **400** sem coluna anterior) |
 | DELETE | `/tasks/:id` | Sim |
-
-**Ainda sem E2E dedicado:** timetrack **403** (utilizador sem acesso ao projeto), **403** em stop/update/delete quando não é dono nem gestor; mover tarefa quando não há próxima/anterior (**400**).
 
 ### Subtasks (`/subtasks`)
 
@@ -139,24 +137,24 @@ Legenda: **Sim** = há pelo menos um `it` que chama a rota (feliz ou erro). **Pa
 
 | Evento / fluxo | Coberto |
 |----------------|---------|
-| `joinTask` + emissão `timetrack:started` após HTTP start | Sim (`test/timetrack.gateway.e2e-spec.ts`) |
-
-**Não coberto em E2E:** eventos `timetrack:stopped`, `timetrack:updated`, `timetrack:deleted` (poderiam acrescentar-se ouvindo o socket após stop/update/delete HTTP).
+| `joinTask` + `timetrack:started` após HTTP start | Sim |
+| `timetrack:stopped`, `timetrack:updated`, `timetrack:deleted` após HTTP | Sim (segundo `it` em `test/timetrack.gateway.e2e-spec.ts`) |
 
 ## Matriz por ficheiro de teste
 
 | Ficheiro | Foco |
 |----------|------|
 | `test/app.e2e-spec.ts` | Health `/` |
-| `test/auth.e2e-spec.ts` | Login, logout, forget-password, check-token, reset-password (validação) |
+| `test/auth.e2e-spec.ts` | Login, logout, forget-password, check-token, reset-password (validação + fluxo feliz com token da BD) |
+| `test/helpers/e2e-forget-token.ts` | Leitura do JWT de reset em `ForgetPassword` para E2E |
 | `test/users.e2e-spec.ts` | CRUD utilizador, PUT, PATCH soft delete alheio, DELETE 403 |
 | `test/companies.e2e-spec.ts` | CRUD empresas |
 | `test/projects.e2e-spec.ts` | Projetos + participantes + permissões |
 | `test/project-stages.e2e-spec.ts` | Colunas + GET global + 403 participante |
-| `test/tasks.e2e-spec.ts` | Tarefas, timetrack completo, next/previous stage |
+| `test/tasks.e2e-spec.ts` | Tarefas, timetrack completo + 403, next/previous stage + 400 nas pontas |
 | `test/subtasks.e2e-spec.ts` | Subtarefas + GET lista e por id |
 | `test/to-do.e2e-spec.ts` | To-do + recorrência `nextDateRecurring` |
-| `test/timetrack.gateway.e2e-spec.ts` | Socket.IO `timetrack:started` |
+| `test/timetrack.gateway.e2e-spec.ts` | Socket.IO eventos timetrack (started, stopped, updated, deleted) |
 
 ## Correção aplicada durante os E2E
 
@@ -168,5 +166,5 @@ Em [`project-stages.service.ts`](../src/project-stages/project-stages.service.ts
 
 ## Resumo
 
-- **Todas as rotas REST listadas nos controllers** têm pelo menos um teste E2E que as exercita, exceto nuances puramente de erro de negócio (muitas combinações 400/403/404) e o fluxo feliz completo de **reset de senha** / **check-token** com token persistido (hoje exigiria expor o token de teste ou consultar a BD no teste).
-- Para aumentar ainda mais a confiança: mais casos **403/400** em projetos/participantes/timetrack e asserções WebSocket para os outros eventos de timetrack.
+- **Todas as rotas REST listadas nos controllers** têm pelo menos um teste E2E que as exercita; a secção **1.4** do `to-do.md` (lacunas de auditoria) foi endereçada com cenários extra em auth, projetos, tasks, timetrack e gateway.
+- **Nota:** `POST /auth/check-token` devolve o JSON primitivo `true`; com superagent, `res.body` pode vir vazio — nos testes usa-se `JSON.parse(res.text)`.
