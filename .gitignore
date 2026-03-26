@@ -17,6 +17,7 @@ lerna-debug.log*
 
 # Tests
 /coverage
+/test-results
 /.nyc_output
 
 # IDEs and editors
@@ -37,6 +38,7 @@ lerna-debug.log*
 
 # dotenv environment variable files
 .env
+.env.e2e
 .env.development.local
 .env.test.local
 .env.production.local

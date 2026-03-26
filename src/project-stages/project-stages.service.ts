@@ -68,7 +68,12 @@ export class ProjectStagesService {
       return newStage
 
     } catch (error) {
-      if (error instanceof BadRequestException) throw error;
+      if (
+        error instanceof BadRequestException ||
+        error instanceof ForbiddenException
+      ) {
+        throw error;
+      }
       throw new InternalServerErrorException('Erro ao criar coluna do projeto');
     }
   }
@@ -148,7 +153,12 @@ export class ProjectStagesService {
       });
       return this.findOne(id);
     } catch (error) {
-      if (error instanceof BadRequestException) throw error;
+      if (
+        error instanceof BadRequestException ||
+        error instanceof ForbiddenException
+      ) {
+        throw error;
+      }
       throw new InternalServerErrorException('Erro ao atualizar coluna');
     }
   }

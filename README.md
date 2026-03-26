@@ -51,7 +51,9 @@ $ npm run start:prod
 # unit tests
 $ npm run test
 
-# e2e tests
+# e2e tests (precisam de PostgreSQL; ver [docs/e2e-coverage.md](docs/e2e-coverage.md))
+$ docker compose -f docker-compose.e2e.yml up -d
+$ cp .env.e2e.example .env.e2e   # ajuste se mudar porta ou credenciais
 $ npm run test:e2e
 
 # test coverage

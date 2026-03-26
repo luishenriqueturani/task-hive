@@ -3,7 +3,25 @@
   "rootDir": ".",
   "testEnvironment": "node",
   "testRegex": ".e2e-spec.ts$",
+  "maxWorkers": 1,
+  "forceExit": true,
+  "testTimeout": 60000,
+  "setupFiles": ["<rootDir>/setup-e2e-env.ts"],
+  "moduleNameMapper": {
+    "^src/(.*)$": "<rootDir>/../src/$1"
+  },
   "transform": {
     "^.+\\.(t|j)s$": "ts-jest"
-  }
+  },
+  "reporters": [
+    "default",
+    [
+      "jest-junit",
+      {
+        "outputDirectory": "test-results",
+        "outputName": "e2e-junit.xml",
+        "reportTestSuiteErrors": true
+      }
+    ]
+  ]
 }

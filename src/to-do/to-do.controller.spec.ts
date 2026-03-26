@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ToDoController } from './to-do.controller';
 import { ToDoService } from './to-do.service';
+import { AuthGuard } from 'src/guards/auth.guard';
 
 describe('ToDoController', () => {
   let controller: ToDoController;
@@ -8,8 +9,11 @@ describe('ToDoController', () => {
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [ToDoController],
-      providers: [ToDoService],
-    }).compile();
+      providers: [{ provide: ToDoService, useValue: {} }],
+    })
+      .overrideGuard(AuthGuard)
+      .useValue({ canActivate: jest.fn(() => true) })
+      .compile();
 
     controller = module.get<ToDoController>(ToDoController);
   });

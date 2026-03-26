@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { SubtasksController } from './subtasks.controller';
 import { SubtasksService } from './subtasks.service';
+import { AuthGuard } from 'src/guards/auth.guard';
 
 describe('SubtasksController', () => {
   let controller: SubtasksController;
@@ -8,8 +9,11 @@ describe('SubtasksController', () => {
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [SubtasksController],
-      providers: [SubtasksService],
-    }).compile();
+      providers: [{ provide: SubtasksService, useValue: {} }],
+    })
+      .overrideGuard(AuthGuard)
+      .useValue({ canActivate: jest.fn(() => true) })
+      .compile();
 
     controller = module.get<SubtasksController>(SubtasksController);
   });

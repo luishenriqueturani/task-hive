@@ -1,0 +1,19 @@
+# PostgreSQL dedicado aos testes E2E. Porta no host 5433 para não conflitar com Postgres na 5432.
+# Uso: docker compose -f docker-compose.e2e.yml up -d
+# Depois: cp .env.e2e.example .env.e2e && npm run test:e2e
+
+services:
+  postgres-e2e:
+    image: postgres:16-alpine
+    container_name: task-hive-postgres-e2e
+    environment:
+      POSTGRES_USER: taskhive_e2e
+      POSTGRES_PASSWORD: taskhive_e2e_secret
+      POSTGRES_DB: task_hive_e2e
+    ports:
+      - '5433:5432'
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U taskhive_e2e -d task_hive_e2e']
+      interval: 3s
+      timeout: 5s
+      retries: 10
