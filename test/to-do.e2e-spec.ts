@@ -99,4 +99,23 @@ describe('To-do (e2e)', () => {
       .send({ status: 'INVALID' })
       .expect(422);
   });
+
+  it('PATCH /to-do/nextDateRecurring/:id — avança recorrência', async () => {
+    const u = await registerUser(app, 'td_rec');
+    const created = await request(app.getHttpServer())
+      .post('/to-do')
+      .set(authHeader(u.token))
+      .send({
+        title: 'Hábito semanal',
+        description: 'Descrição com tamanho mínimo ok',
+        isRecurring: true,
+        recurringType: 'WEEKLY',
+      })
+      .expect(201);
+    const id = String(created.body.id);
+    await request(app.getHttpServer())
+      .patch(`/to-do/nextDateRecurring/${id}`)
+      .set(authHeader(u.token))
+      .expect(200);
+  });
 });

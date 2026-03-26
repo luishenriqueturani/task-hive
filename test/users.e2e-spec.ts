@@ -101,4 +101,42 @@ describe('Users (e2e)', () => {
       .set(authHeader(u.token))
       .expect(403);
   });
+
+  it('PUT /users/:id — atualiza nome', async () => {
+    const u = await registerUser(app, 'put_u');
+    const res = await request(app.getHttpServer())
+      .put(`/users/${u.id}`)
+      .set(authHeader(u.token))
+      .send({
+        name: 'Nome atualizado E2E',
+        email: u.email,
+      })
+      .expect(200);
+    expect(res.body.affected).toBe(1);
+    const again = await request(app.getHttpServer())
+      .get(`/users/${u.id}`)
+      .set(authHeader(u.token))
+      .expect(200);
+    expect(again.body.name).toBe('Nome atualizado E2E');
+  });
+
+  it('PATCH /users/:id — soft delete de outro usuário', async () => {
+    const admin = await registerUser(app, 'adm_soft');
+    const email = `alvo_${Date.now()}@example.com`;
+    const created = await request(app.getHttpServer())
+      .post('/users')
+      .send({
+        name: 'Alvo',
+        email,
+        password: E2E_PASSWORD,
+        confirmPassword: E2E_PASSWORD,
+      })
+      .expect(201);
+    const targetId = created.body.id;
+    const res = await request(app.getHttpServer())
+      .patch(`/users/${targetId}`)
+      .set(authHeader(admin.token))
+      .expect(200);
+    expect(res.body.affected).toBe(1);
+  });
 });

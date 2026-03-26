@@ -71,4 +71,31 @@ describe('Subtasks (e2e)', () => {
       .set(authHeader(u.token))
       .expect(200);
   });
+
+  it('GET /subtasks e GET /subtasks/:id — listagem e detalhe', async () => {
+    const u = await registerUser(app, 'sb_get');
+    const taskId = await seedTask(app, u.token);
+    const sub = await request(app.getHttpServer())
+      .post('/subtasks')
+      .set(authHeader(u.token))
+      .send({ name: 'Para GET', taskId })
+      .expect(201);
+    const subId = String(sub.body.id);
+
+    const all = await request(app.getHttpServer())
+      .get('/subtasks')
+      .set(authHeader(u.token))
+      .expect(200);
+    expect(Array.isArray(all.body)).toBe(true);
+    expect(all.body.some((s: { id: string }) => String(s.id) === subId)).toBe(
+      true,
+    );
+
+    const one = await request(app.getHttpServer())
+      .get(`/subtasks/${subId}`)
+      .set(authHeader(u.token))
+      .expect(200);
+    expect(String(one.body.id)).toBe(subId);
+    expect(one.body.name).toBe('Para GET');
+  });
 });

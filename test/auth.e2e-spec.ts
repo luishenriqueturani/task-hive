@@ -1,7 +1,7 @@
 import { INestApplication } from '@nestjs/common';
 import * as request from 'supertest';
 import { createE2eApplication } from './helpers/e2e-app.factory';
-import { E2E_PASSWORD } from './helpers/e2e-constants';
+import { E2E_PASSWORD, E2E_PASSWORD_ALT } from './helpers/e2e-constants';
 import { authHeader, registerUser } from './helpers/e2e-auth';
 
 describe('Auth (e2e)', () => {
@@ -69,6 +69,24 @@ describe('Auth (e2e)', () => {
     return request(app.getHttpServer())
       .post('/auth/check-token')
       .send({ token: 'not-a-jwt' })
+      .expect(422);
+  });
+
+  it('POST /auth/forget-password — 400 usuário inexistente', () => {
+    return request(app.getHttpServer())
+      .post('/auth/forget-password')
+      .send({ email: 'ninguem_existe_aqui@example.com' })
+      .expect(400);
+  });
+
+  it('POST /auth/reset-password — 422 confirmPassword diferente', () => {
+    return request(app.getHttpServer())
+      .post('/auth/reset-password')
+      .send({
+        password: E2E_PASSWORD_ALT,
+        confirmPassword: E2E_PASSWORD,
+        token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c',
+      })
       .expect(422);
   });
 });

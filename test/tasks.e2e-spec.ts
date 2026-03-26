@@ -105,4 +105,90 @@ describe('Tasks (e2e)', () => {
       .set(authHeader(u.token))
       .expect(404);
   });
+
+  it('PATCH nextStage/previousStage — move entre colunas encadeadas', async () => {
+    const u = await registerUser(app, 'tk_move');
+    const pr = await request(app.getHttpServer())
+      .post('/projects')
+      .set(authHeader(u.token))
+      .send({ name: 'Move E2E', description: 'd' })
+      .expect(201);
+    const projectId = String(pr.body.id);
+    const s1 = await request(app.getHttpServer())
+      .post('/project-stages')
+      .set(authHeader(u.token))
+      .send({ name: 'Col A', projectId, order: 0 })
+      .expect(201);
+    const id1 = String(s1.body.id);
+    const s2 = await request(app.getHttpServer())
+      .post('/project-stages')
+      .set(authHeader(u.token))
+      .send({
+        name: 'Col B',
+        projectId,
+        order: 1,
+        prevStageId: id1,
+      })
+      .expect(201);
+    const id2 = String(s2.body.id);
+
+    const taskRes = await request(app.getHttpServer())
+      .post('/tasks')
+      .set(authHeader(u.token))
+      .send({ name: 'Mover', stageId: id1 })
+      .expect(201);
+    const taskId = String(taskRes.body.id);
+
+    const fwd = await request(app.getHttpServer())
+      .patch(`/tasks/nextStage/${taskId}`)
+      .set(authHeader(u.token))
+      .expect(200);
+    expect(String(fwd.body.stage.id)).toBe(id2);
+
+    const back = await request(app.getHttpServer())
+      .patch(`/tasks/previousStage/${taskId}`)
+      .set(authHeader(u.token))
+      .expect(200);
+    expect(String(back.body.stage.id)).toBe(id1);
+
+    await request(app.getHttpServer())
+      .delete(`/tasks/${taskId}`)
+      .set(authHeader(u.token))
+      .expect(200);
+  });
+
+  it('PATCH e DELETE timetrack — atualizar fim e remover registro', async () => {
+    const u = await registerUser(app, 'tk_trk');
+    const { stageId } = await seedProjectWithStage(app, u.token);
+    const taskRes = await request(app.getHttpServer())
+      .post('/tasks')
+      .set(authHeader(u.token))
+      .send({ name: 'Timer E2E', stageId })
+      .expect(201);
+    const taskId = String(taskRes.body.id);
+
+    const track = await request(app.getHttpServer())
+      .post(`/tasks/${taskId}/timetrack/start`)
+      .set(authHeader(u.token))
+      .send({})
+      .expect(201);
+    const trackId = String(track.body.id);
+
+    await request(app.getHttpServer())
+      .patch(`/tasks/${taskId}/timetrack/${trackId}`)
+      .set(authHeader(u.token))
+      .send({ end: '2025-06-15T14:30:00.000Z' })
+      .expect(200);
+
+    const del = await request(app.getHttpServer())
+      .delete(`/tasks/${taskId}/timetrack/${trackId}`)
+      .set(authHeader(u.token))
+      .expect(200);
+    expect(del.body).toMatchObject({ deleted: true });
+
+    await request(app.getHttpServer())
+      .delete(`/tasks/${taskId}`)
+      .set(authHeader(u.token))
+      .expect(200);
+  });
 });

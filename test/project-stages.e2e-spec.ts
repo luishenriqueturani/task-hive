@@ -36,6 +36,15 @@ describe('ProjectStages (e2e)', () => {
       .expect(422);
   });
 
+  it('GET /project-stages — 200 lista global', async () => {
+    const u = await registerUser(app, 'st_all');
+    const res = await request(app.getHttpServer())
+      .get('/project-stages')
+      .set(authHeader(u.token))
+      .expect(200);
+    expect(Array.isArray(res.body)).toBe(true);
+  });
+
   it('CRUD colunas — fluxo feliz', async () => {
     const u = await registerUser(app, 'st_crud');
     const projectId = await createProject(app, u.token);

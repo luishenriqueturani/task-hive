@@ -25,6 +25,23 @@ Baseado na **ANALISE-PROJETO.md**. Ordem: **primeiro correções**, depois **nov
 - [x] **Tratamento de erros:** Evitar `throw new Error('mensagem genérica')` nos services; usar exceções HTTP do Nest (`BadRequestException`, `NotFoundException`, etc.) para não perder contexto.
 - [x] **Soft delete:** Garantir que consultas (`find`, `findOne`) não retornem registros com `deletedAt` preenchido onde for o caso, ou usar `@DeleteDateColumn` e `withDeleted` de forma consistente.
 
+### 1.4 Auditoria E2E — lacunas e correções pendentes
+
+_Tarefas criadas após revisão da cobertura E2E e do doc `docs/e2e-coverage.md`._
+
+**Testes E2E (completar cenários)**
+
+- [ ] **Auth — fluxo feliz `check-token` e `reset-password`:** Hoje só há 422/400; para 200 é preciso token JWT de reset guardado em `ForgetPassword`. Opções: (a) helper E2E que injeta `DataSource`/`Repository` e lê o último token do utilizador de teste; (b) endpoint ou flag só em `NODE_ENV=test` que devolva o token no `forget-password` (avaliar risco); (c) teste de integração separado com base já “semeada”.
+- [ ] **Projetos — erros de negócio:** E2E para `POST .../participants` quando o utilizador já é participante (**400**), quando tenta adicionar o dono (**400**), `DELETE .../participants` com **403** (não gestor) se aplicável.
+- [ ] **Timetrack — permissões:** E2E para **403** em list/start/stop/update/delete quando o utilizador não tem acesso ao projeto; stop/update/delete quando não é dono do registo nem gestor do projeto (**403**).
+- [ ] **Tarefas — mover coluna:** E2E para **400** em `nextStage`/`previousStage` quando não há coluna seguinte/anterior.
+- [ ] **WebSocket timetrack:** Após HTTP stop/update/delete, asserções no cliente Socket.IO para `timetrack:stopped`, `timetrack:updated` e `timetrack:deleted` (hoje só `timetrack:started` está coberto).
+
+**Código / consistência (bugs ou dívida técnica)**
+
+- [ ] **`UsersController.create`:** O `catch` devolve `error` em vez de re-lançar (`throw error` ou `HttpException`); em falhas pode responder **200** com corpo estranho. Alinhar ao padrão dos outros controllers.
+- [ ] **`CRYPT_SALT` vs `CRYPT_SAULT`:** `configuration.ts` usa `CRYPT_SALT` e `src/utils/crypt.ts` usa `CRYPT_SAULT`; o Dockerfile usa `CRYPT_SAULT`. Unificar nome da variável e documentar em `.env.example` / README para evitar ambiente mal configurado.
+
 ---
 
 ## Fase 2 – Arquitetura e qualidade (recomendado antes de crescer)
