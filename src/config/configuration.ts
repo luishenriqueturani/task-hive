@@ -3,7 +3,6 @@ export default () => ({
   /** Rounds bcrypt; CRYPT_SALT preferido (ver também `src/utils/crypt.ts`). */
   cryptSault: process.env.CRYPT_SALT ?? process.env.CRYPT_SAULT,
   jwtSecret: process.env.JWT_SECRET,
-  /** false em produção (NODE_ENV=production); true em desenvolvimento */
   isProduction: process.env.NODE_ENV === 'production',
   db: {
     host: process.env.DB_HOST,
@@ -11,7 +10,10 @@ export default () => ({
     username: process.env.DB_USER,
     password: process.env.DB_PASSWORD,
     database: process.env.DB_NAME,
-    /** Sincronizar schema: true em dev, false em produção. Use NODE_ENV=production para desativar. */
-    synchronize: process.env.NODE_ENV !== 'production',
+    /**
+     * Obsoleto: synchronize nunca é usado pela app (sempre false em `database.providers.ts`).
+     * Use apenas migrations em `src/migrations/`.
+     */
+    synchronize: false,
   },
 });

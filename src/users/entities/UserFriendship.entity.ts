@@ -1,36 +1,23 @@
-import { SnowflakeIdService } from "src/snowflakeid/snowflakeid.service";
-import { BeforeInsert, CreateDateColumn, DeleteDateColumn, Entity, ManyToOne, PrimaryColumn, UpdateDateColumn } from "typeorm";
-import { User } from "../../users/entities/User.entity";
+import { CreateDateColumn, DeleteDateColumn, Entity, ManyToOne, PrimaryColumn, UpdateDateColumn } from 'typeorm';
+import { User } from './User.entity';
 
 @Entity()
 export class UserFriendship {
-
   @PrimaryColumn('bigint')
-  id: string
+  id: string;
 
-  @ManyToOne(() => User, user => user.friendship1)
-  user1: User
+  @ManyToOne(() => User, (user) => user.friendship1)
+  user1: User;
 
-  @ManyToOne(() => User, user => user.friendship2)
-  user2: User
+  @ManyToOne(() => User, (user) => user.friendship2)
+  user2: User;
 
-  @CreateDateColumn({ type: "timestamp", default: () => "CURRENT_TIMESTAMP()" })
+  @CreateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP()' })
   createdAt: Date;
 
-  @UpdateDateColumn({ type: "timestamp", onUpdate: "CURRENT_TIMESTAMP()", nullable: true })
+  @UpdateDateColumn({ type: 'timestamp', onUpdate: 'CURRENT_TIMESTAMP()', nullable: true })
   updatedAt: Date;
 
   @DeleteDateColumn()
   deletedAt: Date;
-
-  constructor(
-    private snowflakeIdService: SnowflakeIdService
-  ) {}
-
-
-  @BeforeInsert()
-  async generateId() {
-    this.id = String(this.snowflakeIdService.generateId());
-  }
-
 }

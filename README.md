@@ -1,89 +1,101 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# Task Hive
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+API em [NestJS](https://nestjs.com/) para gestão de **projetos**, **tarefas** (kanban com colunas), **subtarefas**, **to-do** (pontuais/recorrentes), **empresas**, **autenticação JWT**, **timetrack** com WebSocket (Socket.IO) e **participantes de projeto**.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://coveralls.io/github/nestjs/nest?branch=master" target="_blank"><img src="https://coveralls.io/repos/github/nestjs/nest/badge.svg?branch=master#9" alt="Coverage" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+## Requisitos
 
-## Description
+- Node.js 20+ (recomendado 22)
+- PostgreSQL 16+
+- Docker e Docker Compose (opcional, para subir stack completa)
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+## Configuração rápida (local, sem Docker)
 
-## Project setup
+1. Copie o exemplo de variáveis:
+
+   ```bash
+   cp .env.example .env
+   ```
+
+2. Edite `.env`: `DB_*`, `JWT_SECRET`, `CRYPT_SALT`, e para o Swagger **`SWAGGER_USER`** + **`SWAGGER_PASSWORD`** (HTTP Basic em `/api` e `/api-json`).
+
+3. Instale dependências e aplique o schema (migrations):
+
+   ```bash
+   npm install
+   npm run typeorm -- migration:run
+   ```
+
+4. Inicie a API:
+
+   ```bash
+   npm run start:dev
+   ```
+
+A API escuta em **`APP_PORT`** (default **3001**). Documentação interativa: `http://localhost:3001/api` (com utilizador/palavra-passe definidos no `.env`).
+
+## Schema da base de dados (migrations)
+
+- **`synchronize` do TypeORM está desligado** e não deve voltar a ser usado. Qualquer alteração ao modelo faz-se com **migrations** em `src/migrations/`.
+- Ao arrancar, a aplicação executa migrations pendentes (`migrationsRun: true` em `src/repository/database.providers.ts`).
+- Comandos úteis (carregam `.env`):
+
+  ```bash
+  npm run typeorm -- migration:run
+  npm run typeorm -- migration:revert
+  npm run typeorm -- migration:generate src/migrations/NomeDescritivo
+  ```
+
+- **Base já existente** (criada antes com `synchronize`): se as tabelas já existem e ainda **não** há registo na tabela `typeorm_migrations`, tem de fazer *baseline* **uma vez** antes de arrancar com migrations — ver [`docs/database-migrations.md`](docs/database-migrations.md).
+
+## Testes
 
 ```bash
-$ npm install
+# Unitários
+npm test
+
+# E2E (Postgres na porta 5433 — ver docker-compose.e2e.yml)
+docker compose -f docker-compose.e2e.yml up -d
+cp .env.e2e.example .env.e2e
+# Se a BD E2E já tinha schema antigo sem migrations, limpe o volume ou o schema (ver docs/database-migrations.md)
+npm run test:e2e
 ```
 
-Variáveis de ambiente: veja [`.env.example`](.env.example) (use `CRYPT_SALT` para o custo do bcrypt; `CRYPT_SAULT` continua aceite como alias em [`src/utils/crypt.ts`](src/utils/crypt.ts)).
+## Docker em casa (API + Nginx + Postgres opcional)
 
-## Compile and run the project
+Ficheiros: [`Dockerfile`](Dockerfile), [`docker-compose.yml`](docker-compose.yml), [`docker/nginx.conf`](docker/nginx.conf).
 
-```bash
-# development
-$ npm run start
+- **Postgres já corre no servidor** (como no teu `.env`): sobe só API e proxy:
 
-# watch mode
-$ npm run start:dev
+  ```bash
+  docker compose up -d
+  ```
 
-# production mode
-$ npm run start:prod
-```
+  No `.env`, `DB_HOST` deve ser alcançável **a partir do contentor** (ex.: IP da máquina anfitriã na LAN, ou `host.docker.internal` no Docker Desktop; em Linux podes acrescentar ao serviço `api` em `docker-compose.yml`: `extra_hosts: ["host.docker.internal:host-gateway"]` e usar `DB_HOST=host.docker.internal` se o Postgres estiver no host).
 
-## Run tests
+- **Postgres dentro do Docker** (perfil `bundled-db`): no `.env` define também `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB` e **para a API** `DB_HOST=postgres`, `DB_PORT=5432`, e os mesmos utilizador/password/nome de BD.
 
-```bash
-# unit tests
-$ npm run test
+  ```bash
+  docker compose --profile bundled-db up -d
+  ```
 
-# e2e tests (precisam de PostgreSQL; ver [docs/e2e-coverage.md](docs/e2e-coverage.md))
-$ docker compose -f docker-compose.e2e.yml up -d
-$ cp .env.e2e.example .env.e2e   # ajuste se mudar porta ou credenciais
-$ npm run test:e2e
+- **Porta HTTP** no host: `HTTP_PORT` no `.env` (default **8080**). O Nginx na porta 80 do contentor faz proxy para **`http://api.taskhive.com:3001`** dentro da rede Docker (o nome `api.taskhive.com` é um **alias** do serviço `api`, não precisa de DNS na Internet).
 
-# test coverage
-$ npm run test:cov
-```
+**Segredos:** não coloques passwords ou `JWT_SECRET` no `Dockerfile`; usa sempre `.env` (fora do Git) ou secrets do teu ambiente.
 
-## Resources
+### Acesso por nome noutro PC na mesma rede (sem DNS público)
 
-Check out a few resources that may come in handy when working with NestJS:
+O hostname **`api.taskhive.com`** só existe **entre contentores** (alias no Compose). Para o browser noutro PC usar um nome em vez do IP:
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+1. **Ficheiro hosts** — no PC cliente, uma linha com o **IP LAN do servidor** (a máquina onde corre o Docker), por exemplo:  
+   `192.168.1.50 api.taskhive.com`  
+   Depois abre **`http://api.taskhive.com:8080`** (ou o valor de `HTTP_PORT`). A porta **3001** é só interna à stack Docker; quem está fora usa normalmente a porta publicada pelo Nginx.
+2. **mDNS (`.local`)** — alternativa: hostname do servidor tipo `taskhive.local` e `http://taskhive.local:8080`.
 
-## Support
+## Documentação extra
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+- Cobertura E2E: [`docs/e2e-coverage.md`](docs/e2e-coverage.md)
+- Migrations e baseline: [`docs/database-migrations.md`](docs/database-migrations.md)
 
-## Stay in touch
+## Licença
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
-
-## License
-
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+UNLICENSED (projeto privado).

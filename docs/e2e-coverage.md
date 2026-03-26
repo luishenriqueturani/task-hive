@@ -16,7 +16,7 @@
    npm run test:e2e
    ```
 
-O Jest usa [`test/jest-e2e.json`](../test/jest-e2e.json): um worker (`maxWorkers: 1`) para evitar `synchronize` concorrente no mesmo banco; relatório JUnit em `test-results/e2e-junit.xml`.
+O Jest usa [`test/jest-e2e.json`](../test/jest-e2e.json): um worker (`maxWorkers: 1`) para evitar corridas no mesmo banco; relatório JUnit em `test-results/e2e-junit.xml`. O schema E2E vem de **migrations** (`migrationsRun` na `DataSource`), não de `synchronize`.
 
 ## Comportamento da API relevante para os testes
 
