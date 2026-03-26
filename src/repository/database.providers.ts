@@ -17,13 +17,19 @@ export const databaseProviders = [
   {
     provide: PostgreSQLTokens.DATA_SOURCE,
     useFactory: async () => {
+      const { DB_HOST, DB_PORT, DB_USER, DB_PASSWORD, DB_NAME } = process.env;
+      if (DB_PASSWORD === undefined || DB_PASSWORD === '') {
+        throw new Error(
+          'DB_PASSWORD em falta ou vazio: o cliente PostgreSQL (SCRAM) exige uma string. Verifica .env e, no Docker, docker-compose.yml (passwords com # têm de ir entre aspas na expansão).',
+        );
+      }
       const dataSource = new DataSource({
         type: 'postgres',
-        host: process.env.DB_HOST,
-        port: Number(process.env.DB_PORT),
-        username: process.env.DB_USER,
-        password: process.env.DB_PASSWORD,
-        database: process.env.DB_NAME,
+        host: DB_HOST,
+        port: Number(DB_PORT),
+        username: DB_USER,
+        password: DB_PASSWORD,
+        database: DB_NAME,
         entities: [join(__dirname, '..', '**', '*.entity.{ts,js}')],
         migrations: [join(__dirname, '..', 'migrations', '*.{ts,js}')],
         synchronize: false,

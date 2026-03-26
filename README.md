@@ -131,6 +131,8 @@ Depois iguala `DB_PASSWORD` no `.env` à mesma string. Para migrations a correr 
 
 Se no **host** já existir um serviço na porta **5432** (Postgres instalado no sistema, outro contentor com `-p 5432`, etc.), define **`POSTGRES_PUBLISH_PORT`** para uma porta livre (ex. **5433**); a API dentro do Docker não precisa de alteração.
 
+**`.env`:** não repitas `DB_USER` / `DB_PASSWORD` / `DB_NAME` no mesmo ficheiro — o Compose pode ficar com valores inconsistentes. Passwords com **`#`** têm de ir entre aspas no `.env`; no `docker-compose.yml` as expansões `${VAR}` para secrets usam `"${VAR}"` para o YAML não tratar `#` como comentário.
+
 **Segurança:** expor `POSTGRES_PUBLISH_PORT` na LAN é prático; na Internet usa firewall/VPN e passwords fortes. Não coloques secrets no `Dockerfile`; usa `.env` (fora do Git) ou secrets do ambiente.
 
 ### Acesso por nome na LAN (`taskhive.orangepi.local`)
