@@ -45,7 +45,7 @@ A API escuta em **`APP_PORT`** (default **3001**). Documentação interativa: `h
   npm run typeorm -- migration:generate src/migrations/NomeDescritivo
   ```
 
-- **Base já existente** (criada antes com `synchronize`): se as tabelas já existem e ainda **não** há registo na tabela `typeorm_migrations`, tem de fazer *baseline* **uma vez** antes de arrancar com migrations — ver [`docs/database-migrations.md`](docs/database-migrations.md).
+- **Base já existente** (criada antes com `synchronize`): a migration inicial é **idempotente**; `migration:run` pode correr sem apagar dados. Detalhes e *baseline* manual opcional em [`docs/database-migrations.md`](docs/database-migrations.md).
 
 ## Testes
 

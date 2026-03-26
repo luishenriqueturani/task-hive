@@ -8,20 +8,26 @@
 
 ## Base de dados que já existia (ex.: criada com `synchronize`)
 
-Se o Postgres **já tem todas as tabelas** alinhadas com a migration inicial `InitialSchema1732600000000` mas a tabela `typeorm_migrations` está vazia, **não** corras `migration:run` sem mais nem menos: o `CREATE TABLE` falharia.
+A migration inicial `InitialSchema1732600000000` é **idempotente** (`CREATE TABLE IF NOT EXISTS`, enums e FKs com tolerância a duplicados). Podes correr `npm run typeorm -- migration:run` mesmo que as tabelas já existam: o TypeORM regista a migration na tabela **`migrations`** e as **próximas** migrations passam a correr normalmente.
 
-Faz *baseline* **uma vez**, registando a migration como já aplicada sem executar o SQL:
+**Baseline manual (INSERT na `migrations`)** só é necessário em cenários raros em que preferes não executar o `up` da inicial (por exemplo BD muito customizada). O TypeORM 0.3 usa por defeito a tabela **`migrations`**:
 
 ```sql
-INSERT INTO "typeorm_migrations" ("timestamp", "name")
+SELECT tablename FROM pg_tables WHERE schemaname = 'public' AND tablename LIKE '%migrat%';
+```
+
+```sql
+INSERT INTO "migrations" ("timestamp", "name")
 VALUES (1732600000000, 'InitialSchema1732600000000');
 ```
 
-Confirma que o nome na coluna `name` coincide **exactamente** com a propriedade `name` da classe em `src/migrations/1732600000000-InitialSchema.ts`.
+## Migrations seguintes
+
+Novas alterações ao modelo devem ser **migrations normais** (add column, alter type, etc.), geradas com `migration:generate` ou escritas à mão. **Não** é boa prática tornar todas as migrations “if not exists”: isso esconde divergências entre ambientes. A inicial é excepção para compatibilizar quem veio do `synchronize`.
 
 ## Testes E2E
 
-A BD do `docker-compose.e2e.yml` deve estar vazia (ou só com `typeorm_migrations` coerente) para a primeira migration criar o schema. Se tiveres erros de “relation already exists”, faz por exemplo:
+A BD E2E pode estar vazia ou já com schema: a migration inicial é idempotente. Se algo correr mal, podes repor a BD com:
 
 ```bash
 docker compose -f docker-compose.e2e.yml down -v
