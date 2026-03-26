@@ -12,6 +12,10 @@ if [ "${DB_USER}" = "${DB_REMOTE_USER}" ]; then
   echo "01-users.sh: DB_USER e DB_REMOTE_USER têm de ser nomes distintos." >&2
   exit 1
 fi
+if [ -z "${POSTGRES_PASSWORD}" ] || [ -z "${DB_PASSWORD}" ] || [ -z "${DB_REMOTE_PASSWORD}" ]; then
+  echo "01-users.sh: POSTGRES_PASSWORD, DB_PASSWORD e DB_REMOTE_PASSWORD têm de ser não vazios (pg/SCRAM e a app não aceitam vazio)." >&2
+  exit 1
+fi
 
 _escape_sql() {
   printf '%s' "$1" | sed "s/'/''/g"

@@ -88,6 +88,47 @@ Comandos com **`docker compose`** (espaço — plugin Compose v2). Se ainda só 
 
 5. **Volume novo:** o script `docker/postgres/init/01-users.sh` corre só quando o volume de dados está vazio. Se já tinhas dados com outro esquema de utilizadores, ou `docker compose down -v`, trata como **nova** base ou aplica alterações manualmente em SQL.
 
+### Migrations dentro do contentor `api`
+
+A imagem de produção só tem **`dist/`** (sem `src/` nem `ts-node`). Usa os scripts que apontam para o DataSource compilado:
+
+```bash
+docker compose exec api npm run migration:run:dist
+docker compose exec api npm run migration:revert:dist
+```
+
+O Compose já define **`DB_HOST=postgres`** e **`DB_PORT=5432`** para o serviço `api`; **`DB_USER`**, **`DB_PASSWORD`** e **`DB_NAME`** vêm do teu `.env` (via `env_file`). Não precisas de hostname `postgres` no host — só dentro da rede Docker.
+
+Se o contentor `api` ainda não estiver a correr:
+
+```bash
+docker compose run --rm api npm run migration:run:dist
+```
+
+**Rebuild** (`docker compose up -d --build`) sempre que adicionares ou alterares ficheiros em `src/migrations/`, para o `dist` da imagem incluir as novas migrations.
+
+No **host** (código-fonte + Postgres na porta publicada), continua a usar `npm run typeorm -- migration:run` com `DB_HOST=127.0.0.1` e `DB_PORT` = `POSTGRES_PUBLISH_PORT`.
+
+### Recriar o Postgres (sem dados / password errada no init)
+
+Se criaste o volume com `DB_PASSWORD` vazio ou queres alinhar utilizadores ao `.env` sem dados a preservar:
+
+```bash
+docker compose down -v
+# Preenche no .env: POSTGRES_PASSWORD, DB_PASSWORD, DB_REMOTE_PASSWORD (todos não vazios)
+docker compose up -d
+```
+
+O `-v` remove o volume nomeado (`task_hive_pg`); na próxima subida o init volta a criar roles e extensões.
+
+**Só alterar a password de um role** (Postgres já a correr, superuser `postgres`):
+
+```bash
+docker compose exec postgres psql -U postgres -d task_hive -c "ALTER ROLE taskhive_app PASSWORD 'a_tua_nova_password';"
+```
+
+Depois iguala `DB_PASSWORD` no `.env` à mesma string. Para migrations a correr **no host** (fora do Docker), usa `DB_HOST=127.0.0.1` (ou IP da máquina) e `DB_PORT` igual a `POSTGRES_PUBLISH_PORT` — o hostname `postgres` só existe dentro da rede do Compose.
+
 Se no **host** já existir um serviço na porta **5432** (Postgres instalado no sistema, outro contentor com `-p 5432`, etc.), define **`POSTGRES_PUBLISH_PORT`** para uma porta livre (ex. **5433**); a API dentro do Docker não precisa de alteração.
 
 **Segurança:** expor `POSTGRES_PUBLISH_PORT` na LAN é prático; na Internet usa firewall/VPN e passwords fortes. Não coloques secrets no `Dockerfile`; usa `.env` (fora do Git) ou secrets do ambiente.
