@@ -8,16 +8,9 @@ services:
     image: postgres:16-alpine
     container_name: task-hive-postgres
     restart: unless-stopped
+    # Só env_file: credenciais vêm do ficheiro tal como o Docker as interpreta (sem sobrescrever
+    # com "${VAR}" do Compose, que no host pode ficar vazio e anular o .env).
     env_file: .env
-    # Aspas em "${VAR}" evitam que '#' na password (ou noutros valores) corte o YAML após a expansão.
-    environment:
-      POSTGRES_USER: "${POSTGRES_USER}"
-      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD}"
-      POSTGRES_DB: "${POSTGRES_DB}"
-      DB_USER: "${DB_USER}"
-      DB_PASSWORD: "${DB_PASSWORD}"
-      DB_REMOTE_USER: "${DB_REMOTE_USER}"
-      DB_REMOTE_PASSWORD: "${DB_REMOTE_PASSWORD}"
     volumes:
       - task_hive_pg:/var/lib/postgresql/data
       - ./docker/postgres/init:/docker-entrypoint-initdb.d:ro
@@ -39,11 +32,10 @@ services:
     environment:
       NODE_ENV: production
       APP_PORT: '3001'
+      # Isto sim tem de vir do Compose: aponta para o serviço na rede Docker (não 127.0.0.1 do host).
       DB_HOST: postgres
       DB_PORT: '5432'
-      DB_USER: "${DB_USER}"
-      DB_PASSWORD: "${DB_PASSWORD}"
-      DB_NAME: "${DB_NAME}"
+      # DB_USER, DB_PASSWORD, DB_NAME só no env_file — evita substituição "${DB_PASSWORD}" vazia no host.
     depends_on:
       postgres:
         condition: service_healthy
