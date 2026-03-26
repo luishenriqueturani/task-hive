@@ -30,8 +30,8 @@ Novas alterações ao modelo devem ser **migrations normais** (add column, alter
 A BD E2E pode estar vazia ou já com schema: a migration inicial é idempotente. Se algo correr mal, podes repor a BD com:
 
 ```bash
-docker-compose -f docker-compose.e2e.yml down -v
-docker-compose -f docker-compose.e2e.yml up -d
+docker compose -f docker-compose.e2e.yml down -v
+docker compose -f docker-compose.e2e.yml up -d
 ```
 
 ou apaga só o schema público no contentor Postgres E2E antes de correr `npm run test:e2e`.

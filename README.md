@@ -6,7 +6,7 @@ API em [NestJS](https://nestjs.com/) para gestão de **projetos**, **tarefas** (
 
 - Node.js 20+ (recomendado 22)
 - PostgreSQL 16+
-- Docker e Docker Compose (opcional, para subir stack completa)
+- Docker e **Docker Compose v2** (`docker compose`, opcional para deploy em contentores)
 
 ## Configuração rápida (local, sem Docker)
 
@@ -54,7 +54,7 @@ A API escuta em **`APP_PORT`** (default **3001**). Documentação interativa: `h
 npm test
 
 # E2E (Postgres na porta 5433 — ver docker-compose.e2e.yml)
-docker-compose -f docker-compose.e2e.yml up -d
+docker compose -f docker-compose.e2e.yml up -d
 cp .env.e2e.example .env.e2e
 # Se a BD E2E já tinha schema antigo sem migrations, limpe o volume ou o schema (ver docs/database-migrations.md)
 npm run test:e2e
@@ -62,44 +62,49 @@ npm run test:e2e
 
 ## Docker em casa (API + Nginx + Postgres opcional)
 
-Ficheiros: [`Dockerfile`](Dockerfile), [`docker-compose.yml`](docker-compose.yml), [`docker-compose.postgres.yml`](docker-compose.postgres.yml) (Postgres opcional), [`docker/nginx.conf`](docker/nginx.conf).
+Ficheiros: [`Dockerfile`](Dockerfile), [`docker-compose.yml`](docker-compose.yml), [`docker/nginx.conf`](docker/nginx.conf).
 
-**Comando Compose:** em muitos servidores Linux / **CasaOS** / pacote `apt`, o binário é **`docker-compose`** (hífen). O **`docker compose`** (espaço) é o plugin v2. Se `docker compose up -d` falhar com `unknown shorthand flag: 'd'`, usa `docker-compose up -d`. Mais detalhes: [`docs/docker-compose-legacy.md`](docs/docker-compose-legacy.md).
+Comandos com **`docker compose`** (espaço — plugin Compose v2). Se ainda só tiveres `docker-compose` (hífen) antigo, vê [`docs/docker-compose-legacy.md`](docs/docker-compose-legacy.md).
 
-- **Postgres já corre no servidor** (como no teu `.env`): sobe só API e proxy:
-
-  ```bash
-  docker-compose up -d
-  ```
-
-  No `.env`, `DB_HOST` deve ser alcançável **a partir do contentor** (ex.: IP da máquina anfitriã na LAN, ou `host.docker.internal` no Docker Desktop; em Linux podes acrescentar ao serviço `api` em `docker-compose.yml`: `extra_hosts: ["host.docker.internal:host-gateway"]` e usar `DB_HOST=host.docker.internal` se o Postgres estiver no host).
-
-- **Postgres dentro do Docker** (segundo ficheiro, sem `profiles` nem opções só do Compose v2):
+- **Postgres já corre no servidor** (BD no `.env`): API + Nginx apenas:
 
   ```bash
-  docker-compose -f docker-compose.yml -f docker-compose.postgres.yml up -d
+  docker compose up -d
   ```
 
-  No `.env`: `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB` e **`DB_HOST=postgres`**, `DB_PORT=5432`, com `DB_USER` / `DB_PASSWORD` / `DB_NAME` alinhados.
+  No `.env`, `DB_HOST` deve ser alcançável **a partir do contentor** (IP do host na LAN, `host.docker.internal` com `extra_hosts` no serviço `api`, etc.).
 
-- **Porta HTTP** no host: `HTTP_PORT` no `.env` (default **8080**). O Nginx na porta 80 do contentor faz proxy para **`http://api.taskhive.com:3001`** dentro da rede Docker (o nome `api.taskhive.com` é um **alias** do serviço `api`, não precisa de DNS na Internet).
+- **Postgres dentro do Docker** (perfil `bundled-db`): define `POSTGRES_*` no `.env` e **`DB_HOST=postgres`**, `DB_PORT=5432`, com `DB_USER` / `DB_PASSWORD` / `DB_NAME` alinhados.
+
+  ```bash
+  docker compose --profile bundled-db up -d
+  ```
+
+- **Porta HTTP** no host: `HTTP_PORT` no `.env` (default **8080**). O Nginx faz proxy para **`http://taskhive.orangepi.local:3001`** na rede Docker (alias do serviço `api`).
 
 **Segredos:** não coloques passwords ou `JWT_SECRET` no `Dockerfile`; usa sempre `.env` (fora do Git) ou secrets do teu ambiente.
 
-### Acesso por nome noutro PC na mesma rede (sem DNS público)
+### Acesso por nome na LAN (`taskhive.orangepi.local`)
 
-O hostname **`api.taskhive.com`** só existe **entre contentores** (alias no Compose). Para o browser noutro PC usar um nome em vez do IP:
+O mDNS resolve **`orangepi.local`** se o hostname do SBC for `orangepi` e o Avahi estiver activo; o subdomínio **`taskhive.orangepi.local`** em geral **não** aparece sozinho no mDNS.
 
-1. **Ficheiro hosts** — no PC cliente, uma linha com o **IP LAN do servidor** (a máquina onde corre o Docker), por exemplo:  
-   `192.168.1.50 api.taskhive.com`  
-   Depois abre **`http://api.taskhive.com:8080`** (ou o valor de `HTTP_PORT`). A porta **3001** é só interna à stack Docker; quem está fora usa normalmente a porta publicada pelo Nginx.
-2. **mDNS (`.local`)** — alternativa: hostname do servidor tipo `taskhive.local` e `http://taskhive.local:8080`.
+1. **Recomendado:** em cada PC/telemóvel, no **`/etc/hosts`** (Linux/macOS) ou **`C:\Windows\System32\drivers\etc\hosts`** (Windows), uma linha com o **IP LAN do Orange Pi**:
+
+   ```
+   192.168.1.50   taskhive.orangepi.local
+   ```
+
+   (Substitui pelo IP real.)
+
+2. No browser: **`http://taskhive.orangepi.local:8080`** (ou o valor de `HTTP_PORT`). A API Nest continua na **3001** só **dentro** da rede Docker; o Nginx é a entrada HTTP.
+
+3. O Nginx aceita também **`http://orangepi.local:8080`** (`server_name` inclui `orangepi.local`) se o mDNS do host responder.
 
 ## Documentação extra
 
 - Cobertura E2E: [`docs/e2e-coverage.md`](docs/e2e-coverage.md)
 - Migrations e baseline: [`docs/database-migrations.md`](docs/database-migrations.md)
-- `docker-compose` antigo / CasaOS: [`docs/docker-compose-legacy.md`](docs/docker-compose-legacy.md)
+- Compose antigo / só `docker-compose` com hífen: [`docs/docker-compose-legacy.md`](docs/docker-compose-legacy.md)
 
 ## Licença
 
