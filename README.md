@@ -52,11 +52,13 @@ A API escuta em **`APP_PORT`** (default **3001**). Documentação interativa: `h
 Não há dados iniciais na migration. Para criar um **ADMIN_GOD** (idempotente por email):
 
 ```bash
-# Na raiz do repositório (usa `git config user.name` e `user.email` se existirem)
+# Na raiz do repositório no host (com `npm install` e ficheiro `.env` com DB_* — usa `git config user.name` / `user.email`)
 SEED_ADMIN_PASSWORD='palavra-passe-forte' npm run seed:admin
 ```
 
 Opcional no `.env` ou no comando: `SEED_ADMIN_NAME`, `SEED_ADMIN_EMAIL`. Se não houver email no Git, gera-se algo como `nome.sobrenome@task-hive.local`.
+
+**Não corras `npm run seed:admin` dentro do contentor `api`:** a imagem de produção não tem `src/`, `ts-node` nem `dotenv-cli`; o script correcto aí é o de baixo (`seed:admin:dist` ou `node dist/...`). As variáveis `DB_*` vêm do ambiente injectado pelo Compose, não de um `.env` no disco do contentor.
 
 **Docker:** o contentor leva o `package.json` e o `dist/` **da última vez que construíste a imagem**. Depois de `git pull` com o seeder novo, **reconstrói** antes de correr o seed:
 

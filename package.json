@@ -21,7 +21,7 @@
     "typeorm": "NODE_OPTIONS='-r tsconfig-paths/register' dotenv -e .env -- typeorm-ts-node-commonjs -d src/typeorm-datasource.ts",
     "migration:run:dist": "typeorm migration:run -d dist/typeorm-datasource.js",
     "migration:revert:dist": "typeorm migration:revert -d dist/typeorm-datasource.js",
-    "seed:admin": "NODE_OPTIONS='-r tsconfig-paths/register' dotenv -e .env -- ts-node -r tsconfig-paths/register src/seed/seed-admin.ts",
+    "seed:admin": "NODE_OPTIONS='-r dotenv/config -r tsconfig-paths/register' ts-node src/seed/seed-admin.ts",
     "seed:admin:dist": "node dist/seed/seed-admin.js"
   },
   "dependencies": {
