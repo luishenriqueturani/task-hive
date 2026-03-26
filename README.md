@@ -58,11 +58,20 @@ SEED_ADMIN_PASSWORD='palavra-passe-forte' npm run seed:admin
 
 Opcional no `.env` ou no comando: `SEED_ADMIN_NAME`, `SEED_ADMIN_EMAIL`. Se não houver email no Git, gera-se algo como `nome.sobrenome@task-hive.local`.
 
-**Docker** (imagem já com `dist/`):
+**Docker:** o contentor leva o `package.json` e o `dist/` **da última vez que construíste a imagem**. Depois de `git pull` com o seeder novo, **reconstrói** antes de correr o seed:
 
 ```bash
+docker compose build api && docker compose up -d api
 docker compose exec -e SEED_ADMIN_PASSWORD='palavra-passe-forte' api npm run seed:admin:dist
 ```
+
+Equivalente sem depender do script npm (útil se o `package.json` dentro da imagem ainda for antigo mas o `dist/` já tiver o ficheiro):
+
+```bash
+docker compose exec -e SEED_ADMIN_PASSWORD='palavra-passe-forte' api node dist/seed/seed-admin.js
+```
+
+Se `dist/seed/seed-admin.js` não existir, o `build` da API ainda não incluiu o seed — volta a fazer **`docker compose build --no-cache api`** a partir do código actualizado.
 
 ## Testes
 
