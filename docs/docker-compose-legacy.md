@@ -1,6 +1,6 @@
 # Docker Compose antigo (`docker-compose` com hífen, sem plugin v2)
 
-O repositório assume **`docker compose`** (espaço), plugin **Compose v2**, para `profiles`, `depends_on` com `condition` / `required: false`, etc.
+O repositório assume **`docker compose`** (espaço), plugin **Compose v2**, para `depends_on` com `condition: service_healthy`, etc.
 
 ## Se não tiveres o plugin v2
 

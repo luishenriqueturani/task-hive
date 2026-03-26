@@ -60,29 +60,37 @@ cp .env.e2e.example .env.e2e
 npm run test:e2e
 ```
 
-## Docker em casa (API + Nginx + Postgres opcional)
+## Docker em casa (Postgres + API + Nginx)
 
-Ficheiros: [`Dockerfile`](Dockerfile), [`docker-compose.yml`](docker-compose.yml), [`docker/nginx.conf`](docker/nginx.conf).
+Ficheiros: [`Dockerfile`](Dockerfile), [`docker-compose.yml`](docker-compose.yml), [`docker/nginx.conf`](docker/nginx.conf), script de init em [`docker/postgres/init/`](docker/postgres/init/).
 
 Comandos com **`docker compose`** (espaço — plugin Compose v2). Se ainda só tiveres `docker-compose` (hífen) antigo, vê [`docs/docker-compose-legacy.md`](docs/docker-compose-legacy.md).
 
-- **Postgres já corre no servidor** (BD no `.env`): API + Nginx apenas:
+1. Copia e edita o `.env` (mínimo: `POSTGRES_PASSWORD`, `DB_PASSWORD`, `DB_REMOTE_PASSWORD`, `JWT_SECRET`, `SWAGGER_PASSWORD`; alinha `DB_NAME` com `POSTGRES_DB`). O [``.env.example`](.env.example) lista todos os campos.
 
-  ```bash
-  docker compose up -d
-  ```
+2. Sobe a stack:
 
-  No `.env`, `DB_HOST` deve ser alcançável **a partir do contentor** (IP do host na LAN, `host.docker.internal` com `extra_hosts` no serviço `api`, etc.).
+   ```bash
+   docker compose up -d --build
+   ```
 
-- **Postgres dentro do Docker** (perfil `bundled-db`): define `POSTGRES_*` no `.env` e **`DB_HOST=postgres`**, `DB_PORT=5432`, com `DB_USER` / `DB_PASSWORD` / `DB_NAME` alinhados.
+3. **Utilizadores na base de dados** (criados na **primeira** inicialização do volume; ver nota abaixo):
 
-  ```bash
-  docker compose --profile bundled-db up -d
-  ```
+   | Variável | Papel |
+   |----------|--------|
+   | `POSTGRES_USER` / `POSTGRES_PASSWORD` | Superuser do contentor (ex. `postgres`) — administração total; **não** uses como `DB_USER`. |
+   | `DB_USER` / `DB_PASSWORD` | Utilizador da API (migrations + TypeORM). |
+   | `DB_REMOTE_USER` / `DB_REMOTE_PASSWORD` | Clientes remotos (pgAdmin, DBeaver, `psql`) na LAN: liga ao **IP do host** e à porta **`POSTGRES_PUBLISH_PORT`** (default **5432**). |
 
-- **Porta HTTP** no host: `HTTP_PORT` no `.env` (default **8080**). O Nginx faz proxy para **`http://taskhive.orangepi.local:3001`** na rede Docker (alias do serviço `api`).
+   `DB_USER` e `DB_REMOTE_USER` têm de ser **nomes diferentes** de `POSTGRES_USER` e entre si.
 
-**Segredos:** não coloques passwords ou `JWT_SECRET` no `Dockerfile`; usa sempre `.env` (fora do Git) ou secrets do teu ambiente.
+4. **Porta HTTP** no host: `HTTP_PORT` (default **8080**). O Nginx faz proxy para **`http://taskhive.orangepi.local:3001`** na rede Docker (alias do serviço `api`).
+
+5. **Volume novo:** o script `docker/postgres/init/01-users.sh` corre só quando o volume de dados está vazio. Se já tinhas dados com outro esquema de utilizadores, ou `docker compose down -v`, trata como **nova** base ou aplica alterações manualmente em SQL.
+
+Se no **host** já existir um serviço na porta **5432** (Postgres instalado no sistema, outro contentor com `-p 5432`, etc.), define **`POSTGRES_PUBLISH_PORT`** para uma porta livre (ex. **5433**); a API dentro do Docker não precisa de alteração.
+
+**Segurança:** expor `POSTGRES_PUBLISH_PORT` na LAN é prático; na Internet usa firewall/VPN e passwords fortes. Não coloques secrets no `Dockerfile`; usa `.env` (fora do Git) ou secrets do ambiente.
 
 ### Acesso por nome na LAN (`taskhive.orangepi.local`)
 
