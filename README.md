@@ -54,7 +54,7 @@ A API escuta em **`APP_PORT`** (default **3001**). Documentação interativa: `h
 npm test
 
 # E2E (Postgres na porta 5433 — ver docker-compose.e2e.yml)
-docker compose -f docker-compose.e2e.yml up -d
+docker-compose -f docker-compose.e2e.yml up -d
 cp .env.e2e.example .env.e2e
 # Se a BD E2E já tinha schema antigo sem migrations, limpe o volume ou o schema (ver docs/database-migrations.md)
 npm run test:e2e
@@ -62,21 +62,25 @@ npm run test:e2e
 
 ## Docker em casa (API + Nginx + Postgres opcional)
 
-Ficheiros: [`Dockerfile`](Dockerfile), [`docker-compose.yml`](docker-compose.yml), [`docker/nginx.conf`](docker/nginx.conf).
+Ficheiros: [`Dockerfile`](Dockerfile), [`docker-compose.yml`](docker-compose.yml), [`docker-compose.postgres.yml`](docker-compose.postgres.yml) (Postgres opcional), [`docker/nginx.conf`](docker/nginx.conf).
+
+**Comando Compose:** em muitos servidores Linux / **CasaOS** / pacote `apt`, o binário é **`docker-compose`** (hífen). O **`docker compose`** (espaço) é o plugin v2. Se `docker compose up -d` falhar com `unknown shorthand flag: 'd'`, usa `docker-compose up -d`. Mais detalhes: [`docs/docker-compose-legacy.md`](docs/docker-compose-legacy.md).
 
 - **Postgres já corre no servidor** (como no teu `.env`): sobe só API e proxy:
 
   ```bash
-  docker compose up -d
+  docker-compose up -d
   ```
 
   No `.env`, `DB_HOST` deve ser alcançável **a partir do contentor** (ex.: IP da máquina anfitriã na LAN, ou `host.docker.internal` no Docker Desktop; em Linux podes acrescentar ao serviço `api` em `docker-compose.yml`: `extra_hosts: ["host.docker.internal:host-gateway"]` e usar `DB_HOST=host.docker.internal` se o Postgres estiver no host).
 
-- **Postgres dentro do Docker** (perfil `bundled-db`): no `.env` define também `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB` e **para a API** `DB_HOST=postgres`, `DB_PORT=5432`, e os mesmos utilizador/password/nome de BD.
+- **Postgres dentro do Docker** (segundo ficheiro, sem `profiles` nem opções só do Compose v2):
 
   ```bash
-  docker compose --profile bundled-db up -d
+  docker-compose -f docker-compose.yml -f docker-compose.postgres.yml up -d
   ```
+
+  No `.env`: `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB` e **`DB_HOST=postgres`**, `DB_PORT=5432`, com `DB_USER` / `DB_PASSWORD` / `DB_NAME` alinhados.
 
 - **Porta HTTP** no host: `HTTP_PORT` no `.env` (default **8080**). O Nginx na porta 80 do contentor faz proxy para **`http://api.taskhive.com:3001`** dentro da rede Docker (o nome `api.taskhive.com` é um **alias** do serviço `api`, não precisa de DNS na Internet).
 
@@ -95,6 +99,7 @@ O hostname **`api.taskhive.com`** só existe **entre contentores** (alias no Com
 
 - Cobertura E2E: [`docs/e2e-coverage.md`](docs/e2e-coverage.md)
 - Migrations e baseline: [`docs/database-migrations.md`](docs/database-migrations.md)
+- `docker-compose` antigo / CasaOS: [`docs/docker-compose-legacy.md`](docs/docker-compose-legacy.md)
 
 ## Licença
 

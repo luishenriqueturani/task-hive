@@ -5,7 +5,7 @@
 1. Subir o Postgres de testes (porta host **5433**, não conflita com 5432):
 
    ```bash
-   docker compose -f docker-compose.e2e.yml up -d
+   docker-compose -f docker-compose.e2e.yml up -d
    ```
 
 2. Variáveis: copie [`.env.e2e.example`](../.env.e2e.example) para `.env.e2e` na raiz do repositório.
