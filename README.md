@@ -47,6 +47,23 @@ A API escuta em **`APP_PORT`** (default **3001**). Documentação interativa: `h
 
 - **Base já existente** (criada antes com `synchronize`): a migration inicial é **idempotente**; `migration:run` pode correr sem apagar dados. Detalhes e *baseline* manual opcional em [`docs/database-migrations.md`](docs/database-migrations.md).
 
+## Primeiro utilizador admin (seeder)
+
+Não há dados iniciais na migration. Para criar um **ADMIN_GOD** (idempotente por email):
+
+```bash
+# Na raiz do repositório (usa `git config user.name` e `user.email` se existirem)
+SEED_ADMIN_PASSWORD='palavra-passe-forte' npm run seed:admin
+```
+
+Opcional no `.env` ou no comando: `SEED_ADMIN_NAME`, `SEED_ADMIN_EMAIL`. Se não houver email no Git, gera-se algo como `nome.sobrenome@task-hive.local`.
+
+**Docker** (imagem já com `dist/`):
+
+```bash
+docker compose exec -e SEED_ADMIN_PASSWORD='palavra-passe-forte' api npm run seed:admin:dist
+```
+
 ## Testes
 
 ```bash
