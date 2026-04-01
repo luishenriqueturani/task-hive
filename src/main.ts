@@ -9,6 +9,10 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   app.useWebSocketAdapter(new IoAdapter(app));
 
+  const port = Number(process.env.APP_PORT) || 3001;
+  const openapiServerUrl =
+    process.env.OPENAPI_SERVER_URL ?? `http://localhost:${port}`;
+
   const swaggerUser = process.env.SWAGGER_USER;
   const swaggerPassword = process.env.SWAGGER_PASSWORD;
 
@@ -28,8 +32,13 @@ async function bootstrap() {
 
   const config = new DocumentBuilder()
     .setTitle('Task Hive API')
-    .setDescription('API do Task Hive - projetos, tarefas, tarefas avulsas e empresas')
+    .setDescription(
+      'API do Task Hive - projetos, tarefas, tarefas avulsas e empresas.\n\n' +
+        '**Autenticação:** esta spec usa HTTP Bearer (JWT). Se o cliente for um BFF com sessão em cookie, ' +
+        'o proxy deve enviar `Authorization: Bearer <token>` ao upstream (ou o backend passar a aceitar cookie) — documente o fluxo no deploy.',
+    )
     .setVersion('1.0')
+    .addServer(openapiServerUrl, 'URL base local ou proxy (use OPENAPI_SERVER_URL fora do default)')
     .addBearerAuth()
     .addTag('auth', 'Login, logout, recuperação de senha')
     .addTag('users', 'CRUD de usuários')
@@ -51,7 +60,6 @@ async function bootstrap() {
     }),
   );
 
-  const port = Number(process.env.APP_PORT) || 3001;
   await app.listen(port);
 }
 bootstrap();

@@ -1,14 +1,24 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete, Put, UseGuards } from '@nestjs/common';
-import { ApiTags, ApiBearerAuth, ApiOperation, ApiResponse, ApiBody, ApiParam } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiBearerAuth,
+  ApiOperation,
+  ApiResponse,
+  ApiBody,
+  ApiParam,
+  ApiCreatedResponse,
+  ApiOkResponse,
+} from '@nestjs/swagger';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { UserPublicResponseDto } from './dto/user-public-response.dto';
+import { TypeormUpdateResultDto } from 'src/common/swagger/typeorm-update-result.dto';
 import { AuthGuard } from 'src/guards/auth.guard';
 import { User } from 'src/decorators/user.decorator';
 import { User as UserEntity } from 'src/users/entities/User.entity';
 
 @ApiTags('users')
-@ApiBearerAuth()
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
@@ -16,21 +26,9 @@ export class UsersController {
   @Post()
   @ApiOperation({ summary: 'Criar usuário', description: 'Cadastra um novo usuário. Não requer autenticação. Retorna o usuário criado (sem senha).' })
   @ApiBody({ type: CreateUserDto })
-  @ApiResponse({
-    status: 200,
-    description: 'Usuário criado (entidade retornada pelo serviço, sem password)',
-    schema: {
-      example: {
-        id: '550e8400-e29b-41d4-a716-446655440000',
-        name: 'João Silva',
-        email: 'joao@email.com',
-        avatar: null,
-        role: 'CLIENT',
-        createdAt: '2025-02-09T12:00:00.000Z',
-        updatedAt: null,
-        deletedAt: null,
-      },
-    },
+  @ApiCreatedResponse({
+    description: 'Usuário criado (sem password)',
+    type: UserPublicResponseDto,
   })
   @ApiResponse({ status: 400, description: 'Não foi possível criar o usuário' })
   @ApiResponse({ status: 422, description: 'Email já em uso ou dados inválidos' })
@@ -40,23 +38,12 @@ export class UsersController {
 
   @UseGuards(AuthGuard)
   @Get()
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Listar usuários', description: 'Retorna todos os usuários (sem password). Select do serviço: id, name, email, avatar, createdAt, updatedAt, deletedAt. Requer Bearer token.' })
-  @ApiResponse({
-    status: 200,
-    description: 'Lista de usuários (campos retornados pelo find do serviço)',
-    schema: {
-      example: [
-        {
-          id: '550e8400-e29b-41d4-a716-446655440000',
-          name: 'João Silva',
-          email: 'joao@email.com',
-          avatar: null,
-          createdAt: '2025-01-15T10:00:00.000Z',
-          updatedAt: null,
-          deletedAt: null,
-        },
-      ],
-    },
+  @ApiOkResponse({
+    description: 'Lista de usuários',
+    type: UserPublicResponseDto,
+    isArray: true,
   })
   @ApiResponse({ status: 401, description: 'Não autorizado' })
   findAll() {
@@ -65,23 +52,10 @@ export class UsersController {
 
   @UseGuards(AuthGuard)
   @Get(':id')
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Buscar usuário', description: 'Retorna um usuário por ID (UUID). Apenas usuários não removidos (deletedAt null). Mesmo select do findAll.' })
   @ApiParam({ name: 'id', description: 'UUID do usuário', example: '550e8400-e29b-41d4-a716-446655440000' })
-  @ApiResponse({
-    status: 200,
-    description: 'Usuário encontrado (sem password)',
-    schema: {
-      example: {
-        id: '550e8400-e29b-41d4-a716-446655440000',
-        name: 'João Silva',
-        email: 'joao@email.com',
-        avatar: null,
-        createdAt: '2025-01-15T10:00:00.000Z',
-        updatedAt: null,
-        deletedAt: null,
-      },
-    },
-  })
+  @ApiOkResponse({ description: 'Usuário encontrado (sem password)', type: UserPublicResponseDto })
   @ApiResponse({ status: 404, description: 'Usuário não encontrado' })
   findOne(@Param('id') id: string) {
     return this.usersService.findOne(id);
@@ -89,6 +63,7 @@ export class UsersController {
 
   @UseGuards(AuthGuard)
   @Put(':id')
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Atualizar usuário', description: 'Atualiza name, email e/ou avatar. Retorna o resultado do update do TypeORM (não a entidade).' })
   @ApiParam({ name: 'id', description: 'UUID do usuário', example: '550e8400-e29b-41d4-a716-446655440000' })
   @ApiBody({
@@ -104,17 +79,7 @@ export class UsersController {
       },
     },
   })
-  @ApiResponse({
-    status: 200,
-    description: 'Resultado do update (TypeORM UpdateResult)',
-    schema: {
-      example: {
-        raw: [],
-        affected: 1,
-        generatedMaps: [],
-      },
-    },
-  })
+  @ApiOkResponse({ description: 'Resultado do update (TypeORM UpdateResult)', type: TypeormUpdateResultDto })
   @ApiResponse({ status: 404, description: 'Usuário não encontrado' })
   @ApiResponse({ status: 422, description: 'Email já em uso' })
   update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
@@ -123,19 +88,10 @@ export class UsersController {
 
   @UseGuards(AuthGuard)
   @Patch(':id')
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Soft delete', description: 'Marca o usuário como removido (deletedAt = agora). Retorna TypeORM UpdateResult.' })
   @ApiParam({ name: 'id', description: 'UUID do usuário', example: '550e8400-e29b-41d4-a716-446655440000' })
-  @ApiResponse({
-    status: 200,
-    description: 'Resultado do update (TypeORM UpdateResult)',
-    schema: {
-      example: {
-        raw: [],
-        affected: 1,
-        generatedMaps: [],
-      },
-    },
-  })
+  @ApiOkResponse({ description: 'Resultado do update (TypeORM UpdateResult)', type: TypeormUpdateResultDto })
   @ApiResponse({ status: 404, description: 'Usuário não encontrado' })
   softDelete(@Param('id') id: string) {
     return this.usersService.softDelete(id);
@@ -143,19 +99,10 @@ export class UsersController {
 
   @UseGuards(AuthGuard)
   @Delete(':id')
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Remover usuário', description: 'Marca o usuário como removido (deletedAt). Não é permitido remover a própria conta (403). Retorna TypeORM UpdateResult.' })
   @ApiParam({ name: 'id', description: 'UUID do usuário', example: '550e8400-e29b-41d4-a716-446655440000' })
-  @ApiResponse({
-    status: 200,
-    description: 'Resultado do update (TypeORM UpdateResult)',
-    schema: {
-      example: {
-        raw: [],
-        affected: 1,
-        generatedMaps: [],
-      },
-    },
-  })
+  @ApiOkResponse({ description: 'Resultado do update (TypeORM UpdateResult)', type: TypeormUpdateResultDto })
   @ApiResponse({ status: 403, description: 'Não é permitido remover a própria conta' })
   @ApiResponse({ status: 404, description: 'Usuário não encontrado' })
   remove(@Param('id') id: string, @User() user: UserEntity) {

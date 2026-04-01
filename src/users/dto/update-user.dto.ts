@@ -1,4 +1,7 @@
-import { PartialType } from '@nestjs/mapped-types';
+import { PartialType, PickType } from '@nestjs/swagger';
 import { CreateUserDto } from './create-user.dto';
 
-export class UpdateUserDto extends PartialType(CreateUserDto) {}
+/** Atualização parcial: apenas `name`, `email` e `avatar` (sem senha). */
+export class UpdateUserDto extends PartialType(
+  PickType(CreateUserDto, ['name', 'email', 'avatar'] as const),
+) {}
