@@ -9,8 +9,15 @@ export class AppController {
   @Get()
   @ApiOperation({ summary: 'Health/root', description: 'Retorna mensagem de boas-vindas da API.' })
   @ApiOkResponse({
-    description: 'Texto de boas-vindas',
-    schema: { type: 'string', example: 'Hello World!' },
+    description: 'Texto de boas-vindas (JSON string)',
+    content: {
+      'application/json': {
+        schema: {
+          type: 'string',
+          example: 'Hello World!',
+        },
+      },
+    },
   })
   getHello(): string {
     return this.appService.getHello();

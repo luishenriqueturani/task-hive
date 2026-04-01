@@ -33,6 +33,13 @@ API em [NestJS](https://nestjs.com/) para gestão de **projetos**, **tarefas** (
 
 A API escuta em **`APP_PORT`** (default **3001**). Documentação interativa: `http://localhost:3001/api` (com utilizador/palavra-passe definidos no `.env`).
 
+### OpenAPI (`openapi/openapi.json`, Orval, etc.)
+
+- **`npm run openapi:generate`** — arranca a app em memória e grava `openapi/openapi.json`. É preciso **PostgreSQL acessível** com o mesmo `.env` que a API.
+- Se correres o comando **no host** e o `.env` tiver `DB_HOST=postgres` (nome do serviço no Docker), o host não resolve esse nome: define **`DB_HOST_OPENAPI=127.0.0.1`** (e a porta publicada do Postgres, ex. `5432`) no `.env`. O script define `OPENAPI_GENERATE=1` só durante a geração.
+- Com a API **já em execução** (versão que queres documentar): **`npm run openapi:pull`** — opcional `OPENAPI_URL` e, se o Swagger tiver Basic Auth, `SWAGGER_USER` / `SWAGGER_PASSWORD`.
+- O JSON corresponde ao **código que está deployado / compilado**: após alterações no backend, regera o ficheiro (ou faz pull contra a instância já atualizada) antes de correr o gerador no front.
+
 ## Schema da base de dados (migrations)
 
 - **`synchronize` do TypeORM está desligado** e não deve voltar a ser usado. Qualquer alteração ao modelo faz-se com **migrations** em `src/migrations/`.

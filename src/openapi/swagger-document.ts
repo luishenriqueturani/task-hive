@@ -1,5 +1,27 @@
 import { INestApplication } from '@nestjs/common';
-import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import {
+  DocumentBuilder,
+  OpenAPIObject,
+  SwaggerModule,
+} from '@nestjs/swagger';
+
+/**
+ * Garante `servers` e registo público mesmo quando o merge interno do Swagger
+ * ou metadados antigos não refletem o esperado (ex.: Orval / clientes).
+ */
+function patchOpenApiDocument(
+  doc: OpenAPIObject,
+  serverUrl: string,
+): OpenAPIObject {
+  if (!doc.servers?.length) {
+    doc.servers = [{ url: serverUrl, description: 'URL base da API' }];
+  }
+  const postUsers = doc.paths?.['/users']?.post;
+  if (postUsers) {
+    postUsers.security = [];
+  }
+  return doc;
+}
 
 /** Documento OpenAPI 3 usado pelo Swagger UI e pelo script `openapi:generate`. */
 export function buildSwaggerDocument(app: INestApplication) {
@@ -27,5 +49,6 @@ export function buildSwaggerDocument(app: INestApplication) {
     .addTag('to-do', 'Tarefas avulsas (recorrentes ou pontuais)')
     .build();
 
-  return SwaggerModule.createDocument(app, config);
+  const raw = SwaggerModule.createDocument(app, config);
+  return patchOpenApiDocument(raw, openapiServerUrl);
 }

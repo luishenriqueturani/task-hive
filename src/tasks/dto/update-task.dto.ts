@@ -1,17 +1,19 @@
-import { PartialType } from '@nestjs/swagger';
-import { CreateTaskDto } from './create-task.dto';
+import {
+  ApiPropertyOptional,
+  IntersectionType,
+  PartialType,
+} from '@nestjs/swagger';
 import { IsDateString, IsOptional, IsString } from 'class-validator';
-import { ApiPropertyOptional } from '@nestjs/swagger';
+import { CreateTaskDto } from './create-task.dto';
 
-export class UpdateTaskDto extends PartialType(CreateTaskDto) {
-
+class UpdateTaskExtraDto {
   @ApiPropertyOptional({
     description: 'Descrição da tarefa',
     example: 'Implementar login com OAuth2',
   })
   @IsString()
   @IsOptional()
-  description: string;
+  description?: string;
 
   @ApiPropertyOptional({
     description: 'Data de conclusão prevista (ISO 8601)',
@@ -19,6 +21,11 @@ export class UpdateTaskDto extends PartialType(CreateTaskDto) {
   })
   @IsDateString()
   @IsOptional()
-  finishDate: string;
-
+  finishDate?: string;
 }
+
+/** Partial de criação + campos extra; o IntersectionType expõe name/stageId no schema OpenAPI. */
+export class UpdateTaskDto extends IntersectionType(
+  PartialType(CreateTaskDto),
+  UpdateTaskExtraDto,
+) {}

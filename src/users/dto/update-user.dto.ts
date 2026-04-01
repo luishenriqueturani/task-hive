@@ -1,7 +1,33 @@
-import { PartialType, PickType } from '@nestjs/swagger';
-import { CreateUserDto } from './create-user.dto';
+import { ApiPropertyOptional } from '@nestjs/swagger';
+import { IsEmail, IsOptional, IsString, MaxLength } from 'class-validator';
 
-/** Atualização parcial: apenas `name`, `email` e `avatar` (sem senha). */
-export class UpdateUserDto extends PartialType(
-  PickType(CreateUserDto, ['name', 'email', 'avatar'] as const),
-) {}
+/** Corpo opcional de atualização (sem senha). Campos explícitos para o OpenAPI / Orval. */
+export class UpdateUserDto {
+  @ApiPropertyOptional({
+    description: 'Nome do usuário',
+    example: 'João Silva',
+    maxLength: 255,
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(255)
+  name?: string;
+
+  @ApiPropertyOptional({
+    description: 'Email único do usuário',
+    example: 'joao@email.com',
+    maxLength: 255,
+  })
+  @IsOptional()
+  @IsEmail()
+  @MaxLength(255)
+  email?: string;
+
+  @ApiPropertyOptional({
+    description: 'URL ou identificador do avatar',
+    example: 'https://example.com/avatar.png',
+  })
+  @IsOptional()
+  @IsString()
+  avatar?: string;
+}

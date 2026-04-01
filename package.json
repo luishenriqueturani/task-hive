@@ -23,7 +23,7 @@
     "migration:revert:dist": "typeorm migration:revert -d dist/typeorm-datasource.js",
     "seed:admin": "NODE_OPTIONS='-r dotenv/config -r tsconfig-paths/register' ts-node src/seed/seed-admin.ts",
     "seed:admin:dist": "node dist/seed/seed-admin.js",
-    "openapi:generate": "NODE_OPTIONS='-r tsconfig-paths/register' dotenv -e .env -- ts-node src/scripts/generate-openapi.ts",
+    "openapi:generate": "OPENAPI_GENERATE=1 NODE_OPTIONS='-r tsconfig-paths/register' dotenv -e .env -- ts-node src/scripts/generate-openapi.ts",
     "openapi:pull": "bash scripts/pull-openapi.sh"
   },
   "dependencies": {
