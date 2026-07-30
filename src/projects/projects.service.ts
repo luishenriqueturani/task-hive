@@ -43,7 +43,7 @@ export class ProjectsService {
 
     } catch (error) {
       if (error instanceof BadRequestException || error instanceof NotFoundException) throw error;
-      throw new InternalServerErrorException('Erro ao criar o projeto');
+      throw new InternalServerErrorException('Erro ao criar o projeto', { cause: error });
     }
   }
 
@@ -57,7 +57,7 @@ export class ProjectsService {
         .orWhere('participants.id = :userId', { userId: user.id })
         .getMany();
     } catch (error) {
-      throw new InternalServerErrorException('Erro ao buscar todos os projetos');
+      throw new InternalServerErrorException('Erro ao buscar todos os projetos', { cause: error });
     }
   }
 
@@ -67,7 +67,7 @@ export class ProjectsService {
         where: { id: String(id) },
       });
     } catch (error) {
-      throw new InternalServerErrorException('Erro ao buscar o projeto');
+      throw new InternalServerErrorException('Erro ao buscar o projeto', { cause: error });
     }
   }
 
@@ -78,7 +78,7 @@ export class ProjectsService {
         relations: ['userOwner', 'participants'],
       });
     } catch (error) {
-      throw new InternalServerErrorException('Erro ao buscar o projeto');
+      throw new InternalServerErrorException('Erro ao buscar o projeto', { cause: error });
     }
   }
 
@@ -97,7 +97,7 @@ export class ProjectsService {
       });
       return this.findOne(id);
     } catch (error) {
-      throw new InternalServerErrorException('Erro ao atualizar o projeto');
+      throw new InternalServerErrorException('Erro ao atualizar o projeto', { cause: error });
     }
   }
 
@@ -115,7 +115,7 @@ export class ProjectsService {
       });
       return project;
     } catch (error) {
-      throw new InternalServerErrorException('Erro ao remover o projeto');
+      throw new InternalServerErrorException('Erro ao remover o projeto', { cause: error });
     }
   }
 

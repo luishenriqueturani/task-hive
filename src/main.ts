@@ -1,9 +1,10 @@
 import { Logger, ValidationPipe } from '@nestjs/common';
-import { NestFactory } from '@nestjs/core';
+import { HttpAdapterHost, NestFactory } from '@nestjs/core';
 import { SwaggerModule } from '@nestjs/swagger';
 import { IoAdapter } from '@nestjs/platform-socket.io';
 import expressBasicAuth = require('express-basic-auth');
 import { AppModule } from './app.module';
+import { AllExceptionsFilter } from './filters/all-exceptions.filter';
 import { buildSwaggerDocument } from './openapi/swagger-document';
 
 async function bootstrap() {
@@ -38,6 +39,10 @@ async function bootstrap() {
     new ValidationPipe({
       errorHttpStatusCode: 422,
     }),
+  );
+
+  app.useGlobalFilters(
+    new AllExceptionsFilter(app.get(HttpAdapterHost).httpAdapter),
   );
 
   await app.listen(port);

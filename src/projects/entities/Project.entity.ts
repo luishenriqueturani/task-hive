@@ -12,8 +12,8 @@ export class Project {
   @Column({type: 'varchar', length: 255})
   name: string
 
-  @Column('text')
-  description: string
+  @Column({ type: 'text', nullable: true })
+  description: string | null
 
 
   @ManyToOne(() => User, (user) => user.projectsOwner)

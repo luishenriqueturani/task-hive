@@ -46,6 +46,9 @@ _Tarefas criadas após revisão da cobertura E2E e do doc `docs/e2e-coverage.md`
 
 - [x] **`UsersController.create`:** Handlers passam a delegar ao service sem `catch` que devolvia `error` cru.
 - [x] **`CRYPT_SALT` vs `CRYPT_SAULT`:** `crypt.ts` e `configuration.ts` aceitam `CRYPT_SALT` com fallback `CRYPT_SAULT`; Dockerfile e [`.env.example`](.env.example) documentam `CRYPT_SALT`.
+- [x] **`project.description` NOT NULL indevido:** campo é opcional no DTO mas a coluna era `text NOT NULL` → 500 ao criar projeto sem descrição. Entidade agora é `nullable: true` e a migration `1785444009764-ProjectDescriptionNullable` faz o `DROP NOT NULL` (rodar no servidor com `npm run migration:run:dist`).
+- [x] **500 sem rastro no log:** os `catch` dos services engolem o erro original e relançam `InternalServerErrorException`, que o filtro padrão do Nest não loga. Adicionado `AllExceptionsFilter` global ([`src/filters/all-exceptions.filter.ts`](src/filters/all-exceptions.filter.ts)) que loga todo 5xx com método, URL, stack e a causa original.
+- [ ] **Propagar `{ cause: error }`:** o `projects.service` já relança as `InternalServerErrorException` com `{ cause: error }` para o filtro logar o erro de origem (ex.: constraint do Postgres); replicar o padrão nos demais services (users, auth, tasks, to-do, companies, project-stages, subtasks).
 
 ---
 
