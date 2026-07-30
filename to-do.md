@@ -25,7 +25,12 @@ Baseado na **ANALISE-PROJETO.md**. Ordem: **primeiro correções**, depois **nov
 - [x] **Tratamento de erros:** Evitar `throw new Error('mensagem genérica')` nos services; usar exceções HTTP do Nest (`BadRequestException`, `NotFoundException`, etc.) para não perder contexto.
 - [x] **Soft delete:** Garantir que consultas (`find`, `findOne`) não retornem registros com `deletedAt` preenchido onde for o caso, ou usar `@DeleteDateColumn` e `withDeleted` de forma consistente.
 
-### 1.4 Auditoria E2E — lacunas e correções pendentes
+### 1.4 Fluxo de reset de senha (pendências identificadas no uso com o frontend)
+
+- [ ] **Invalidar token após o uso:** `auth.service.resetPassword` não remove a linha da `forget_password` após trocar a senha; o mesmo link funciona múltiplas vezes dentro das 24h. Apagar o registro (ou marcá-lo como usado) ao concluir o reset.
+- [ ] **Limpar tokens acumulados/expirados:** cada `forget-password` cria uma nova linha e nenhuma é removida — tokens antigos do mesmo usuário continuam válidos até expirar. Ao gerar um novo token, invalidar os anteriores do usuário; a limpeza dos expirados pode entrar no cronjob planejado na Fase 5.
+
+### 1.5 Auditoria E2E — lacunas e correções pendentes
 
 _Tarefas criadas após revisão da cobertura E2E e do doc `docs/e2e-coverage.md`._
 

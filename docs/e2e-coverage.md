@@ -166,5 +166,5 @@ Em [`project-stages.service.ts`](../src/project-stages/project-stages.service.ts
 
 ## Resumo
 
-- **Todas as rotas REST listadas nos controllers** têm pelo menos um teste E2E que as exercita; a secção **1.4** do `to-do.md` (lacunas de auditoria) foi endereçada com cenários extra em auth, projetos, tasks, timetrack e gateway.
+- **Todas as rotas REST listadas nos controllers** têm pelo menos um teste E2E que as exercita; a secção **1.5** do `to-do.md` (lacunas de auditoria) foi endereçada com cenários extra em auth, projetos, tasks, timetrack e gateway.
 - **Nota:** `POST /auth/check-token` devolve o JSON primitivo `true`; com superagent, `res.body` pode vir vazio — nos testes usa-se `JSON.parse(res.text)`.
