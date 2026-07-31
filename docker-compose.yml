@@ -41,10 +41,6 @@ services:
         condition: service_healthy
     expose:
       - '3001'
-    networks:
-      default:
-        aliases:
-          - taskhive.orangepi.local
 
   nginx:
     image: nginx:alpine
@@ -59,3 +55,4 @@ services:
 
 volumes:
   task_hive_pg:
+    name: task_hive_pg

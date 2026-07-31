@@ -95,15 +95,19 @@ cp .env.e2e.example .env.e2e
 npm run test:e2e
 ```
 
-## Docker em casa (Postgres + API + Nginx)
+## Docker em casa
 
-Ficheiros: [`Dockerfile`](Dockerfile), [`docker-compose.yml`](docker-compose.yml), [`docker/nginx.conf`](docker/nginx.conf), script de init em [`docker/postgres/init/`](docker/postgres/init/).
+**Stack completa (UI + API + Postgres + Nginx):** usa o compose na **raiz do monorepo** — ver [`../README.md`](../README.md#docker-em-casa-stack-completa). Acesso por IP (`http://IP:8080`), sem DNS.
+
+**Stack só-API** (este diretório): Postgres + Nest + Nginx. Ficheiros: [`Dockerfile`](Dockerfile), [`docker-compose.yml`](docker-compose.yml), [`docker/nginx.conf`](docker/nginx.conf), init em [`docker/postgres/init/`](docker/postgres/init/).
+
+Não corras as duas stacks em paralelo (partilham nomes de contentor e o volume `task_hive_pg`).
 
 Comandos com **`docker compose`** (espaço — plugin Compose v2). Se ainda só tiveres `docker-compose` (hífen) antigo, vê [`docs/docker-compose-legacy.md`](docs/docker-compose-legacy.md).
 
 1. Copia e edita o `.env` (mínimo: `POSTGRES_PASSWORD`, `DB_PASSWORD`, `DB_REMOTE_PASSWORD`, `JWT_SECRET`, `SWAGGER_PASSWORD`; alinha `DB_NAME` com `POSTGRES_DB`). O [``.env.example`](.env.example) lista todos os campos.
 
-2. Sobe a stack:
+2. Sobe a stack só-API:
 
    ```bash
    docker compose up -d --build
@@ -119,7 +123,7 @@ Comandos com **`docker compose`** (espaço — plugin Compose v2). Se ainda só 
 
    `DB_USER` e `DB_REMOTE_USER` têm de ser **nomes diferentes** de `POSTGRES_USER` e entre si.
 
-4. **Porta HTTP** no host: `HTTP_PORT` (default **8080**). O Nginx faz proxy para **`http://taskhive.orangepi.local:3001`** na rede Docker (alias do serviço `api`).
+4. **Porta HTTP** no host: `HTTP_PORT` (default **8080**). O Nginx faz proxy para **`http://api:3001`** na rede Docker. Aceita qualquer `Host` (incluindo IP da LAN).
 
 5. **Volume novo:** o script `docker/postgres/init/01-users.sh` corre só quando o volume de dados está vazio. Se já tinhas dados com outro esquema de utilizadores, ou `docker compose down -v`, trata como **nova** base ou aplica alterações manualmente em SQL.
 
@@ -172,21 +176,11 @@ Para confirmar no servidor: `docker compose exec api sh -c 'echo DB_HOST=$DB_HOS
 
 **Segurança:** expor `POSTGRES_PUBLISH_PORT` na LAN é prático; na Internet usa firewall/VPN e passwords fortes. Não coloques secrets no `Dockerfile`; usa `.env` (fora do Git) ou secrets do ambiente.
 
-### Acesso por nome na LAN (`taskhive.orangepi.local`)
+### Acesso na LAN (sem DNS)
 
-O mDNS resolve **`orangepi.local`** se o hostname do SBC for `orangepi` e o Avahi estiver activo; o subdomínio **`taskhive.orangepi.local`** em geral **não** aparece sozinho no mDNS.
+Abre **`http://IP_DO_SERVIDOR:8080`** (ou o valor de `HTTP_PORT`). A API Nest continua na **3001** só **dentro** da rede Docker; o Nginx é a entrada HTTP.
 
-1. **Recomendado:** em cada PC/telemóvel, no **`/etc/hosts`** (Linux/macOS) ou **`C:\Windows\System32\drivers\etc\hosts`** (Windows), uma linha com o **IP LAN do Orange Pi**:
-
-   ```
-   192.168.1.50   taskhive.orangepi.local
-   ```
-
-   (Substitui pelo IP real.)
-
-2. No browser: **`http://taskhive.orangepi.local:8080`** (ou o valor de `HTTP_PORT`). A API Nest continua na **3001** só **dentro** da rede Docker; o Nginx é a entrada HTTP.
-
-3. O Nginx aceita também **`http://orangepi.local:8080`** (`server_name` inclui `orangepi.local`) se o mDNS do host responder.
+Nomes locais (`/etc/hosts`, mDNS `orangepi.local`, etc.) são **opcionais** — úteis quando tiveres DNS; não são necessários para o proxy actual (`server_name _`).
 
 ## Documentação extra
 
