@@ -73,7 +73,8 @@ export class SubtasksService {
           task: {
             id: taskId
           }
-        }
+        },
+        relations: ['responsible'],
       })
     } catch (error) {
       throw error;
@@ -96,13 +97,21 @@ export class SubtasksService {
         throw new BadRequestException(`You are not the responsible of this subtask`)
       }
 
-      return this.subtasksRepository.update({
-        id: id
-      }, {
-        description: updateSubtaskDto.description,
-        name: updateSubtaskDto.name,
-        responsible: user
-      })
+      return this.subtasksRepository.update(
+        { id },
+        {
+          ...(updateSubtaskDto.description !== undefined && {
+            description: updateSubtaskDto.description,
+          }),
+          ...(updateSubtaskDto.name !== undefined && {
+            name: updateSubtaskDto.name,
+          }),
+          ...(updateSubtaskDto.isCompleted !== undefined && {
+            isCompleted: updateSubtaskDto.isCompleted,
+          }),
+          responsible: user,
+        },
+      );
 
     } catch (error) {
       throw error;

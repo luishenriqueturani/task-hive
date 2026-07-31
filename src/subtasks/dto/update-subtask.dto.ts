@@ -1,6 +1,6 @@
 import { PartialType } from '@nestjs/swagger';
 import { CreateSubtaskDto } from './create-subtask.dto';
-import { IsOptional, IsString } from 'class-validator';
+import { IsBoolean, IsOptional, IsString } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 
 export class UpdateSubtaskDto extends PartialType(CreateSubtaskDto) {
@@ -11,5 +11,13 @@ export class UpdateSubtaskDto extends PartialType(CreateSubtaskDto) {
   })
   @IsString()
   @IsOptional()
-  description: string;
+  description?: string;
+
+  @ApiPropertyOptional({
+    description: 'Se a subtarefa está concluída',
+    example: true,
+  })
+  @IsBoolean()
+  @IsOptional()
+  isCompleted?: boolean;
 }
