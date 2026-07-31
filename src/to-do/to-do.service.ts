@@ -18,7 +18,9 @@ export class ToDoService {
   ) { }
 
   async create(createToDoDto: CreateToDoDto, user: User) {
-    try {      
+    try {
+      // Só true estrito: evita string/"false" truthy e default RECURRING na entidade.
+      const isRecurring = createToDoDto.isRecurring === true;
 
       const created = await this.toDoRepository.save({
         id: String(this.snowflakeIdService.generateId()),
@@ -26,14 +28,23 @@ export class ToDoService {
         description: createToDoDto.description,
         user,
         status: ToDoStatus.CREATED,
-        type: createToDoDto.isRecurring ? ToDoTypes.RECURRING : ToDoTypes.PUNCTUAL,
-        recurringDeadline: createToDoDto.recurringDeadline,
-        recurringTimes: createToDoDto.recurringTimes,
-        recurringType: createToDoDto.recurringType,
-        recurringNextDate: this.returnNextDate(createToDoDto.recurringType),
-      })
-
-      console.log(created)
+        type: isRecurring ? ToDoTypes.RECURRING : ToDoTypes.PUNCTUAL,
+        recurringDeadline: isRecurring
+          ? createToDoDto.recurringDeadline ?? null
+          : null,
+        recurringTimes: isRecurring
+          ? createToDoDto.recurringTimes ?? null
+          : null,
+        recurringType: isRecurring
+          ? createToDoDto.recurringType ?? RecurringTypes.WEEKLY
+          : null,
+        recurringNextDate: isRecurring
+          ? this.returnNextDate(
+              createToDoDto.recurringType ?? RecurringTypes.WEEKLY,
+            )
+          : null,
+        recurringCount: 0,
+      });
 
       /**
        * disparar a notificação
@@ -63,6 +74,7 @@ export class ToDoService {
           id: true,
           title: true,
           description: true,
+          status: true,
           recurringDeadline: true,
           recurringTimes: true,
           recurringType: true,
@@ -95,6 +107,7 @@ export class ToDoService {
           id: true,
           title: true,
           description: true,
+          status: true,
           recurringDeadline: true,
           recurringTimes: true,
           recurringType: true,
@@ -128,14 +141,50 @@ export class ToDoService {
         throw new BadRequestException('Tarefa não encontrada')
       }
 
-      return this.toDoRepository.update(id.toString(), {
-        title: updateToDoDto.title,
-        description: updateToDoDto.description,
-        recurringDeadline: updateToDoDto.recurringDeadline,
-        recurringTimes: updateToDoDto.recurringTimes,
-        recurringType: updateToDoDto.recurringType,
-        type: updateToDoDto.isRecurring ? ToDoTypes.RECURRING : ToDoTypes.PUNCTUAL,
-      })
+      const patch: Record<string, unknown> = {
+        ...(updateToDoDto.title !== undefined && { title: updateToDoDto.title }),
+        ...(updateToDoDto.description !== undefined && {
+          description: updateToDoDto.description,
+        }),
+      };
+
+      if (updateToDoDto.isRecurring === true) {
+        patch.type = ToDoTypes.RECURRING;
+        if (updateToDoDto.recurringType !== undefined) {
+          patch.recurringType = updateToDoDto.recurringType;
+        }
+        if (updateToDoDto.recurringDeadline !== undefined) {
+          patch.recurringDeadline = updateToDoDto.recurringDeadline;
+        }
+        if (updateToDoDto.recurringTimes !== undefined) {
+          patch.recurringTimes = updateToDoDto.recurringTimes;
+        }
+        if (!todo.recurringNextDate) {
+          patch.recurringNextDate = this.returnNextDate(
+            updateToDoDto.recurringType ??
+              todo.recurringType ??
+              RecurringTypes.WEEKLY,
+          );
+        }
+      } else if (updateToDoDto.isRecurring === false) {
+        patch.type = ToDoTypes.PUNCTUAL;
+        patch.recurringType = null;
+        patch.recurringDeadline = null;
+        patch.recurringTimes = null;
+        patch.recurringNextDate = null;
+      } else {
+        if (updateToDoDto.recurringDeadline !== undefined) {
+          patch.recurringDeadline = updateToDoDto.recurringDeadline;
+        }
+        if (updateToDoDto.recurringTimes !== undefined) {
+          patch.recurringTimes = updateToDoDto.recurringTimes;
+        }
+        if (updateToDoDto.recurringType !== undefined) {
+          patch.recurringType = updateToDoDto.recurringType;
+        }
+      }
+
+      return this.toDoRepository.update(id.toString(), patch);
 
     } catch (error) {
       throw new BadRequestException('Falha ao atualizar a tarefa, Error: ' + error)
@@ -211,8 +260,8 @@ export class ToDoService {
     }
   }
 
-  returnNextDate(type: RecurringTypes) {
-    const recurringNextDate = new Date();
+  returnNextDate(type: RecurringTypes, from: Date = new Date()) {
+    const recurringNextDate = new Date(from);
 
     switch (type) {
       case RecurringTypes.DAILY:
@@ -223,6 +272,9 @@ export class ToDoService {
         break;
       case RecurringTypes.MONTHLY:
         recurringNextDate.setMonth(recurringNextDate.getMonth() + 1);
+        break;
+      default:
+        recurringNextDate.setDate(recurringNextDate.getDate() + 7);
         break;
     }
 
@@ -241,19 +293,35 @@ export class ToDoService {
         throw new BadRequestException('Tarefa não encontrada')
       }
 
-      const count = todo.recurringCount + 1;
+      if (todo.type !== ToDoTypes.RECURRING) {
+        return this.endTask(id, user);
+      }
 
-      if(todo.recurringTimes){
+      const count = (todo.recurringCount ?? 0) + 1;
 
-        if(count >= todo.recurringTimes){
-          return this.endTask(id, user)
-        }
+      if (todo.recurringTimes != null && count >= todo.recurringTimes) {
+        return this.endTask(id, user);
+      }
 
+      const base = todo.recurringNextDate
+        ? new Date(todo.recurringNextDate)
+        : new Date();
+      const next = this.returnNextDate(
+        todo.recurringType ?? RecurringTypes.WEEKLY,
+        base,
+      );
+
+      if (
+        todo.recurringDeadline &&
+        next.getTime() > new Date(todo.recurringDeadline).getTime()
+      ) {
+        return this.endTask(id, user);
       }
 
       return this.toDoRepository.update(id.toString(), {
-        recurringNextDate: this.returnNextDate(todo.recurringType),
+        recurringNextDate: next,
         recurringCount: count,
+        status: ToDoStatus.TODO,
       })
 
     } catch (error) {

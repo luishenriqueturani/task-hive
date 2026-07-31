@@ -18,10 +18,10 @@ export class ToDo {
   @Column({ type: "enum", enum: ToDoStatus, default: ToDoStatus.CREATED })
   status: ToDoStatus;
   
-  @Column({ type: "enum", enum: ToDoTypes, default: ToDoTypes.RECURRING })
+  @Column({ type: "enum", enum: ToDoTypes, default: ToDoTypes.PUNCTUAL })
   type: ToDoTypes;
 
-  @Column({ type: "enum", enum: RecurringTypes, nullable: true, default: RecurringTypes.MONTHLY })
+  @Column({ type: "enum", enum: RecurringTypes, nullable: true })
   recurringType: RecurringTypes;
 
   @Column({ type: "int", nullable: true })

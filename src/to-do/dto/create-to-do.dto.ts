@@ -31,6 +31,15 @@ export class CreateToDoDto {
     description: 'Se true, tarefa é recorrente (type RECURRING); senão PUNCTUAL',
     example: true,
   })
+  @Transform(({ value }) => {
+    if (value === true || value === 'true' || value === 1 || value === '1') {
+      return true;
+    }
+    if (value === false || value === 'false' || value === 0 || value === '0') {
+      return false;
+    }
+    return value;
+  })
   @IsBoolean()
   @IsOptional()
   isRecurring?: boolean;
