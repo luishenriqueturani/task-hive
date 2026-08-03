@@ -133,15 +133,17 @@ export class TasksService {
 
   findByStage(stage: string) {
     try {
-      return this.tasksRepository.find({
-        where: {
-          stage: {
-            id: stage
-          },
-        },
-        relations: ['stage'],
-        order: { order: 'ASC', createdAt: 'ASC' },
-      })
+      // Join explícito de `user` (só id/name/email) — o frontend usa
+      // task.user.id em canMoveOrRemoveTask para mostrar DnD/concluir.
+      return this.tasksRepository
+        .createQueryBuilder('task')
+        .leftJoinAndSelect('task.stage', 'stage')
+        .leftJoin('task.user', 'user')
+        .addSelect(['user.id', 'user.name', 'user.email'])
+        .where('stage.id = :stageId', { stageId: stage })
+        .orderBy('task.order', 'ASC')
+        .addOrderBy('task.createdAt', 'ASC')
+        .getMany();
     } catch (error) {
       console.log(error)
       throw error
@@ -150,12 +152,13 @@ export class TasksService {
 
   findOne(id: bigint) {
     try {
-      return this.tasksRepository.findOne({
-        where: {
-          id: String(id)
-        },
-        relations: ['stage']
-      })
+      return this.tasksRepository
+        .createQueryBuilder('task')
+        .leftJoinAndSelect('task.stage', 'stage')
+        .leftJoin('task.user', 'user')
+        .addSelect(['user.id', 'user.name', 'user.email'])
+        .where('task.id = :id', { id: String(id) })
+        .getOne();
     } catch (error) {
       console.log(error)
       throw error
