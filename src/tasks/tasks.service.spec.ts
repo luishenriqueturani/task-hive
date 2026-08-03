@@ -4,6 +4,7 @@ import { ProjectStagesService } from 'src/project-stages/project-stages.service'
 import { ProjectsService } from 'src/projects/projects.service';
 import {
   mockSnowflakeIdServiceProvider,
+  mockTaskCompletionRepositoryProvider,
   mockTaskRepositoryProvider,
 } from 'src/test-utils/unit-test.mocks';
 
@@ -15,6 +16,7 @@ describe('TasksService', () => {
       providers: [
         TasksService,
         mockTaskRepositoryProvider,
+        mockTaskCompletionRepositoryProvider,
         mockSnowflakeIdServiceProvider,
         { provide: ProjectStagesService, useValue: {} },
         { provide: ProjectsService, useValue: {} },

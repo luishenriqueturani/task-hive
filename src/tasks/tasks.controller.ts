@@ -11,6 +11,7 @@ import {
 } from '@nestjs/swagger';
 import {
   TaskOpenApiDto,
+  TaskCompletionOpenApiDto,
   TimetrackListItemOpenApiDto,
   TimetrackDetailOpenApiDto,
   DeletedFlagOpenApiDto,
@@ -74,6 +75,41 @@ export class TasksController {
     } catch (error) {
       throw error;
     }
+  }
+
+  @Get(':taskId/completions')
+  @ApiOperation({
+    summary: 'Histórico de conclusões',
+    description:
+      'Lista registos de conclusão da tarefa (stage + completedAt), do mais recente para o mais antigo. Quem tem acesso ao projeto pode listar.',
+  })
+  @ApiParam({ name: 'taskId', description: 'ID da tarefa (bigint)', example: '1112223334455667778' })
+  @ApiOkResponse({
+    description: 'Lista de conclusões',
+    type: TaskCompletionOpenApiDto,
+    isArray: true,
+  })
+  @ApiResponse({ status: 403, description: 'Sem permissão para ver o histórico' })
+  @ApiResponse({ status: 400, description: 'Tarefa não encontrada' })
+  listCompletions(@Param('taskId') taskId: string, @User() user: UserEntity) {
+    return this.tasksService.listCompletions(BigInt(taskId), user);
+  }
+
+  @Post(':taskId/completions')
+  @ApiOperation({
+    summary: 'Concluir tarefa',
+    description:
+      'Marca a tarefa como concluída (completedAt), cria entrada no histórico com a coluna actual. Apenas dono da tarefa ou admin. 400 se já concluída.',
+  })
+  @ApiParam({ name: 'taskId', description: 'ID da tarefa (bigint)', example: '1112223334455667778' })
+  @ApiCreatedResponse({
+    description: 'Tarefa actualizada (com stage)',
+    type: TaskOpenApiDto,
+  })
+  @ApiResponse({ status: 400, description: 'Tarefa não encontrada ou já concluída' })
+  @ApiResponse({ status: 403, description: 'Sem permissão para concluir esta tarefa' })
+  complete(@Param('taskId') taskId: string, @User() user: UserEntity) {
+    return this.tasksService.complete(BigInt(taskId), user);
   }
 
   @Get(':taskId/timetrack')
@@ -177,13 +213,19 @@ export class TasksController {
   }
 
   @Patch(':id')
-  @ApiOperation({ summary: 'Atualizar tarefa', description: 'Participante pode alterar name, description, finishDate; dono da tarefa ou admin podem também alterar stageId (mover coluna). Retorna findOne(id).' })
+  @ApiOperation({
+    summary: 'Atualizar tarefa',
+    description:
+      'Participante pode alterar name, description, finishDate; dono da tarefa ou admin podem também alterar stageId/order e limpar completedAt (null). Conclusão via POST .../completions.',
+  })
   @ApiParam({ name: 'id', description: 'ID da tarefa (bigint)', example: '1112223334455667778' })
   @ApiBody({
     type: UpdateTaskDto,
     examples: {
       campos: { summary: 'Nome, descrição e data', value: { name: 'Implementar login OAuth', description: 'Descrição', finishDate: '2025-03-01T23:59:59.000Z' } },
       mover: { summary: 'Mover coluna (dono/admin)', value: { stageId: '9876543210987654322' } },
+      reordenar: { summary: 'Reordenar na coluna', value: { order: 0 } },
+      reabrir: { summary: 'Limpar conclusão actual', value: { completedAt: null } },
     },
   })
   @ApiOkResponse({ description: 'Tarefa atualizada (entidade com stage)', type: TaskOpenApiDto })

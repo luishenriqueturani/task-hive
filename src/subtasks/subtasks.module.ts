@@ -6,6 +6,7 @@ import { SnowflakeIdService } from 'src/snowflakeid/snowflakeid.service';
 import { subtaskProviders } from 'src/repository/providers/subtask.provider';
 import { TasksService } from 'src/tasks/tasks.service';
 import { taskProviders } from 'src/repository/providers/task.provider';
+import { taskCompletionProviders } from 'src/repository/providers/taskCompletion.provider';
 import { ProjectStagesService } from 'src/project-stages/project-stages.service';
 import { projectStageProviders } from 'src/repository/providers/projectStage.provider';
 import { projectProviders } from 'src/repository/providers/project.provider';
@@ -20,6 +21,7 @@ import { AuthModule } from 'src/auth/auth.module';
     ...projectProviders,
     ...companyProvider,
     ...taskProviders,
+    ...taskCompletionProviders,
     ...projectStageProviders,
     ...subtaskProviders,
     SnowflakeIdService,

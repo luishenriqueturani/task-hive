@@ -5,6 +5,7 @@ import { projectStageProviders } from 'src/repository/providers/projectStage.pro
 import { SnowflakeIdService } from 'src/snowflakeid/snowflakeid.service';
 import { DatabaseModule } from 'src/repository/database.module';
 import { taskProviders } from 'src/repository/providers/task.provider';
+import { taskCompletionProviders } from 'src/repository/providers/taskCompletion.provider';
 import { taskTimetrackProviders } from 'src/repository/providers/taskTimetrack.provider';
 import { ProjectStagesService } from 'src/project-stages/project-stages.service';
 import { ProjectsModule } from 'src/projects/projects.module';
@@ -20,6 +21,7 @@ import { TimetrackGateway } from './timetrack.gateway';
     ...companyProvider,
     ...projectStageProviders,
     ...taskProviders,
+    ...taskCompletionProviders,
     ...taskTimetrackProviders,
     SnowflakeIdService,
     CompaniesService,

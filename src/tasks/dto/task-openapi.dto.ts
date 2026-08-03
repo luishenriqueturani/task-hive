@@ -39,6 +39,19 @@ export class TaskOpenApiDto {
   @ApiPropertyOptional({ nullable: true, example: null })
   finishDate?: string | null;
 
+  @ApiPropertyOptional({
+    nullable: true,
+    example: null,
+    description: 'Estado actual de conclusão; null = não concluída agora',
+  })
+  completedAt?: string | null;
+
+  @ApiPropertyOptional({
+    example: 0,
+    description: 'Ordem dentro da coluna (menor = mais acima)',
+  })
+  order?: number;
+
   @ApiPropertyOptional({ type: () => ProjectStageSummaryOpenApiDto })
   stage?: ProjectStageSummaryOpenApiDto;
 
@@ -53,6 +66,17 @@ export class TaskOpenApiDto {
 
   @ApiPropertyOptional({ nullable: true, example: null })
   deletedAt?: string | null;
+}
+
+export class TaskCompletionOpenApiDto {
+  @ApiProperty({ example: '3334445556667778889' })
+  id: string;
+
+  @ApiProperty({ example: '2025-02-09T12:00:00.000Z' })
+  completedAt: string;
+
+  @ApiProperty({ type: () => ProjectStageSummaryOpenApiDto })
+  stage: ProjectStageSummaryOpenApiDto;
 }
 
 export class TimetrackListItemOpenApiDto {

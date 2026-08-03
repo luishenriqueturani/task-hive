@@ -299,4 +299,116 @@ describe('Tasks (e2e)', () => {
       .set(authHeader(u.token))
       .expect(200);
   });
+
+  it('completions + order — concluir, histórico, reordenar e mover para o fim', async () => {
+    const u = await registerUser(app, 'tk_comp');
+    const pr = await request(app.getHttpServer())
+      .post('/projects')
+      .set(authHeader(u.token))
+      .send({ name: 'Comp E2E', description: 'd' })
+      .expect(201);
+    const projectId = String(pr.body.id);
+    const s1 = await request(app.getHttpServer())
+      .post('/project-stages')
+      .set(authHeader(u.token))
+      .send({ name: 'A fazer', projectId, order: 0 })
+      .expect(201);
+    const s2 = await request(app.getHttpServer())
+      .post('/project-stages')
+      .set(authHeader(u.token))
+      .send({
+        name: 'Feito',
+        projectId,
+        order: 1,
+        prevStageId: String(s1.body.id),
+      })
+      .expect(201);
+    await request(app.getHttpServer())
+      .patch(`/project-stages/${s1.body.id}`)
+      .set(authHeader(u.token))
+      .send({ nextStageId: String(s2.body.id) })
+      .expect(200);
+
+    const stageA = String(s1.body.id);
+    const stageB = String(s2.body.id);
+
+    const t1 = await request(app.getHttpServer())
+      .post('/tasks')
+      .set(authHeader(u.token))
+      .send({ name: 'Primeira', stageId: stageA })
+      .expect(201);
+    const t2 = await request(app.getHttpServer())
+      .post('/tasks')
+      .set(authHeader(u.token))
+      .send({ name: 'Segunda', stageId: stageA })
+      .expect(201);
+    expect(t1.body.order).toBe(0);
+    expect(t2.body.order).toBe(1);
+
+    await request(app.getHttpServer())
+      .patch(`/tasks/${t2.body.id}`)
+      .set(authHeader(u.token))
+      .send({ order: 0 })
+      .expect(200);
+
+    const ordered = await request(app.getHttpServer())
+      .get(`/tasks/stage/${stageA}`)
+      .set(authHeader(u.token))
+      .expect(200);
+    expect(ordered.body.map((t: { name: string }) => t.name)).toEqual([
+      'Segunda',
+      'Primeira',
+    ]);
+
+    const completed = await request(app.getHttpServer())
+      .post(`/tasks/${t1.body.id}/completions`)
+      .set(authHeader(u.token))
+      .expect(201);
+    expect(completed.body.completedAt).toBeTruthy();
+
+    const hist = await request(app.getHttpServer())
+      .get(`/tasks/${t1.body.id}/completions`)
+      .set(authHeader(u.token))
+      .expect(200);
+    expect(hist.body).toHaveLength(1);
+    expect(String(hist.body[0].stage.id)).toBe(stageA);
+
+    await request(app.getHttpServer())
+      .post(`/tasks/${t1.body.id}/completions`)
+      .set(authHeader(u.token))
+      .expect(400);
+
+    const other = await request(app.getHttpServer())
+      .post('/tasks')
+      .set(authHeader(u.token))
+      .send({ name: 'Já em B', stageId: stageB })
+      .expect(201);
+
+    await request(app.getHttpServer())
+      .patch(`/tasks/${t1.body.id}`)
+      .set(authHeader(u.token))
+      .send({ stageId: stageB, completedAt: null })
+      .expect(200);
+
+    const inB = await request(app.getHttpServer())
+      .get(`/tasks/stage/${stageB}`)
+      .set(authHeader(u.token))
+      .expect(200);
+    expect(inB.body.map((t: { name: string }) => t.name)).toEqual([
+      'Já em B',
+      'Primeira',
+    ]);
+    const moved = inB.body.find(
+      (t: { id: string }) => String(t.id) === String(t1.body.id),
+    );
+    expect(moved.completedAt).toBeNull();
+
+    const histAfter = await request(app.getHttpServer())
+      .get(`/tasks/${t1.body.id}/completions`)
+      .set(authHeader(u.token))
+      .expect(200);
+    expect(histAfter.body).toHaveLength(1);
+
+    void other;
+  });
 });

@@ -2,6 +2,7 @@ import { Column, CreateDateColumn, DeleteDateColumn, Entity, ManyToOne, OneToMan
 import { User } from "../../users/entities/User.entity";
 import { Subtask } from "../../subtasks/entities/subtask.entity";
 import { TaskTimeTrak } from "./TaskTimeTrak.entity";
+import { TaskCompletion } from "./TaskCompletion.entity";
 import { ProjectStage } from "src/project-stages/entities/ProjectStage.entity";
 
 @Entity()
@@ -19,6 +20,14 @@ export class Task {
   @Column({type: 'timestamp', nullable: true})
   finishDate: Date
 
+  /** Estado actual de conclusão; o histórico fica em `completions`. */
+  @Column({ type: 'timestamp', nullable: true })
+  completedAt: Date | null
+
+  /** Ordem dentro da coluna (stage), menor = mais acima. */
+  @Column({ type: 'int', default: 0 })
+  order: number
+
   @ManyToOne(() => User, user => user.tasks)
   user: User
 
@@ -27,6 +36,9 @@ export class Task {
 
   @OneToMany(() => Subtask, subtask => subtask.task)
   subtask: Subtask[]
+
+  @OneToMany(() => TaskCompletion, (completion) => completion.task)
+  completions: TaskCompletion[]
 
   @ManyToOne(() => ProjectStage, stage => stage.tasks)
   stage: ProjectStage

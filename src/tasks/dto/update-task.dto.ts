@@ -3,7 +3,14 @@ import {
   IntersectionType,
   PartialType,
 } from '@nestjs/swagger';
-import { IsDateString, IsOptional, IsString } from 'class-validator';
+import {
+  IsDateString,
+  IsInt,
+  IsOptional,
+  IsString,
+  Min,
+  ValidateIf,
+} from 'class-validator';
 import { CreateTaskDto } from './create-task.dto';
 
 class UpdateTaskExtraDto {
@@ -22,6 +29,27 @@ class UpdateTaskExtraDto {
   @IsDateString()
   @IsOptional()
   finishDate?: string;
+
+  @ApiPropertyOptional({
+    description:
+      'Ordem na coluna (0 = topo). Apenas dono da tarefa ou admin.',
+    example: 0,
+    minimum: 0,
+  })
+  @IsInt()
+  @Min(0)
+  @IsOptional()
+  order?: number;
+
+  @ApiPropertyOptional({
+    description:
+      'Somente `null` para limpar o estado de concluída (histórico permanece). Para concluir use POST /tasks/:id/completions.',
+    nullable: true,
+    example: null,
+  })
+  @ValidateIf((_, value) => value !== null)
+  @IsOptional()
+  completedAt?: null;
 }
 
 /** Partial de criação + campos extra; o IntersectionType expõe name/stageId no schema OpenAPI. */

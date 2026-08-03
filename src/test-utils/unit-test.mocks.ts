@@ -50,6 +50,9 @@ export const mockConfigServiceProvider = {
 export const mockTaskRepositoryProvider = mockRepositoryProvider(
   PostgreSQLTokens.TASK_REPOSITORY,
 );
+export const mockTaskCompletionRepositoryProvider = mockRepositoryProvider(
+  PostgreSQLTokens.TASK_COMPLETION_REPOSITORY,
+);
 export const mockUserRepositoryProvider = mockRepositoryProvider(
   PostgreSQLTokens.USER_REPOSITORY,
 );
