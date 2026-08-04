@@ -46,6 +46,10 @@ class UpdateTaskExtraDto {
       'Somente `null` para limpar o estado de concluída (histórico permanece). Para concluir use POST /tasks/:id/completions.',
     nullable: true,
     example: null,
+    // type explícito: `completedAt?: null` sem type faz o @nestjs/swagger
+    // reportar dependência circular em "completedAt" ao gerar o schema.
+    type: String,
+    format: 'date-time',
   })
   @ValidateIf((_, value) => value !== null)
   @IsOptional()

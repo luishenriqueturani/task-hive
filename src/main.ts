@@ -18,7 +18,9 @@ async function bootstrap() {
 
   if (swaggerUser && swaggerPassword) {
     app.use(
-      ['/api', '/api-json'],
+      // Path público alinhado com nginx `/swagger` (antes era `/api`, que
+      // colidia com o BFF do Next e gerava assets relativos `./api/...`).
+      ['/swagger', '/api-json', '/api-yaml'],
       expressBasicAuth({
         challenge: true,
         users: { [swaggerUser]: swaggerPassword },
@@ -31,7 +33,12 @@ async function bootstrap() {
   }
 
   const documentFactory = () => buildSwaggerDocument(app);
-  SwaggerModule.setup('api', app, documentFactory);
+  // Path `swagger` = URL pública no Compose (`/swagger`). Mantém `/api-json`
+  // para `openapi:pull` e clientes existentes.
+  SwaggerModule.setup('swagger', app, documentFactory, {
+    jsonDocumentUrl: 'api-json',
+    yamlDocumentUrl: 'api-yaml',
+  });
 
   app.enableCors();
 

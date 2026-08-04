@@ -43,6 +43,8 @@ export class TaskOpenApiDto {
     nullable: true,
     example: null,
     description: 'Estado actual de conclusão; null = não concluída agora',
+    type: String,
+    format: 'date-time',
   })
   completedAt?: string | null;
 
