@@ -9,6 +9,8 @@ import { buildSwaggerDocument } from './openapi/swagger-document';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  // Respeita X-Forwarded-* do nginx (host:porta pública, ex. :8080).
+  app.getHttpAdapter().getInstance().set('trust proxy', 1);
   app.useWebSocketAdapter(new IoAdapter(app));
 
   const port = Number(process.env.APP_PORT) || 3001;
