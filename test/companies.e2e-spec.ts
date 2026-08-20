@@ -14,8 +14,8 @@ describe('Companies (e2e)', () => {
     await app?.close();
   });
 
-  it('GET /companies — 403 sem token', () => {
-    return request(app.getHttpServer()).get('/companies').expect(403);
+  it('GET /companies — 401 sem token', () => {
+    return request(app.getHttpServer()).get('/companies').expect(401);
   });
 
   it('POST /companies — 403 para CLIENT', async () => {

@@ -1,10 +1,12 @@
 import { Body, Controller, Post, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 import { AuthService } from './auth.service';
 import { AuthLoginDto } from './dto/authLogin.dto';
 import { AuthForgetPasswordDto } from './dto/authForgetPassword.dto';
 import { AuthCheckTokenDto } from './dto/authCheckToken.dto';
 import { AuthResetPasswordDto } from './dto/authResetPassword.dto';
+import { AuthRefreshDto } from './dto/authRefresh.dto';
 import { AuthGuard } from 'src/guards/auth.guard';
 import { RequestToken } from 'src/decorators/requestToken.decorator';
 
@@ -13,6 +15,7 @@ import { RequestToken } from 'src/decorators/requestToken.decorator';
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
   @Post('login')
   @ApiOperation({ summary: 'Login', description: 'Autentica com email e senha. Retorna token JWT e dados do usuário (sem senha).' })
   @ApiBody({ type: AuthLoginDto })
@@ -69,6 +72,7 @@ export class AuthController {
     }
   }
   
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
   @Post('forget-password')
   @ApiOperation({ summary: 'Esqueci a senha', description: 'Gera token de redefinição e associa ao usuário (email de envio pode ser implementado depois). Retorna true se o usuário existir.' })
   @ApiBody({ type: AuthForgetPasswordDto })
@@ -105,6 +109,7 @@ export class AuthController {
     }
   }
 
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
   @Post('reset-password')
   @ApiOperation({ summary: 'Redefinir senha', description: 'Atualiza a senha do usuário usando o token de reset e retorna nova sessão (token + user), igual ao login.' })
   @ApiBody({ type: AuthResetPasswordDto })
@@ -137,7 +142,16 @@ export class AuthController {
     }
   }
 
-
-
-
+  @Throttle({ default: { limit: 30, ttl: 60000 } })
+  @Post('refresh')
+  @ApiOperation({
+    summary: 'Renovar sessão',
+    description: 'Troca refresh token por novo par access + refresh (rotativo).',
+  })
+  @ApiBody({ type: AuthRefreshDto })
+  @ApiResponse({ status: 200, description: 'Nova sessão (token + refreshToken + user)' })
+  @ApiResponse({ status: 401, description: 'Refresh token inválido ou expirado' })
+  async refresh(@Body() body: AuthRefreshDto) {
+    return this.authService.refresh(body.refreshToken);
+  }
 }

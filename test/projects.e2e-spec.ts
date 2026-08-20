@@ -14,8 +14,8 @@ describe('Projects (e2e)', () => {
     await app?.close();
   });
 
-  it('GET /projects — 403 sem token', () => {
-    return request(app.getHttpServer()).get('/projects').expect(403);
+  it('GET /projects — 401 sem token', () => {
+    return request(app.getHttpServer()).get('/projects').expect(401);
   });
 
   it('POST /projects — 422 sem name', async () => {

@@ -1,4 +1,5 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete, Put, UseGuards, Query } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import {
   ApiTags,
   ApiBearerAuth,
@@ -27,6 +28,7 @@ import { UserRole } from './user-role.enum';
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
+  @Throttle({ default: { limit: 5, ttl: 3600000 } })
   @Post()
   @ApiOperation({ summary: 'Criar usuário', description: 'Cadastra um novo usuário. Não requer autenticação. Retorna o usuário criado (sem senha).' })
   @ApiBody({ type: CreateUserDto })

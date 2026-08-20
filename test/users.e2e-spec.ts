@@ -65,8 +65,8 @@ describe('Users (e2e)', () => {
       .expect(422);
   });
 
-  it('GET /users — 403 sem token', () => {
-    return request(app.getHttpServer()).get('/users').expect(403);
+  it('GET /users — 401 sem token', () => {
+    return request(app.getHttpServer()).get('/users').expect(401);
   });
 
   it('GET /users — 403 para CLIENT', async () => {

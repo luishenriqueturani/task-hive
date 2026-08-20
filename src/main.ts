@@ -8,6 +8,14 @@ import { AllExceptionsFilter } from './filters/all-exceptions.filter';
 import { buildSwaggerDocument } from './openapi/swagger-document';
 
 async function bootstrap() {
+  const jwtSecret = process.env.JWT_SECRET?.trim();
+  if (!jwtSecret || jwtSecret.length < 32) {
+    Logger.error(
+      'JWT_SECRET em falta ou demasiado curto (mínimo 32 caracteres). Defina em backend/.env',
+    );
+    process.exit(1);
+  }
+
   const app = await NestFactory.create(AppModule);
   // Respeita X-Forwarded-* do nginx (host:porta pública, ex. :8080).
   app.getHttpAdapter().getInstance().set('trust proxy', 1);
@@ -49,6 +57,7 @@ async function bootstrap() {
       errorHttpStatusCode: 422,
       transform: true,
       whitelist: true,
+      forbidNonWhitelisted: true,
     }),
   );
 

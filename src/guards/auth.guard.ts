@@ -1,62 +1,49 @@
-import { CanActivate, ExecutionContext, Injectable } from "@nestjs/common";
+import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from "@nestjs/common";
 import { JWTAudience } from "src/auth/auth.enums";
 import { AuthService } from "src/auth/auth.service";
-import { UsersService } from "src/users/users.service";
 
 @Injectable()
 export class AuthGuard implements CanActivate {
 
   constructor(
     private readonly authService: AuthService,
-    private readonly userService: UsersService,
   ) {}
 
-  async canActivate(context: ExecutionContext){
-    
-    const request = context.switchToHttp().getRequest()
+  async canActivate(context: ExecutionContext) {
+    const request = context.switchToHttp().getRequest();
+    const authorization = request.headers.authorization;
 
-    const authorization = request.headers.authorization
+    const raw = authorization?.startsWith('Bearer ')
+      ? authorization.slice('Bearer '.length)
+      : authorization;
+
+    if (!raw) {
+      throw new UnauthorizedException('Não autorizado');
+    }
 
     try {
+      request.token = raw;
 
-      const token = authorization?.replace('Bearer ', '')
-
-      //console.log(token)
-
-      if(!token) {
-        return false
-      }
-
-      request.token = token
-
-      const res = this.authService.checkToken(token, {
+      const payload = this.authService.checkToken(raw, {
         audience: JWTAudience.LOGIN,
         issuer: 'TaskHive',
-      })
+      });
 
-      //console.log(res)
+      request.tokenPayload = payload;
 
-      request.tokenPayload = res
+      const session = await this.authService.findSessionByToken(raw);
 
-      const session = await this.authService.findSessionByToken(token)
-
-      if(!session) {
-        return false
+      if (!session) {
+        throw new UnauthorizedException('Não autorizado');
       }
 
-      request.session = session
+      request.session = session;
+      request.user = session.user;
 
-      //console.log(session)
-
-      request.user = session.user
-
-      //console.log(request.user)
-
-      return true
-
+      return true;
     } catch (error) {
-      return false
+      if (error instanceof UnauthorizedException) throw error;
+      throw new UnauthorizedException('Não autorizado');
     }
   }
-  
 }

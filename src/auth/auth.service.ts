@@ -1,4 +1,4 @@
-import { BadRequestException, Inject, Injectable } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService, JwtVerifyOptions } from '@nestjs/jwt';
 import { User } from 'src/users/entities/User.entity';
 import { PostgreSQLTokens } from 'src/repository/postgresql.enums';
@@ -8,12 +8,15 @@ import { JWTAudience } from './auth.enums';
 import { ConfigService } from '@nestjs/config';
 import { ForgetPassword } from './entities/ForgetPassword.entity';
 import { Session } from './entities/Session.entity';
+import { RefreshToken } from './entities/RefreshToken.entity';
 import { AppMetricsService } from 'src/metrics/app-metrics.service';
-
+import { GENERIC_AUTH_ERROR, DUMMY_BCRYPT_HASH } from 'src/utils/auth-constants';
+import { generateRefreshToken, hashToken } from 'src/utils/token-hash';
 
 export interface SessionResponse {
-  token: string,
-  user: User
+  token: string;
+  refreshToken: string;
+  user: User;
 }
 
 @Injectable()
@@ -30,18 +33,18 @@ export class AuthService {
     @Inject(PostgreSQLTokens.SESSION_REPOSITORY)
     private sessionRepository: Repository<Session>,
 
+    @Inject(PostgreSQLTokens.REFRESH_TOKEN_REPOSITORY)
+    private refreshTokenRepository: Repository<RefreshToken>,
+
     private readonly configService: ConfigService,
     private readonly metrics: AppMetricsService,
   ) { }
 
-  /**
-   * 
-   * @param user User
-   * @param audience JWTAudience
-   * @param expiresIn string
-   * @returns string
-   */
-  async createToken(user: User, audience: JWTAudience, expiresIn: string = '90d') {
+  async createToken(user: User, audience: JWTAudience, expiresIn?: string) {
+    const ttl =
+      expiresIn ??
+      this.configService.get<string>('jwtAccessExpiresIn') ??
+      '1h';
     return this.jwtService.sign(
       {
         id: user.id,
@@ -50,194 +53,138 @@ export class AuthService {
         role: user.role,
       },
       {
-      subject: user.id,
-      issuer: 'TaskHive',
-      audience: audience, // Nível do usuário
-      expiresIn: expiresIn,
-    });
-  }
-
-  /**
-   * 
-   * @param token string
-   * @param options JwtVerifyOptions
-   * @returns boolean
-   */
-  checkToken(token: string, options?: JwtVerifyOptions) {
-    try {
-      const res = this.jwtService.verify(token, {
-        secret: this.configService.get<string>('jwtSecret'),
-        ...options
-      });
-      return res
-
-    } catch (error) {
-      console.log(error)
-      throw new BadRequestException('Token inválido')
-    }
-  }
-
-  /**
-   * 
-   * @param email string
-   * @param password string
-   * 
-   * @returns SessionResponse
-   */
-  async login(email: string, password: string) {
-    return this.metrics.track('auth', 'login', async () => {
-      const user = await this.findFirstUserByEmail(email)
-
-      if(!user) {
-        throw new BadRequestException('Usuário não cadastrado')
-      }
-      try {
-        
-        //console.log(await Crypt.compare(password, user.password))
-    
-        if(!await Crypt.compare(password, user.password)) {
-          throw new BadRequestException('Senha incorreta')
-        }
-        
-        return this.createSession(user)
-
-      } catch (error) {
-        console.log(error)
-        throw new BadRequestException('Senha incorreta')
-      }
-    });
-  }
-
-  /**
-   * 
-   * @param token string
-   * @returns Promise<DeleteResult>
-   */
-  async logout(token: string) {
-    return this.metrics.track('auth', 'logout', async () => {
-      const session = await this.findSessionByToken(token)
-
-      if(!session) {
-        throw new BadRequestException('Sessão inválida')
-      }
-
-      return await this.sessionRepository.delete({
-        id: session.id,
-      })
-    });
-  }
-
-  /**
-   * 
-   * @param email string
-   * @returns boolean
-   */
-  async forgetPassword(email: string) {
-    return this.metrics.track('auth', 'forget_password', async () => {
-      const user = await this.findFirstUserByEmail(email)
-
-      if(!user) {
-        throw new BadRequestException('Usuário não cadastrado')
-      }
-
-      const expiresAt = new Date()
-      expiresAt.setDate(expiresAt.getDate() + 1)
-
-      const res = await this.forgetPasswordRepository.save({
-        user,
-        token: await this.createToken(user, JWTAudience.FORGET_PASSWORD, '24h'),
-        expiresAt,
-      })
-
-      // enviar email
-
-      return !!res
-    });
-  }
-
-  /**
-   * 
-   * @param password string
-   * @param token string
-   * @returns SessionResponse
-   */
-  async resetPassword(password: string, token: string) {
-    return this.metrics.track('auth', 'reset_password', async () => {
-      const check = await this.isValidResetToken(token)
-
-      if (!check) {
-        throw new BadRequestException('Token inválido')
-      }
-
-      const fp = await this.forgetPasswordRepository.findOne({
-        where: {
-          token,
-        },
-        relations: ['user'],
-      })
-
-      if (!fp) {
-        throw new BadRequestException('Token inválido')
-      }
-
-      const user = await this.userRepository.findOne({
-        where: {
-          id: fp.user.id,
-        },
-      })
-
-      if (!user) {
-        throw new BadRequestException('Usuário inválido')
-      }
-
-      user.password = await Crypt.hash(password)
-
-      const update = await this.userRepository.update(fp.user.id, {
-        password: user.password,
-      })
-
-      if (!update.affected) {
-        throw new BadRequestException('Falha ao atualizar usuário')
-      }
-
-      // enviar email de aviso de alteração de senha
-
-      return this.createSession(user)
-    });
-  }
-
-  /**
-   * 
-   * @param token string
-   * @returns boolean
-   */
-  async checkTokenResetPassword(token: string) {
-    return this.metrics.track('auth', 'check_token', () =>
-      this.isValidResetToken(token),
+        subject: user.id,
+        issuer: 'TaskHive',
+        audience,
+        expiresIn: ttl,
+        algorithm: 'HS256',
+      },
     );
   }
 
-  private async isValidResetToken(token: string) {
-    const check = this.checkToken(token)
-
-    if (!check) {
-      throw new BadRequestException('Token inválido')
+  checkToken(token: string, options?: JwtVerifyOptions) {
+    try {
+      return this.jwtService.verify(token, {
+        secret: this.configService.get<string>('jwtSecret'),
+        algorithms: ['HS256'],
+        ...options,
+      });
+    } catch {
+      throw new BadRequestException('Token inválido');
     }
-
-    const res = await this.forgetPasswordRepository.findOne({
-      where: {
-        token,
-      },
-    })
-
-    return !!res
   }
 
-  /**
-   * 
-   * @param email string
-   * @returns User
-   */
+  async login(email: string, password: string) {
+    return this.metrics.track('auth', 'login', async () => {
+      const user = await this.findFirstUserByEmail(email);
+      const hash = user?.password ?? DUMMY_BCRYPT_HASH;
+      const valid = await Crypt.compare(password, hash);
+
+      if (!user || !valid) {
+        throw new BadRequestException(GENERIC_AUTH_ERROR);
+      }
+
+      return this.createSession(user);
+    });
+  }
+
+  async logout(token: string) {
+    return this.metrics.track('auth', 'logout', async () => {
+      const session = await this.findSessionByToken(token);
+
+      if (!session) {
+        throw new BadRequestException('Sessão inválida');
+      }
+
+      return this.sessionRepository.delete({ id: session.id });
+    });
+  }
+
+  async forgetPassword(email: string) {
+    return this.metrics.track('auth', 'forget_password', async () => {
+      const user = await this.findFirstUserByEmail(email);
+
+      if (!user) {
+        await Crypt.compare('dummy-timing', DUMMY_BCRYPT_HASH);
+        return true;
+      }
+
+      await this.forgetPasswordRepository.delete({ user: { id: user.id } });
+
+      const expiresAt = new Date();
+      expiresAt.setDate(expiresAt.getDate() + 1);
+
+      const resetJwt = await this.createToken(
+        user,
+        JWTAudience.FORGET_PASSWORD,
+        '24h',
+      );
+
+      await this.forgetPasswordRepository.save({
+        user,
+        token: resetJwt,
+        expiresAt,
+      });
+
+      return true;
+    });
+  }
+
+  async resetPassword(password: string, token: string) {
+    return this.metrics.track('auth', 'reset_password', async () => {
+      const fp = await this.findValidForgetPassword(token);
+
+      if (!fp) {
+        throw new BadRequestException('Token inválido');
+      }
+
+      const user = await this.userRepository.findOne({
+        where: { id: fp.user.id },
+      });
+
+      if (!user) {
+        throw new BadRequestException('Token inválido');
+      }
+
+      const hashed = await Crypt.hash(password);
+      const update = await this.userRepository.update(fp.user.id, {
+        password: hashed,
+      });
+
+      if (!update.affected) {
+        throw new BadRequestException('Falha ao atualizar usuário');
+      }
+
+      await this.forgetPasswordRepository.delete({ id: fp.id });
+      await this.revokeAllSessionsForUser(user.id);
+
+      return this.createSession(user);
+    });
+  }
+
+  async checkTokenResetPassword(token: string) {
+    return this.metrics.track('auth', 'check_token', async () => {
+      const fp = await this.findValidForgetPassword(token);
+      return !!fp;
+    });
+  }
+
+  async refresh(refreshToken: string): Promise<SessionResponse> {
+    return this.metrics.track('auth', 'refresh', async () => {
+      const record = await this.refreshTokenRepository.findOne({
+        where: { tokenHash: hashToken(refreshToken) },
+        relations: ['user'],
+      });
+
+      if (!record || record.expiresAt.getTime() <= Date.now()) {
+        throw new UnauthorizedException('Refresh token inválido');
+      }
+
+      await this.refreshTokenRepository.delete({ id: record.id });
+      return this.createSession(record.user);
+    });
+  }
+
   async findFirstUserByEmail(email: string) {
     return this.userRepository
       .createQueryBuilder('user')
@@ -247,16 +194,9 @@ export class AuthService {
       .getOne();
   }
 
-  /**
-   * 
-   * @param token string
-   * @returns Session
-   */
   async findSessionByToken(token: string) {
     return this.sessionRepository.findOne({
-      where: {
-        token,
-      },
+      where: { token: hashToken(token) },
       select: {
         token: true,
         createdAt: true,
@@ -275,33 +215,65 @@ export class AuthService {
       },
       relations: ['user'],
       withDeleted: false,
-
     });
   }
 
-  /**
-   * 
-   * @param user User
-   * @returns SessionResponse
-   */
-  async createSession(user: User) {
-    const newToken = await this.createToken(user, JWTAudience.LOGIN)
+  async createSession(user: User): Promise<SessionResponse> {
+    const accessToken = await this.createToken(user, JWTAudience.LOGIN);
+    const refreshToken = generateRefreshToken();
+    const refreshDays =
+      this.configService.get<number>('jwtRefreshExpiresDays') ?? 30;
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + refreshDays);
 
-    const res = await this.sessionRepository.save({
+    const session = await this.sessionRepository.save({
       user,
-      token: newToken,
-    })
+      token: hashToken(accessToken),
+    });
 
-    if(!res) {
-      throw new BadRequestException('Não foi possível criar sessão')
+    if (!session) {
+      throw new BadRequestException('Não foi possível criar sessão');
     }
 
-    user.password = undefined
+    await this.refreshTokenRepository.save({
+      user,
+      tokenHash: hashToken(refreshToken),
+      expiresAt,
+    });
+
+    user.password = undefined;
 
     return {
-      token: newToken,
+      token: accessToken,
+      refreshToken,
       user,
-    }
+    };
   }
 
+  private async findValidForgetPassword(token: string) {
+    try {
+      this.checkToken(token, {
+        audience: JWTAudience.FORGET_PASSWORD,
+        issuer: 'TaskHive',
+      });
+    } catch {
+      return null;
+    }
+
+    const fp = await this.forgetPasswordRepository.findOne({
+      where: { token },
+      relations: ['user'],
+    });
+
+    if (!fp || fp.expiresAt.getTime() <= Date.now()) {
+      return null;
+    }
+
+    return fp;
+  }
+
+  private async revokeAllSessionsForUser(userId: string) {
+    await this.sessionRepository.delete({ user: { id: userId } });
+    await this.refreshTokenRepository.delete({ user: { id: userId } });
+  }
 }

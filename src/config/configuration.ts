@@ -3,6 +3,8 @@ export default () => ({
   /** Rounds bcrypt; CRYPT_SALT preferido (ver também `src/utils/crypt.ts`). */
   cryptSault: process.env.CRYPT_SALT ?? process.env.CRYPT_SAULT,
   jwtSecret: process.env.JWT_SECRET,
+  jwtAccessExpiresIn: process.env.JWT_ACCESS_EXPIRES_IN ?? '1h',
+  jwtRefreshExpiresDays: Number(process.env.JWT_REFRESH_EXPIRES_DAYS ?? 30),
   isProduction: process.env.NODE_ENV === 'production',
   db: {
     host: process.env.DB_HOST,

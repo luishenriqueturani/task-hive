@@ -13,6 +13,9 @@ export async function createE2eApplication(): Promise<INestApplication> {
   app.useGlobalPipes(
     new ValidationPipe({
       errorHttpStatusCode: 422,
+      transform: true,
+      whitelist: true,
+      forbidNonWhitelisted: true,
     }),
   );
   await app.init();

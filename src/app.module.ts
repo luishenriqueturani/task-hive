@@ -1,4 +1,6 @@
 import { Module } from '@nestjs/common';
+import { APP_GUARD } from '@nestjs/core';
+import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { ConfigModule } from '@nestjs/config';
@@ -22,6 +24,9 @@ import { MetricsModule } from './metrics/metrics.module';
       isGlobal: true,
       load: [configuration],
     }),
+    ThrottlerModule.forRoot([
+      { name: 'default', ttl: 60000, limit: 120 },
+    ]),
     MetricsModule,
     UsersModule,
     AuthModule,
@@ -35,7 +40,8 @@ import { MetricsModule } from './metrics/metrics.module';
   controllers: [AppController],
   providers: [
     SnowflakeIdService,
-    AppService
+    AppService,
+    { provide: APP_GUARD, useClass: ThrottlerGuard },
   ],
 })
 export class AppModule { }

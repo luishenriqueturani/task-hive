@@ -14,8 +14,8 @@ describe('To-do (e2e)', () => {
     await app?.close();
   });
 
-  it('GET /to-do — 403 sem token', () => {
-    return request(app.getHttpServer()).get('/to-do').expect(403);
+  it('GET /to-do — 401 sem token', () => {
+    return request(app.getHttpServer()).get('/to-do').expect(401);
   });
 
   it('POST /to-do — 422 título curto', async () => {

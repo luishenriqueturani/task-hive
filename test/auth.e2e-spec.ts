@@ -30,11 +30,12 @@ describe('Auth (e2e)', () => {
       .expect(422);
   });
 
-  it('POST /auth/login — 400 credenciais inválidas', async () => {
-    await request(app.getHttpServer())
+  it('POST /auth/login — 400 credenciais inválidas (mensagem genérica)', async () => {
+    const res = await request(app.getHttpServer())
       .post('/auth/login')
       .send({ email: 'naoexiste@example.com', password: E2E_PASSWORD })
       .expect(400);
+    expect(res.body.message).toBe('E-mail ou senha inválidos');
   });
 
   it('POST /auth/login — 200 retorna token e user', async () => {
@@ -43,8 +44,8 @@ describe('Auth (e2e)', () => {
     expect(u.id).toBeDefined();
   });
 
-  it('POST /auth/logout — 403 sem Authorization (guard)', () => {
-    return request(app.getHttpServer()).post('/auth/logout').expect(403);
+  it('POST /auth/logout — 401 sem Authorization', () => {
+    return request(app.getHttpServer()).post('/auth/logout').expect(401);
   });
 
   it('POST /auth/logout — 200 invalida sessão', async () => {
@@ -54,9 +55,9 @@ describe('Auth (e2e)', () => {
       .set(authHeader(u.token))
       .expect(201);
     await request(app.getHttpServer())
-      .get('/users')
+      .get('/users/search?q=ab')
       .set(authHeader(u.token))
-      .expect(403);
+      .expect(401);
   });
 
   it('POST /auth/forget-password — 422 email inválido', () => {
@@ -73,11 +74,11 @@ describe('Auth (e2e)', () => {
       .expect(422);
   });
 
-  it('POST /auth/forget-password — 400 usuário inexistente', () => {
+  it('POST /auth/forget-password — 200 mesmo para e-mail inexistente', () => {
     return request(app.getHttpServer())
       .post('/auth/forget-password')
       .send({ email: 'ninguem_existe_aqui@example.com' })
-      .expect(400);
+      .expect(201);
   });
 
   it('POST /auth/reset-password — 422 confirmPassword diferente', () => {
@@ -104,7 +105,6 @@ describe('Auth (e2e)', () => {
       .post('/auth/check-token')
       .send({ token: resetJwt })
       .expect(201);
-    // superagent pode não popular `body` para JSON primitivo `true`
     expect(JSON.parse(check.text)).toBe(true);
 
     const session = await request(app.getHttpServer())
@@ -116,11 +116,43 @@ describe('Auth (e2e)', () => {
       })
       .expect(201);
     expect(session.body.token).toBeDefined();
+    expect(session.body.refreshToken).toBeDefined();
     expect(session.body.user.email).toBe(u.email);
+
+    const reuseCheck = await request(app.getHttpServer())
+      .post('/auth/check-token')
+      .send({ token: resetJwt })
+      .expect(201);
+    expect(JSON.parse(reuseCheck.text)).toBe(false);
 
     await request(app.getHttpServer())
       .post('/auth/login')
       .send({ email: u.email, password: E2E_PASSWORD_ALT })
       .expect(201);
+  });
+
+  it('POST /auth/refresh — rotaciona sessão', async () => {
+    const u = await registerUser(app, 'auth_refresh');
+    const login = await request(app.getHttpServer())
+      .post('/auth/login')
+      .send({ email: u.email, password: E2E_PASSWORD })
+      .expect(201);
+
+    const refreshToken = login.body.refreshToken as string;
+    expect(refreshToken).toMatch(/^th_rf_/);
+
+    const renewed = await request(app.getHttpServer())
+      .post('/auth/refresh')
+      .send({ refreshToken })
+      .expect(201);
+
+    expect(renewed.body.token).toBeDefined();
+    expect(renewed.body.refreshToken).toBeDefined();
+    expect(renewed.body.refreshToken).not.toBe(refreshToken);
+
+    await request(app.getHttpServer())
+      .post('/auth/refresh')
+      .send({ refreshToken })
+      .expect(401);
   });
 });
