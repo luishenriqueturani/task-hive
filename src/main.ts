@@ -2,6 +2,7 @@ import { Logger, ValidationPipe } from '@nestjs/common';
 import { HttpAdapterHost, NestFactory } from '@nestjs/core';
 import { SwaggerModule } from '@nestjs/swagger';
 import { IoAdapter } from '@nestjs/platform-socket.io';
+import helmet from 'helmet';
 import expressBasicAuth = require('express-basic-auth');
 import { AppModule } from './app.module';
 import { AllExceptionsFilter } from './filters/all-exceptions.filter';
@@ -17,9 +18,15 @@ async function bootstrap() {
   }
 
   const app = await NestFactory.create(AppModule);
-  // Respeita X-Forwarded-* do nginx (host:porta pública, ex. :8080).
   app.getHttpAdapter().getInstance().set('trust proxy', 1);
   app.useWebSocketAdapter(new IoAdapter(app));
+
+  app.use(
+    helmet({
+      contentSecurityPolicy: false,
+      crossOriginEmbedderPolicy: false,
+    }),
+  );
 
   const port = Number(process.env.APP_PORT) || 3001;
   const isProduction = process.env.NODE_ENV === 'production';

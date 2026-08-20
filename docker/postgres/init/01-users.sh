@@ -1,8 +1,19 @@
 #!/usr/bin/env bash
 # Executado só na primeira inicialização do volume (docker-entrypoint-initdb.d).
-# Cria: utilizador da API (DB_*) e utilizador para clientes remotos (DB_REMOTE_*).
+# Cria: utilizador da API (DB_*) e utilizador read-only remoto (DB_REMOTE_*).
 
 set -euo pipefail
+
+_valid_sql_ident() {
+  [[ "$1" =~ ^[a-zA-Z_][a-zA-Z0-9_]*$ ]]
+}
+
+for var in POSTGRES_USER DB_USER DB_REMOTE_USER; do
+  if ! _valid_sql_ident "${!var}"; then
+    echo "01-users.sh: ${var} inválido (use apenas [a-zA-Z_][a-zA-Z0-9_]*)" >&2
+    exit 1
+  fi
+done
 
 if [ "${DB_USER}" = "${POSTGRES_USER}" ] || [ "${DB_REMOTE_USER}" = "${POSTGRES_USER}" ]; then
   echo "01-users.sh: DB_USER e DB_REMOTE_USER têm de ser diferentes de POSTGRES_USER (superuser do contentor)." >&2
@@ -36,14 +47,14 @@ GRANT TEMPORARY ON DATABASE "${POSTGRES_DB}" TO "${DB_USER}";
 EOSQL
 
 psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-EOSQL
-GRANT USAGE, CREATE ON SCHEMA public TO "${DB_USER}", "${DB_REMOTE_USER}";
-GRANT ALL PRIVILEGES ON SCHEMA public TO "${DB_REMOTE_USER}";
+GRANT USAGE, CREATE ON SCHEMA public TO "${DB_USER}";
+GRANT USAGE ON SCHEMA public TO "${DB_REMOTE_USER}";
 ALTER DEFAULT PRIVILEGES FOR ROLE "${DB_USER}" IN SCHEMA public
   GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO "${DB_USER}";
 ALTER DEFAULT PRIVILEGES FOR ROLE "${DB_USER}" IN SCHEMA public
-  GRANT ALL PRIVILEGES ON TABLES TO "${DB_REMOTE_USER}";
+  GRANT SELECT ON TABLES TO "${DB_REMOTE_USER}";
 ALTER DEFAULT PRIVILEGES FOR ROLE "${DB_USER}" IN SCHEMA public
   GRANT USAGE, SELECT, UPDATE ON SEQUENCES TO "${DB_USER}";
 ALTER DEFAULT PRIVILEGES FOR ROLE "${DB_USER}" IN SCHEMA public
-  GRANT ALL PRIVILEGES ON SEQUENCES TO "${DB_REMOTE_USER}";
+  GRANT SELECT ON SEQUENCES TO "${DB_REMOTE_USER}";
 EOSQL

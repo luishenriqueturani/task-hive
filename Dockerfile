@@ -1,11 +1,10 @@
-# Build + dependências de produção (uma única npm ci no builder)
+# Build + dependências de produção
 FROM node:22-alpine AS builder
 
 WORKDIR /app
 
 COPY package.json package-lock.json ./
-# `npm install` tolera lockfiles gerados por outras versões do npm; em CI/local podes usar `npm ci` se o lock estiver alinhado.
-RUN npm install
+RUN npm ci
 
 COPY . .
 RUN npm run build && npm prune --omit=dev
@@ -25,5 +24,8 @@ EXPOSE 3001
 ENV APP_PORT=3001
 
 USER node
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=40s --retries=3 \
+  CMD wget -qO- http://127.0.0.1:3001/ >/dev/null || exit 1
 
 CMD ["node", "dist/main.js"]
