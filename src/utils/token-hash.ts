@@ -7,3 +7,9 @@ export function hashToken(token: string): string {
 export function generateRefreshToken(): string {
   return `th_rf_${randomBytes(32).toString('base64url')}`;
 }
+
+export function generatePersonalAccessToken(): string {
+  return `th_pat_${randomBytes(32).toString('base64url')}`;
+}
+
+export const PERSONAL_ACCESS_TOKEN_PREFIX = 'th_pat_';

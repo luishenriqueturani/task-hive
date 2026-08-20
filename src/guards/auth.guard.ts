@@ -1,6 +1,7 @@
 import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from "@nestjs/common";
 import { JWTAudience } from "src/auth/auth.enums";
 import { AuthService } from "src/auth/auth.service";
+import { PERSONAL_ACCESS_TOKEN_PREFIX } from "src/utils/token-hash";
 
 @Injectable()
 export class AuthGuard implements CanActivate {
@@ -23,6 +24,18 @@ export class AuthGuard implements CanActivate {
 
     try {
       request.token = raw;
+
+      if (raw.startsWith(PERSONAL_ACCESS_TOKEN_PREFIX)) {
+        const user = await this.authService.authenticatePersonalAccessToken(raw);
+        request.user = user;
+        request.tokenPayload = {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          role: user.role,
+        };
+        return true;
+      }
 
       const payload = this.authService.checkToken(raw, {
         audience: JWTAudience.LOGIN,

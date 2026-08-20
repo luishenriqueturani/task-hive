@@ -73,6 +73,7 @@ describe('TimetrackGateway (e2e / Socket.IO)', () => {
     const client = io(baseUrl, {
       transports: ['websocket'],
       forceNew: true,
+      auth: { token: u.token },
     });
     await waitForConnect(client);
 
@@ -128,6 +129,7 @@ describe('TimetrackGateway (e2e / Socket.IO)', () => {
     const client = io(baseUrl, {
       transports: ['websocket'],
       forceNew: true,
+      auth: { token: u.token },
     });
     await waitForConnect(client);
     client.emit('joinTask', { taskId });
@@ -174,5 +176,27 @@ describe('TimetrackGateway (e2e / Socket.IO)', () => {
       .delete(`/tasks/${taskId}`)
       .set(authHeader(u.token))
       .expect(200);
+  });
+
+  it('rejeita ligação sem token', async () => {
+    const baseUrl = getE2eBaseUrl(app);
+    const client = io(baseUrl, {
+      transports: ['websocket'],
+      forceNew: true,
+    });
+
+    await new Promise<void>((resolve, reject) => {
+      const t = setTimeout(() => reject(new Error('timeout')), 5000);
+      client.once('connect', () => {
+        clearTimeout(t);
+        reject(new Error('expected disconnect'));
+      });
+      client.once('disconnect', () => {
+        clearTimeout(t);
+        resolve();
+      });
+    });
+
+    client.disconnect();
   });
 });

@@ -11,7 +11,12 @@ import { Session } from './entities/Session.entity';
 import { RefreshToken } from './entities/RefreshToken.entity';
 import { AppMetricsService } from 'src/metrics/app-metrics.service';
 import { GENERIC_AUTH_ERROR, DUMMY_BCRYPT_HASH } from 'src/utils/auth-constants';
-import { generateRefreshToken, hashToken } from 'src/utils/token-hash';
+import {
+  generateRefreshToken,
+  hashToken,
+  PERSONAL_ACCESS_TOKEN_PREFIX,
+} from 'src/utils/token-hash';
+import { PersonalAccessToken } from './entities/PersonalAccessToken.entity';
 
 export interface SessionResponse {
   token: string;
@@ -35,6 +40,9 @@ export class AuthService {
 
     @Inject(PostgreSQLTokens.REFRESH_TOKEN_REPOSITORY)
     private refreshTokenRepository: Repository<RefreshToken>,
+
+    @Inject(PostgreSQLTokens.PERSONAL_ACCESS_TOKEN_REPOSITORY)
+    private personalAccessTokenRepository: Repository<PersonalAccessToken>,
 
     private readonly configService: ConfigService,
     private readonly metrics: AppMetricsService,
@@ -216,6 +224,46 @@ export class AuthService {
       relations: ['user'],
       withDeleted: false,
     });
+  }
+
+  async authenticateAccessToken(raw: string): Promise<User> {
+    try {
+      this.checkToken(raw, {
+        audience: JWTAudience.LOGIN,
+        issuer: 'TaskHive',
+      });
+    } catch {
+      throw new UnauthorizedException('Não autorizado');
+    }
+
+    const session = await this.findSessionByToken(raw);
+    if (!session?.user) {
+      throw new UnauthorizedException('Não autorizado');
+    }
+
+    return session.user;
+  }
+
+  async authenticatePersonalAccessToken(raw: string): Promise<User> {
+    if (!raw.startsWith(PERSONAL_ACCESS_TOKEN_PREFIX)) {
+      throw new UnauthorizedException('Não autorizado');
+    }
+
+    const record = await this.personalAccessTokenRepository.findOne({
+      where: { tokenHash: hashToken(raw) },
+      relations: ['user'],
+    });
+
+    if (!record || record.expiresAt.getTime() <= Date.now()) {
+      throw new UnauthorizedException('Não autorizado');
+    }
+
+    await this.personalAccessTokenRepository.update(
+      { id: record.id },
+      { lastUsedAt: new Date() },
+    );
+
+    return record.user;
   }
 
   async createSession(user: User): Promise<SessionResponse> {

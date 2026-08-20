@@ -4,6 +4,8 @@ import {
   mockConfigServiceProvider,
   mockForgetPasswordRepositoryProvider,
   mockJwtServiceProvider,
+  mockPersonalAccessTokenRepositoryProvider,
+  mockRefreshTokenRepositoryProvider,
   mockSessionRepositoryProvider,
   mockUserRepositoryProvider,
 } from 'src/test-utils/unit-test.mocks';
@@ -21,6 +23,8 @@ describe('AuthService', () => {
         mockUserRepositoryProvider,
         mockForgetPasswordRepositoryProvider,
         mockSessionRepositoryProvider,
+        mockRefreshTokenRepositoryProvider,
+        mockPersonalAccessTokenRepositoryProvider,
         mockConfigServiceProvider,
       ],
     }).compile();

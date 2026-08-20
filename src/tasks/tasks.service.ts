@@ -398,4 +398,16 @@ export class TasksService {
       return task;
     });
   }
+
+  async userCanAccessTask(taskId: string, user: User): Promise<boolean> {
+    const task = await this.tasksRepository.findOne({
+      where: { id: taskId },
+      relations: ['stage', 'stage.project'],
+    });
+    if (!task?.stage?.project) return false;
+    const project = await this.projectsService.findOneWithOwnerAndParticipants(
+      BigInt(task.stage.project.id),
+    );
+    return !!project && canAccessProject(project, user);
+  }
 }

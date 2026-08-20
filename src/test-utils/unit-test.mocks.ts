@@ -62,6 +62,12 @@ export const mockForgetPasswordRepositoryProvider = mockRepositoryProvider(
 export const mockSessionRepositoryProvider = mockRepositoryProvider(
   PostgreSQLTokens.SESSION_REPOSITORY,
 );
+export const mockRefreshTokenRepositoryProvider = mockRepositoryProvider(
+  PostgreSQLTokens.REFRESH_TOKEN_REPOSITORY,
+);
+export const mockPersonalAccessTokenRepositoryProvider = mockRepositoryProvider(
+  PostgreSQLTokens.PERSONAL_ACCESS_TOKEN_REPOSITORY,
+);
 export const mockCompanyRepositoryProvider = mockRepositoryProvider(
   PostgreSQLTokens.COMPANY_REPOSITORY,
 );

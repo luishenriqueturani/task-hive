@@ -1,6 +1,8 @@
 import { Module, forwardRef } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
+import { PersonalAccessTokensController } from './personal-access-tokens.controller';
+import { PersonalAccessTokensService } from './personal-access-tokens.service';
 import { JwtModule } from '@nestjs/jwt';
 import { DatabaseModule } from 'src/repository/database.module';
 import { UsersModule } from 'src/users/users.module';
@@ -25,11 +27,12 @@ import { RolesGuard } from 'src/guards/roles.guard';
     DatabaseModule,
     forwardRef(() => UsersModule),
   ],
-  controllers: [AuthController],
-  providers: [AuthService, AuthGuard, RolesGuard],
+  controllers: [AuthController, PersonalAccessTokensController],
+  providers: [AuthService, PersonalAccessTokensService, AuthGuard, RolesGuard],
   exports: [
     JwtModule,
     AuthService,
+    PersonalAccessTokensService,
     AuthGuard,
     RolesGuard,
     forwardRef(() => UsersModule),
