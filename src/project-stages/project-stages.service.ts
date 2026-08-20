@@ -1,4 +1,4 @@
-import { BadRequestException, ForbiddenException, Inject, Injectable, InternalServerErrorException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Inject, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { CreateProjectStageDto } from './dto/create-project-stage.dto';
 import { UpdateProjectStageDto } from './dto/update-project-stage.dto';
 import { Repository } from 'typeorm';
@@ -7,7 +7,7 @@ import { SnowflakeIdService } from 'src/snowflakeid/snowflakeid.service';
 import { ProjectsService } from 'src/projects/projects.service';
 import { ProjectStage } from './entities/ProjectStage.entity';
 import { User } from 'src/users/entities/User.entity';
-import { canManageProject } from 'src/projects/project-permissions.helper';
+import { canManageProject, canAccessProject } from 'src/projects/project-permissions.helper';
 import { AppMetricsService } from 'src/metrics/app-metrics.service';
 
 @Injectable()
@@ -92,8 +92,12 @@ export class ProjectStagesService {
     });
   }
 
-  async findAllByProject(id: string) {
+  async findAllByProject(id: string, user: User) {
     return this.metrics.track('project-stages', 'find_all_by_project', async () => {
+      const project = await this.projectsService.findOneWithOwnerAndParticipants(BigInt(id));
+      if (!project || !canAccessProject(project, user)) {
+        throw new NotFoundException('Projeto não encontrado');
+      }
       try {
         return this.projectStagesRepository.find({
           where: {
@@ -107,8 +111,20 @@ export class ProjectStagesService {
     });
   }
 
-  async findOne(id: bigint) {
-    return this.metrics.track('project-stages', 'find_one', () => this.loadStage(id));
+  async findOne(id: bigint, user: User) {
+    return this.metrics.track('project-stages', 'find_one', async () => {
+      const stage = await this.loadStage(id);
+      if (!stage) {
+        throw new NotFoundException('Coluna não encontrada');
+      }
+      const project = await this.projectsService.findOneWithOwnerAndParticipants(
+        BigInt(stage.project.id),
+      );
+      if (!project || !canAccessProject(project, user)) {
+        throw new NotFoundException('Coluna não encontrada');
+      }
+      return stage;
+    });
   }
 
   /** Internal lookup without domain metric (used by tasks and stage mutations). */

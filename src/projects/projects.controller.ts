@@ -181,7 +181,7 @@ export class ProjectsController {
   @ApiResponse({ status: 500, description: 'Erro ao buscar projeto' })
   findOne(@Param('id') id: string, @User() user: UserEntity) {
     try {
-      return this.projectsService.findOne(BigInt(id));
+      return this.projectsService.findOne(BigInt(id), user);
     } catch (error) {
       console.log(error)
       throw error

@@ -118,4 +118,26 @@ describe('To-do (e2e)', () => {
       .set(authHeader(u.token))
       .expect(200);
   });
+
+  it('GET/PATCH /to-do/:id — 404 para tarefa de outro utilizador', async () => {
+    const owner = await registerUser(app, 'td_iso_o');
+    const other = await registerUser(app, 'td_iso_x');
+    const created = await request(app.getHttpServer())
+      .post('/to-do')
+      .set(authHeader(owner.token))
+      .send({
+        title: 'Privada',
+        description: 'Descrição com tamanho mínimo ok',
+      })
+      .expect(201);
+    const id = String(created.body.id);
+    await request(app.getHttpServer())
+      .get(`/to-do/${id}`)
+      .set(authHeader(other.token))
+      .expect(404);
+    await request(app.getHttpServer())
+      .patch(`/to-do/${id}`)
+      .set(authHeader(other.token))
+      .expect(404);
+  });
 });

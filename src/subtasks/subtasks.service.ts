@@ -1,4 +1,4 @@
-import { BadRequestException, Inject, Injectable } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { CreateSubtaskDto } from './dto/create-subtask.dto';
 import { UpdateSubtaskDto } from './dto/update-subtask.dto';
 import { PostgreSQLTokens } from 'src/repository/postgresql.enums';
@@ -22,10 +22,11 @@ export class SubtasksService {
 
   async create(createSubtaskDto: CreateSubtaskDto, user: User) {
     return this.metrics.track('subtasks', 'create', async () => {
-      const task = await this.tasksService.findOne(BigInt(createSubtaskDto.taskId))
+      await this.tasksService.assertCanAccessTask(BigInt(createSubtaskDto.taskId), user);
+      const task = await this.tasksService.findOne(BigInt(createSubtaskDto.taskId));
 
       if (!task) {
-        throw new BadRequestException(`Task not found`)
+        throw new NotFoundException('Task not found')
       }
 
       return this.subtasksRepository.save({
@@ -47,27 +48,30 @@ export class SubtasksService {
     });
   }
 
-  findOne(id: string) {
-    return this.metrics.track('subtasks', 'find_one', () => {
+  async findOne(id: string, user: User) {
+    return this.metrics.track('subtasks', 'find_one', async () => {
       try {
+        const subtask = await this.subtasksRepository.findOne({
+          where: { id },
+          relations: ['task'],
+        });
+        if (!subtask?.task?.id) {
+          throw new NotFoundException('Subtask not found');
+        }
+        await this.tasksService.assertCanAccessTask(BigInt(subtask.task.id), user);
         return this.subtasksRepository.findOne({
-          where: {
-            id: id
-          }
-        })
+          where: { id },
+        });
       } catch (error) {
+        if (error instanceof NotFoundException) throw error;
         throw error;
       }
     });
   }
 
-  async findByTaskId(taskId: string) {
+  async findByTaskId(taskId: string, user: User) {
     return this.metrics.track('subtasks', 'find_by_task', async () => {
-      const task = await this.tasksService.findOne(BigInt(taskId))
-
-      if (!task) {
-        throw new BadRequestException(`Task not found`)
-      }
+      await this.tasksService.assertCanAccessTask(BigInt(taskId), user);
 
       return await this.subtasksRepository.find({
         where: {

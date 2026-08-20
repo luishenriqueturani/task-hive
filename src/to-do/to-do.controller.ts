@@ -112,9 +112,9 @@ export class ToDoController {
     },
   })
   @ApiResponse({ status: 400, description: 'Erro ao buscar tarefa' })
-  findOne(@Param('id') id: string) {
+  findOne(@Param('id') id: string, @User() user: UserEntity) {
     try {
-      return this.toDoService.findOne(BigInt(id));
+      return this.toDoService.findOne(BigInt(id), user);
       
     } catch (error) {
       console.log(error)

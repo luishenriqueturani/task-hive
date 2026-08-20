@@ -90,6 +90,20 @@ describe('Projects (e2e)', () => {
       .expect(200);
   });
 
+  it('GET /projects/:id — 404 para utilizador sem acesso', async () => {
+    const owner = await registerUser(app, 'pr_iso_o');
+    const stranger = await registerUser(app, 'pr_iso_s');
+    const created = await request(app.getHttpServer())
+      .post('/projects')
+      .set(authHeader(owner.token))
+      .send({ name: 'Privado', description: 'd' })
+      .expect(201);
+    await request(app.getHttpServer())
+      .get(`/projects/${created.body.id}`)
+      .set(authHeader(stranger.token))
+      .expect(404);
+  });
+
   it('GET /projects/:id/participants — 404 projeto inexistente', async () => {
     const u = await registerUser(app, 'pr_nf');
     await request(app.getHttpServer())

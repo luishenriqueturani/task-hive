@@ -1,4 +1,4 @@
-import { BadRequestException, ForbiddenException, Inject, Injectable } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { CreateTaskDto } from './dto/create-task.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
 import { SnowflakeIdService } from 'src/snowflakeid/snowflakeid.service';
@@ -137,11 +137,19 @@ export class TasksService {
     });
   }
 
-  findByStage(stage: string) {
-    return this.metrics.track('tasks', 'find_by_stage', () => {
+  findByStage(stage: string, user: User) {
+    return this.metrics.track('tasks', 'find_by_stage', async () => {
       try {
-        // Join explícito de `user` (só id/name/email) — o frontend usa
-        // task.user.id em canMoveOrRemoveTask para mostrar DnD/concluir.
+        const stageEntity = await this.projectStagesService.loadStage(BigInt(stage));
+        if (!stageEntity) {
+          throw new NotFoundException('Coluna não encontrada');
+        }
+        const project = await this.projectsService.findOneWithOwnerAndParticipants(
+          BigInt(stageEntity.project.id),
+        );
+        if (!project || !canAccessProject(project, user)) {
+          throw new NotFoundException('Coluna não encontrada');
+        }
         return this.tasksRepository
           .createQueryBuilder('task')
           .leftJoinAndSelect('task.stage', 'stage')
@@ -152,6 +160,7 @@ export class TasksService {
           .addOrderBy('task.createdAt', 'ASC')
           .getMany();
       } catch (error) {
+        if (error instanceof NotFoundException) throw error;
         console.log(error)
         throw error
       }
@@ -160,6 +169,24 @@ export class TasksService {
 
   findOne(id: bigint) {
     return this.metrics.track('tasks', 'find_one', () => this.loadTaskEntity(id));
+  }
+
+  findOneForActor(id: bigint, user: User) {
+    return this.metrics.track('tasks', 'find_one', async () => {
+      const { project } = await this.loadTaskForAccess(id);
+      if (!canAccessProject(project, user)) {
+        throw new NotFoundException('Task not found');
+      }
+      return this.loadTaskEntity(id);
+    });
+  }
+
+  /** Verifica acesso ao projeto da tarefa; lança 404 se negado. */
+  async assertCanAccessTask(id: bigint, user: User) {
+    const { project } = await this.loadTaskForAccess(id);
+    if (!canAccessProject(project, user)) {
+      throw new NotFoundException('Task not found');
+    }
   }
 
   private loadTaskEntity(id: bigint) {
@@ -265,6 +292,9 @@ export class TasksService {
             BigInt(updateTaskDto.stageId!),
           );
           if (!stage) throw new BadRequestException('Stage not found');
+          if (String(stage.project.id) !== String(task.stage.project.id)) {
+            throw new BadRequestException('Stage not found');
+          }
         }
 
         await this.tasksRepository.update(

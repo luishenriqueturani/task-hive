@@ -1,7 +1,7 @@
 import { INestApplication } from '@nestjs/common';
 import * as request from 'supertest';
 import { createE2eApplication } from './helpers/e2e-app.factory';
-import { authHeader, registerUser } from './helpers/e2e-auth';
+import { authHeader, registerAdminUser, registerUser } from './helpers/e2e-auth';
 
 async function createProject(
   app: INestApplication,
@@ -36,11 +36,16 @@ describe('ProjectStages (e2e)', () => {
       .expect(422);
   });
 
-  it('GET /project-stages — 200 lista global', async () => {
+  it('GET /project-stages — 403 para CLIENT e 200 para admin', async () => {
     const u = await registerUser(app, 'st_all');
-    const res = await request(app.getHttpServer())
+    await request(app.getHttpServer())
       .get('/project-stages')
       .set(authHeader(u.token))
+      .expect(403);
+    const admin = await registerAdminUser(app, 'st_all_adm');
+    const res = await request(app.getHttpServer())
+      .get('/project-stages')
+      .set(authHeader(admin.token))
       .expect(200);
     expect(Array.isArray(res.body)).toBe(true);
   });

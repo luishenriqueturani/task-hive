@@ -4,8 +4,11 @@ import { SubtasksService } from './subtasks.service';
 import { CreateSubtaskDto } from './dto/create-subtask.dto';
 import { UpdateSubtaskDto } from './dto/update-subtask.dto';
 import { AuthGuard } from 'src/guards/auth.guard';
+import { RolesGuard } from 'src/guards/roles.guard';
+import { Roles } from 'src/decorators/roles.decorator';
 import { User } from 'src/decorators/user.decorator';
 import { User as UserEntity } from 'src/users/entities/User.entity';
+import { UserRole } from 'src/users/user-role.enum';
 
 @ApiTags('subtasks')
 @ApiBearerAuth()
@@ -45,8 +48,10 @@ export class SubtasksController {
     }
   }
 
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN_GOD, UserRole.ADMIN_COLLABORATOR)
   @Get()
-  @ApiOperation({ summary: 'Listar subtarefas', description: 'Retorna todas as subtarefas (find sem relations).' })
+  @ApiOperation({ summary: 'Listar subtarefas', description: 'Retorna todas as subtarefas. Apenas administradores.' })
   @ApiResponse({
     status: 200,
     description: 'Lista de subtarefas',
@@ -90,9 +95,9 @@ export class SubtasksController {
     },
   })
   @ApiResponse({ status: 400, description: 'Tarefa não encontrada' })
-  findByTaskId(@Param('taskId') taskId: string) {
+  findByTaskId(@Param('taskId') taskId: string, @User() user: UserEntity) {
     try {
-      return this.subtasksService.findByTaskId(taskId);
+      return this.subtasksService.findByTaskId(taskId, user);
     } catch (error) {
       throw error
     }
@@ -116,9 +121,9 @@ export class SubtasksController {
       },
     },
   })
-  findOne(@Param('id') id: string) {
+  findOne(@Param('id') id: string, @User() user: UserEntity) {
     try {
-      return this.subtasksService.findOne(id);
+      return this.subtasksService.findOne(id, user);
     } catch (error) {
       throw error
     }

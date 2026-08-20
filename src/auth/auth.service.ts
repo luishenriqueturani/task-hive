@@ -192,9 +192,11 @@ export class AuthService {
 
       user.password = await Crypt.hash(password)
 
-      const update = await this.userRepository.save(user)
+      const update = await this.userRepository.update(fp.user.id, {
+        password: user.password,
+      })
 
-      if (!update) {
+      if (!update.affected) {
         throw new BadRequestException('Falha ao atualizar usuário')
       }
 
@@ -237,12 +239,12 @@ export class AuthService {
    * @returns User
    */
   async findFirstUserByEmail(email: string) {
-    return this.userRepository.findOne({
-      where: {
-        email,
-        deletedAt: null,
-      },
-    });
+    return this.userRepository
+      .createQueryBuilder('user')
+      .addSelect('user.password')
+      .where('user.email = :email', { email })
+      .andWhere('user.deletedAt IS NULL')
+      .getOne();
   }
 
   /**

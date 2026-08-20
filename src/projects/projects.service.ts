@@ -56,8 +56,10 @@ export class ProjectsService {
       try {
         return this.projectsRepository
           .createQueryBuilder('project')
-          .leftJoinAndSelect('project.userOwner', 'owner')
-          .leftJoinAndSelect('project.participants', 'participants')
+          .leftJoin('project.userOwner', 'owner')
+          .addSelect(['owner.id', 'owner.name', 'owner.email', 'owner.avatar', 'owner.role'])
+          .leftJoin('project.participants', 'participants')
+          .addSelect(['participants.id', 'participants.name', 'participants.email', 'participants.avatar', 'participants.role'])
           .where('owner.id = :userId', { userId: user.id })
           .orWhere('participants.id = :userId', { userId: user.id })
           .getMany();
@@ -67,8 +69,14 @@ export class ProjectsService {
     });
   }
 
-  async findOne(id: bigint) {
-    return this.metrics.track('projects', 'find_one', () => this.findOneEntity(id));
+  async findOne(id: bigint, user: User) {
+    return this.metrics.track('projects', 'find_one', async () => {
+      const project = await this.findOneWithOwnerAndParticipants(id);
+      if (!project || !canAccessProject(project, user)) {
+        throw new NotFoundException('Projeto não encontrado');
+      }
+      return this.findOneEntity(id);
+    });
   }
 
   /** Internal lookup without domain metric (used by other modules). */

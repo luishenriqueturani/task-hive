@@ -1,4 +1,4 @@
-import { BadRequestException, Inject, Injectable } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { CreateToDoDto } from './dto/create-to-do.dto';
 import { UpdateToDoDto } from './dto/update-to-do.dto';
 import { User } from 'src/users/entities/User.entity';
@@ -101,13 +101,15 @@ export class ToDoService {
     });
   }
 
-  findOne(id: bigint) {
-    return this.metrics.track('to-do', 'find_one', () => {
+  findOne(id: bigint, user: User) {
+    return this.metrics.track('to-do', 'find_one', async () => {
       try {
-        return this.toDoRepository.findOne({
+        const todo = await this.toDoRepository.findOne({
           relations: ['user'],
           where: {
             id: String(id),
+            user: { id: user.id },
+            deletedAt: null,
           },
           select: {
             id: true,
@@ -130,24 +132,35 @@ export class ToDoService {
             updatedAt: true,
           }
         })
+        if (!todo) {
+          throw new NotFoundException('Tarefa não encontrada');
+        }
+        return todo;
       } catch (error) {
+        if (error instanceof NotFoundException) throw error;
         throw new BadRequestException('Falha ao buscar a tarefa, Error: ' + error)
       }
     });
   }
 
+  private async findOwnedOrThrow(id: bigint, user: User) {
+    const todo = await this.toDoRepository.findOne({
+      where: {
+        id: String(id),
+        user: { id: user.id },
+        deletedAt: null,
+      },
+    });
+    if (!todo) {
+      throw new NotFoundException('Tarefa não encontrada');
+    }
+    return todo;
+  }
+
   async update(id: bigint, updateToDoDto: UpdateToDoDto, user: User) {
     return this.metrics.track('to-do', 'update', async () => {
       try {
-        const todo = await this.toDoRepository.findOne({
-          where: {
-            id: String(id),
-          },
-        })
-
-        if (!todo) {
-          throw new BadRequestException('Tarefa não encontrada')
-        }
+        await this.findOwnedOrThrow(id, user);
 
         const patch: Record<string, unknown> = {
           ...(updateToDoDto.title !== undefined && { title: updateToDoDto.title }),
@@ -167,10 +180,11 @@ export class ToDoService {
           if (updateToDoDto.recurringTimes !== undefined) {
             patch.recurringTimes = updateToDoDto.recurringTimes;
           }
-          if (!todo.recurringNextDate) {
+          const owned = await this.findOwnedOrThrow(id, user);
+          if (!owned.recurringNextDate) {
             patch.recurringNextDate = this.returnNextDate(
               updateToDoDto.recurringType ??
-                todo.recurringType ??
+                owned.recurringType ??
                 RecurringTypes.WEEKLY,
             );
           }
@@ -195,6 +209,7 @@ export class ToDoService {
         return this.toDoRepository.update(id.toString(), patch);
 
       } catch (error) {
+        if (error instanceof NotFoundException) throw error;
         throw new BadRequestException('Falha ao atualizar a tarefa, Error: ' + error)
       }
     });
@@ -203,21 +218,14 @@ export class ToDoService {
   async remove(id: bigint, user: User) {
     return this.metrics.track('to-do', 'remove', async () => {
       try {
-        const todo = await this.toDoRepository.findOne({
-          where: {
-            id: String(id),
-          },
-        })
-
-        if (!todo) {
-          throw new BadRequestException('Tarefa não encontrada')
-        }
+        await this.findOwnedOrThrow(id, user);
 
         return this.toDoRepository.update(id.toString(), {
           deletedAt: new Date(),
         })
 
       } catch (error) {
+        if (error instanceof NotFoundException) throw error;
         throw new BadRequestException('Falha ao remover a tarefa, Error: ' + error)
       }
     });
@@ -226,15 +234,7 @@ export class ToDoService {
   async endTask(id: bigint, user: User) {
     return this.metrics.track('to-do', 'end_task', async () => {
       try {
-        const todo = await this.toDoRepository.findOne({
-          where: {
-            id: String(id),
-          },
-        })
-
-        if (!todo) {
-          throw new BadRequestException('Tarefa não encontrada')
-        }
+        await this.findOwnedOrThrow(id, user);
 
         const task = await this.toDoRepository.update(id.toString(), {
           status: ToDoStatus.DONE,
@@ -247,6 +247,7 @@ export class ToDoService {
         return task
 
       } catch (error) {
+        if (error instanceof NotFoundException) throw error;
         throw new BadRequestException('Falha ao remover a tarefa, Error: ' + error)
       }
     });
@@ -255,21 +256,14 @@ export class ToDoService {
   async changeTaskStatus(id: bigint, status: ToDoStatus, user: User) {
     return this.metrics.track('to-do', 'update_status', async () => {
       try {
-        const todo = await this.toDoRepository.findOne({
-          where: {
-            id: String(id),
-          },
-        })
-
-        if (!todo) {
-          throw new BadRequestException('Tarefa não encontrada')
-        }
+        await this.findOwnedOrThrow(id, user);
 
         return this.toDoRepository.update(id.toString(), {
           status: status,
         })
 
       } catch (error) {
+        if (error instanceof NotFoundException) throw error;
         throw new BadRequestException('Falha ao remover a tarefa, Error: ' + error)
       }
     });
@@ -299,24 +293,16 @@ export class ToDoService {
   async nextDateRecurringTask(id: bigint, user: User) {
     return this.metrics.track('to-do', 'next_recurring', async () => {
       try {
-        const todo = await this.toDoRepository.findOne({
-          where: {
-            id: String(id),
-          },
-        })
-
-        if (!todo) {
-          throw new BadRequestException('Tarefa não encontrada')
-        }
+        const todo = await this.findOwnedOrThrow(id, user);
 
         if (todo.type !== ToDoTypes.RECURRING) {
-          return this.endTaskUntracked(id);
+          return this.endTaskUntracked(id, user);
         }
 
         const count = (todo.recurringCount ?? 0) + 1;
 
         if (todo.recurringTimes != null && count >= todo.recurringTimes) {
-          return this.endTaskUntracked(id);
+          return this.endTaskUntracked(id, user);
         }
 
         const base = todo.recurringNextDate
@@ -331,7 +317,7 @@ export class ToDoService {
           todo.recurringDeadline &&
           next.getTime() > new Date(todo.recurringDeadline).getTime()
         ) {
-          return this.endTaskUntracked(id);
+          return this.endTaskUntracked(id, user);
         }
 
         return this.toDoRepository.update(id.toString(), {
@@ -341,18 +327,14 @@ export class ToDoService {
         })
 
       } catch (error) {
+        if (error instanceof NotFoundException) throw error;
         throw new BadRequestException('Falha ao remover a tarefa, Error: ' + error)
       }
     });
   }
 
-  private async endTaskUntracked(id: bigint) {
-    const todo = await this.toDoRepository.findOne({
-      where: { id: String(id) },
-    })
-    if (!todo) {
-      throw new BadRequestException('Tarefa não encontrada')
-    }
+  private async endTaskUntracked(id: bigint, user: User) {
+    await this.findOwnedOrThrow(id, user);
     return this.toDoRepository.update(id.toString(), {
       status: ToDoStatus.DONE,
     })

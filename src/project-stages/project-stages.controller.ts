@@ -4,8 +4,11 @@ import { ProjectStagesService } from './project-stages.service';
 import { CreateProjectStageDto } from './dto/create-project-stage.dto';
 import { UpdateProjectStageDto } from './dto/update-project-stage.dto';
 import { AuthGuard } from 'src/guards/auth.guard';
+import { RolesGuard } from 'src/guards/roles.guard';
+import { Roles } from 'src/decorators/roles.decorator';
 import { User } from 'src/decorators/user.decorator';
 import { User as UserEntity } from 'src/users/entities/User.entity';
+import { UserRole } from 'src/users/user-role.enum';
 
 @ApiTags('project-stages')
 @ApiBearerAuth()
@@ -47,8 +50,10 @@ export class ProjectStagesController {
     }
   }
 
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN_GOD, UserRole.ADMIN_COLLABORATOR)
   @Get()
-  @ApiOperation({ summary: 'Listar colunas', description: 'Retorna todas as colunas (find sem relations).' })
+  @ApiOperation({ summary: 'Listar colunas', description: 'Retorna todas as colunas. Apenas administradores.' })
   @ApiResponse({
     status: 200,
     description: 'Lista de colunas',
@@ -95,9 +100,9 @@ export class ProjectStagesController {
     },
   })
   @ApiResponse({ status: 500, description: 'Erro ao buscar colunas do projeto' })
-  findAllByProject(@Param('id') id: string) {
+  findAllByProject(@Param('id') id: string, @User() user: UserEntity) {
     try {
-      return this.projectStagesService.findAllByProject(id);
+      return this.projectStagesService.findAllByProject(id, user);
     } catch (error) {
       console.log(error);
       throw error;
@@ -126,9 +131,9 @@ export class ProjectStagesController {
     },
   })
   @ApiResponse({ status: 500, description: 'Erro ao buscar coluna' })
-  findOne(@Param('id') id: string) {
+  findOne(@Param('id') id: string, @User() user: UserEntity) {
     try {
-      return this.projectStagesService.findOne(BigInt(id));
+      return this.projectStagesService.findOne(BigInt(id), user);
     } catch (error) {
       console.log(error);
       throw error;

@@ -1,4 +1,4 @@
-import { BadRequestException, HttpException, HttpStatus, Inject, Injectable } from '@nestjs/common';
+import { BadRequestException, HttpException, HttpStatus, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { Repository } from 'typeorm';
@@ -6,6 +6,19 @@ import { User } from 'src/users/entities/User.entity';
 import { PostgreSQLTokens } from 'src/repository/postgresql.enums';
 import { Crypt } from 'src/utils/crypt';
 import { AppMetricsService } from 'src/metrics/app-metrics.service';
+import { canAccessUserProfile, canManageUsers } from './user-permissions.helper';
+
+const PUBLIC_USER_SELECT = {
+  password: false as const,
+  avatar: true,
+  createdAt: true,
+  updatedAt: true,
+  deletedAt: true,
+  id: true,
+  name: true,
+  email: true,
+  role: true,
+};
 
 @Injectable()
 export class UsersService {
@@ -16,57 +29,72 @@ export class UsersService {
     private readonly metrics: AppMetricsService,
   ) { }
 
-
   findAll() {
     return this.metrics.track('users', 'find_all', () =>
       this.userRepository.find({
-        select: {
-          password: false,
-          avatar: true,
-          createdAt: true,
-          updatedAt: true, 
-          deletedAt: true,
-          id: true,
-          name: true,
-          email: true,
-        }
+        where: { deletedAt: null },
+        select: PUBLIC_USER_SELECT,
       }),
     );
   }
 
-  findOne(id: string) {
-    return this.metrics.track('users', 'find_one', () =>
-      this.userRepository.findOne({
-        where: {
-          id,
-          deletedAt: null
-        },
-        select: {
-          password: false,
-          avatar: true,
-          createdAt: true,
-          updatedAt: true, 
-          deletedAt: true,
-          id: true,
-          name: true,
-          email: true,
-        }
-      }),
+  search(query: string, limit = 20) {
+    const q = query.trim();
+    if (q.length < 2) {
+      throw new BadRequestException('Informe ao menos 2 caracteres para buscar');
+    }
+    return this.metrics.track('users', 'search', () =>
+      this.userRepository
+        .createQueryBuilder('user')
+        .select([
+          'user.id',
+          'user.name',
+          'user.email',
+          'user.avatar',
+          'user.role',
+        ])
+        .where('user.deletedAt IS NULL')
+        .andWhere('(user.name ILIKE :q OR user.email ILIKE :q)', { q: `%${q}%` })
+        .orderBy('user.name', 'ASC')
+        .take(Math.min(limit, 50))
+        .getMany(),
     );
+  }
+
+  findOne(id: string, actor: User) {
+    return this.metrics.track('users', 'find_one', async () => {
+      if (!canAccessUserProfile(id, actor)) {
+        throw new NotFoundException('Usuário não encontrado');
+      }
+      const user = await this.userRepository.findOne({
+        where: { id, deletedAt: null },
+        select: PUBLIC_USER_SELECT,
+      });
+      if (!user) {
+        throw new NotFoundException('Usuário não encontrado');
+      }
+      return user;
+    });
   }
 
   /**
-   * Soft delete: marca deletedAt. Hard delete restrito a ADMIN_GOD (Fase 3).
-   * Impede auto-delete: usuário não pode remover a si mesmo.
+   * Soft delete: marca deletedAt. Impede auto-delete.
+   * Apenas admin ou o próprio utilizador (via remove com regra de self).
    */
-  async remove(id: string, currentUserId?: string) {
+  async remove(id: string, actor: User) {
     return this.metrics.track('users', 'remove', async () => {
+      if (!canAccessUserProfile(id, actor)) {
+        throw new NotFoundException('User not found');
+      }
+      if (id === actor.id) {
+        throw new HttpException('Não é permitido remover a própria conta', HttpStatus.FORBIDDEN);
+      }
+      if (!canManageUsers(actor)) {
+        throw new NotFoundException('User not found');
+      }
       const user = await this.findOneUntracked(id);
       if (!user) {
-        throw new HttpException('User not found', HttpStatus.NOT_FOUND);
-      }
-      if (currentUserId && id === currentUserId) {
-        throw new HttpException('Não é permitido remover a própria conta', HttpStatus.FORBIDDEN);
+        throw new NotFoundException('User not found');
       }
       return this.userRepository.update(id, {
         deletedAt: new Date(),
@@ -75,12 +103,12 @@ export class UsersService {
   }
 
   findByEmail(email: string) {
-    return this.userRepository.findOne({
-      //withDeleted: true,
-      where: {
-        email,
-      },
-    });
+    return this.userRepository
+      .createQueryBuilder('user')
+      .addSelect('user.password')
+      .where('user.email = :email', { email })
+      .andWhere('user.deletedAt IS NULL')
+      .getOne();
   }
 
   async create(createUserDto: CreateUserDto) {
@@ -107,17 +135,20 @@ export class UsersService {
     });
   }
 
-  async update(id: string, updateUserDto: UpdateUserDto) {
+  async update(id: string, updateUserDto: UpdateUserDto, actor: User) {
     return this.metrics.track('users', 'update', async () => {
+      if (!canAccessUserProfile(id, actor)) {
+        throw new NotFoundException('User not found');
+      }
       const user = await this.findOneUntracked(id);
 
       if(!user) {
-        throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+        throw new NotFoundException('User not found');
       }
 
       if(user.email !== updateUserDto.email) {
         const existing = await this.findByEmail(updateUserDto.email);
-        if(existing) {
+        if(existing && existing.id !== id) {
           throw new HttpException('Email already exists', HttpStatus.UNPROCESSABLE_ENTITY);
         }
       }
@@ -130,10 +161,16 @@ export class UsersService {
     });
   }
 
-  async softDelete(id: string) {
+  async softDelete(id: string, actor: User) {
     return this.metrics.track('users', 'soft_delete', async () => {
+      if (!canManageUsers(actor)) {
+        throw new NotFoundException('User not found');
+      }
+      if (id === actor.id) {
+        throw new HttpException('Não é permitido remover a própria conta', HttpStatus.FORBIDDEN);
+      }
       if(!await this.findOneUntracked(id)) {
-        throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+        throw new NotFoundException('User not found');
       }
 
       return this.userRepository.update(id, {
@@ -149,16 +186,7 @@ export class UsersService {
         id,
         deletedAt: null
       },
-      select: {
-        password: false,
-        avatar: true,
-        createdAt: true,
-        updatedAt: true, 
-        deletedAt: true,
-        id: true,
-        name: true,
-        email: true,
-      }
+      select: PUBLIC_USER_SELECT,
     });
   }
 }

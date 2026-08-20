@@ -71,7 +71,7 @@ export class TasksController {
   @ApiOkResponse({ description: 'Lista de tarefas da coluna (com stage)', type: TaskOpenApiDto, isArray: true })
   findByStage(@Param('stage') stage: string, @User() user: UserEntity) {
     try {
-      return this.tasksService.findByStage(stage);
+      return this.tasksService.findByStage(stage, user);
     } catch (error) {
       throw error;
     }
@@ -204,9 +204,9 @@ export class TasksController {
     description: 'Tarefa encontrada (com stage). Se não existir, retorna null.',
     type: TaskOpenApiDto,
   })
-  findOne(@Param('id') id: string) {
+  findOne(@Param('id') id: string, @User() user: UserEntity) {
     try {
-      return this.tasksService.findOne(BigInt(id));
+      return this.tasksService.findOneForActor(BigInt(id), user);
     } catch (error) {
       throw error;
     }

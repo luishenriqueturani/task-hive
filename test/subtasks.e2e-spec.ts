@@ -1,7 +1,7 @@
 import { INestApplication } from '@nestjs/common';
 import * as request from 'supertest';
 import { createE2eApplication } from './helpers/e2e-app.factory';
-import { authHeader, registerUser } from './helpers/e2e-auth';
+import { authHeader, registerAdminUser, registerUser } from './helpers/e2e-auth';
 
 async function seedTask(app: INestApplication, token: string) {
   const pr = await request(app.getHttpServer())
@@ -72,8 +72,9 @@ describe('Subtasks (e2e)', () => {
       .expect(200);
   });
 
-  it('GET /subtasks e GET /subtasks/:id — listagem e detalhe', async () => {
+  it('GET /subtasks e GET /subtasks/:id — listagem admin e detalhe com acesso', async () => {
     const u = await registerUser(app, 'sb_get');
+    const admin = await registerAdminUser(app, 'sb_get_adm');
     const taskId = await seedTask(app, u.token);
     const sub = await request(app.getHttpServer())
       .post('/subtasks')
@@ -84,7 +85,7 @@ describe('Subtasks (e2e)', () => {
 
     const all = await request(app.getHttpServer())
       .get('/subtasks')
-      .set(authHeader(u.token))
+      .set(authHeader(admin.token))
       .expect(200);
     expect(Array.isArray(all.body)).toBe(true);
     expect(all.body.some((s: { id: string }) => String(s.id) === subId)).toBe(
