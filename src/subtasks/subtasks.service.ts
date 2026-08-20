@@ -7,6 +7,7 @@ import { Subtask } from 'src/subtasks/entities/subtask.entity';
 import { SnowflakeIdService } from 'src/snowflakeid/snowflakeid.service';
 import { User } from 'src/users/entities/User.entity';
 import { TasksService } from 'src/tasks/tasks.service';
+import { AppMetricsService } from 'src/metrics/app-metrics.service';
 
 @Injectable()
 export class SubtasksService {
@@ -16,11 +17,11 @@ export class SubtasksService {
     private readonly subtasksRepository: Repository<Subtask>,
     private snowflakeIdService: SnowflakeIdService,
     private readonly tasksService: TasksService,
+    private readonly metrics: AppMetricsService,
   ) { }
 
   async create(createSubtaskDto: CreateSubtaskDto, user: User) {
-    try {
-      
+    return this.metrics.track('subtasks', 'create', async () => {
       const task = await this.tasksService.findOne(BigInt(createSubtaskDto.taskId))
 
       if (!task) {
@@ -33,35 +34,35 @@ export class SubtasksService {
         task,
         responsible: user
       })
-
-    } catch (error) {
-      throw error;
-    }
+    });
   }
 
   findAll() {
-    try {
-      return this.subtasksRepository.find()
-    } catch (error) {
-      throw error;
-    }
+    return this.metrics.track('subtasks', 'find_all', () => {
+      try {
+        return this.subtasksRepository.find()
+      } catch (error) {
+        throw error;
+      }
+    });
   }
 
   findOne(id: string) {
-    try {
-      return this.subtasksRepository.findOne({
-        where: {
-          id: id
-        }
-      })
-    } catch (error) {
-      throw error;
-    }
+    return this.metrics.track('subtasks', 'find_one', () => {
+      try {
+        return this.subtasksRepository.findOne({
+          where: {
+            id: id
+          }
+        })
+      } catch (error) {
+        throw error;
+      }
+    });
   }
 
   async findByTaskId(taskId: string) {
-    try {
-
+    return this.metrics.track('subtasks', 'find_by_task', async () => {
       const task = await this.tasksService.findOne(BigInt(taskId))
 
       if (!task) {
@@ -76,14 +77,11 @@ export class SubtasksService {
         },
         relations: ['responsible'],
       })
-    } catch (error) {
-      throw error;
-    }
+    });
   }
 
   async update(id: string, updateSubtaskDto: UpdateSubtaskDto, user: User) {
-    try {
-      
+    return this.metrics.track('subtasks', 'update', async () => {
       const subtask = await this.subtasksRepository.findOne({
         where: { id },
         relations: ['responsible'],
@@ -112,15 +110,11 @@ export class SubtasksService {
           responsible: user,
         },
       );
-
-    } catch (error) {
-      throw error;
-    }
+    });
   }
 
   async remove(id: string, user: User) {
-    try {
-      
+    return this.metrics.track('subtasks', 'remove', async () => {
       const subtask = await this.subtasksRepository.findOne({
         where: { id },
         relations: ['responsible'],
@@ -139,9 +133,6 @@ export class SubtasksService {
       }, {
         deletedAt: new Date()
       })
-
-    } catch (error) {
-      throw error;
-    }
+    });
   }
 }

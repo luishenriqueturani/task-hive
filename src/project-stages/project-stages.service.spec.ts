@@ -5,6 +5,7 @@ import {
   mockProjectStageRepositoryProvider,
   mockSnowflakeIdServiceProvider,
 } from 'src/test-utils/unit-test.mocks';
+import { mockAppMetricsProvider } from 'src/test-utils/mock-app-metrics';
 
 describe('ProjectStagesService', () => {
   let service: ProjectStagesService;
@@ -12,6 +13,7 @@ describe('ProjectStagesService', () => {
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
+        mockAppMetricsProvider,
         ProjectStagesService,
         mockProjectStageRepositoryProvider,
         mockSnowflakeIdServiceProvider,

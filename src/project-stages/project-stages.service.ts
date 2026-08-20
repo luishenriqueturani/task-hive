@@ -8,6 +8,7 @@ import { ProjectsService } from 'src/projects/projects.service';
 import { ProjectStage } from './entities/ProjectStage.entity';
 import { User } from 'src/users/entities/User.entity';
 import { canManageProject } from 'src/projects/project-permissions.helper';
+import { AppMetricsService } from 'src/metrics/app-metrics.service';
 
 @Injectable()
 export class ProjectStagesService {
@@ -17,89 +18,101 @@ export class ProjectStagesService {
     private projectStagesRepository: Repository<ProjectStage>,
     private snowflakeIdService: SnowflakeIdService,
     private projectsService: ProjectsService,
+    private readonly metrics: AppMetricsService,
   ) { }
 
   async create(createProjectStageDto: CreateProjectStageDto, user: User) {
-    try {
-      const project = await this.projectsService.findOneWithOwnerAndParticipants(BigInt(createProjectStageDto.projectId));
-      if (!project) {
-        throw new BadRequestException('Project not found');
-      }
-      if (!canManageProject(project, user)) {
-        throw new ForbiddenException('Sem permissão para criar coluna neste projeto');
-      }
+    return this.metrics.track('project-stages', 'create', async () => {
+      try {
+        const project = await this.projectsService.findOneWithOwnerAndParticipants(BigInt(createProjectStageDto.projectId));
+        if (!project) {
+          throw new BadRequestException('Project not found');
+        }
+        if (!canManageProject(project, user)) {
+          throw new ForbiddenException('Sem permissão para criar coluna neste projeto');
+        }
 
-      let nextStage: ProjectStage | undefined;
+        let nextStage: ProjectStage | undefined;
 
-      if(createProjectStageDto.nextStageId) {
-        nextStage = await this.findOne(BigInt(createProjectStageDto.nextStageId))
+        if(createProjectStageDto.nextStageId) {
+          nextStage = await this.loadStage(BigInt(createProjectStageDto.nextStageId))
 
-      }
+        }
 
-      let prevStage : ProjectStage | undefined
+        let prevStage : ProjectStage | undefined
 
-      if(createProjectStageDto.prevStageId) {
-        prevStage = await this.findOne(BigInt(createProjectStageDto.prevStageId))
+        if(createProjectStageDto.prevStageId) {
+          prevStage = await this.loadStage(BigInt(createProjectStageDto.prevStageId))
 
-      }
+        }
 
-      const newStage = await this.projectStagesRepository.save({
-        id: String(this.snowflakeIdService.generateId()),
-        name: createProjectStageDto.name,
-        project: project,
-        order: createProjectStageDto.order,
-        nextStage: nextStage,
-        prevStage: prevStage,
-      })
-
-
-      if(nextStage) {
-        await this.projectStagesRepository.update(nextStage.id, {
-          prevStage: newStage
+        const newStage = await this.projectStagesRepository.save({
+          id: String(this.snowflakeIdService.generateId()),
+          name: createProjectStageDto.name,
+          project: project,
+          order: createProjectStageDto.order,
+          nextStage: nextStage,
+          prevStage: prevStage,
         })
-      }
 
-      if(prevStage) {
-        await this.projectStagesRepository.update(prevStage.id, {
-          nextStage: newStage
-        })
-      }
 
-      return newStage
+        if(nextStage) {
+          await this.projectStagesRepository.update(nextStage.id, {
+            prevStage: newStage
+          })
+        }
 
-    } catch (error) {
-      if (
-        error instanceof BadRequestException ||
-        error instanceof ForbiddenException
-      ) {
-        throw error;
+        if(prevStage) {
+          await this.projectStagesRepository.update(prevStage.id, {
+            nextStage: newStage
+          })
+        }
+
+        return newStage
+
+      } catch (error) {
+        if (
+          error instanceof BadRequestException ||
+          error instanceof ForbiddenException
+        ) {
+          throw error;
+        }
+        throw new InternalServerErrorException('Erro ao criar coluna do projeto');
       }
-      throw new InternalServerErrorException('Erro ao criar coluna do projeto');
-    }
+    });
   }
 
   async findAll() {
-    try {
-      return this.projectStagesRepository.find();
-    } catch (error) {
-      throw new InternalServerErrorException('Erro ao buscar colunas');
-    }
+    return this.metrics.track('project-stages', 'find_all', async () => {
+      try {
+        return this.projectStagesRepository.find();
+      } catch (error) {
+        throw new InternalServerErrorException('Erro ao buscar colunas');
+      }
+    });
   }
 
   async findAllByProject(id: string) {
-    try {
-      return this.projectStagesRepository.find({
-        where: {
-          project: { id },
-        },
-        order: { order: 'ASC' },
-      });
-    } catch (error) {
-      throw new InternalServerErrorException('Erro ao buscar colunas do projeto');
-    }
+    return this.metrics.track('project-stages', 'find_all_by_project', async () => {
+      try {
+        return this.projectStagesRepository.find({
+          where: {
+            project: { id },
+          },
+          order: { order: 'ASC' },
+        });
+      } catch (error) {
+        throw new InternalServerErrorException('Erro ao buscar colunas do projeto');
+      }
+    });
   }
 
   async findOne(id: bigint) {
+    return this.metrics.track('project-stages', 'find_one', () => this.loadStage(id));
+  }
+
+  /** Internal lookup without domain metric (used by tasks and stage mutations). */
+  async loadStage(id: bigint) {
     try {
       return this.projectStagesRepository.findOne({
         where: { id: String(id) },
@@ -111,74 +124,78 @@ export class ProjectStagesService {
   }
 
   async update(id: bigint, updateProjectStageDto: UpdateProjectStageDto, user: User) {
-    try {
-      const projectStage = await this.findOne(id);
+    return this.metrics.track('project-stages', 'update', async () => {
+      try {
+        const projectStage = await this.loadStage(id);
+        if (!projectStage) {
+          throw new BadRequestException('Project stage not found');
+        }
+        const project = await this.projectsService.findOneWithOwnerAndParticipants(BigInt(projectStage.project.id));
+        if (!project || !canManageProject(project, user)) {
+          throw new ForbiddenException('Sem permissão para editar esta coluna');
+        }
+
+        let nextStage: ProjectStage | undefined;
+
+        if(updateProjectStageDto.nextStageId) {
+          nextStage = await this.loadStage(BigInt(updateProjectStageDto.nextStageId))
+
+          if(nextStage) {
+            await this.projectStagesRepository.update(nextStage.id, {
+              prevStage: projectStage
+            })
+          }
+        }
+
+        let prevStage : ProjectStage | undefined
+
+        if(updateProjectStageDto.prevStageId) {
+          prevStage = await this.loadStage(BigInt(updateProjectStageDto.prevStageId))
+
+          if(prevStage) {
+            await this.projectStagesRepository.update(prevStage.id, {
+              nextStage: projectStage
+            })
+          }
+        }
+
+        await this.projectStagesRepository.update(id.toString(), {
+          name: updateProjectStageDto.name,
+          order: updateProjectStageDto.order,
+          nextStage: nextStage,
+          prevStage: prevStage,
+        });
+        return this.loadStage(id);
+      } catch (error) {
+        if (
+          error instanceof BadRequestException ||
+          error instanceof ForbiddenException
+        ) {
+          throw error;
+        }
+        throw new InternalServerErrorException('Erro ao atualizar coluna');
+      }
+    });
+  }
+
+  async remove(id: bigint, user: User) {
+    return this.metrics.track('project-stages', 'remove', async () => {
+      const projectStage = await this.loadStage(id);
       if (!projectStage) {
         throw new BadRequestException('Project stage not found');
       }
       const project = await this.projectsService.findOneWithOwnerAndParticipants(BigInt(projectStage.project.id));
       if (!project || !canManageProject(project, user)) {
-        throw new ForbiddenException('Sem permissão para editar esta coluna');
+        throw new ForbiddenException('Sem permissão para remover esta coluna');
       }
-
-      let nextStage: ProjectStage | undefined;
-
-      if(updateProjectStageDto.nextStageId) {
-        nextStage = await this.findOne(BigInt(updateProjectStageDto.nextStageId))
-
-        if(nextStage) {
-          await this.projectStagesRepository.update(nextStage.id, {
-            prevStage: projectStage
-          })
-        }
+      try {
+        await this.projectStagesRepository.update(id.toString(), {
+          deletedAt: new Date(),
+        });
+        return projectStage;
+      } catch (error) {
+        throw new InternalServerErrorException('Erro ao remover coluna');
       }
-
-      let prevStage : ProjectStage | undefined
-
-      if(updateProjectStageDto.prevStageId) {
-        prevStage = await this.findOne(BigInt(updateProjectStageDto.prevStageId))
-
-        if(prevStage) {
-          await this.projectStagesRepository.update(prevStage.id, {
-            nextStage: projectStage
-          })
-        }
-      }
-
-      await this.projectStagesRepository.update(id.toString(), {
-        name: updateProjectStageDto.name,
-        order: updateProjectStageDto.order,
-        nextStage: nextStage,
-        prevStage: prevStage,
-      });
-      return this.findOne(id);
-    } catch (error) {
-      if (
-        error instanceof BadRequestException ||
-        error instanceof ForbiddenException
-      ) {
-        throw error;
-      }
-      throw new InternalServerErrorException('Erro ao atualizar coluna');
-    }
-  }
-
-  async remove(id: bigint, user: User) {
-    const projectStage = await this.findOne(id);
-    if (!projectStage) {
-      throw new BadRequestException('Project stage not found');
-    }
-    const project = await this.projectsService.findOneWithOwnerAndParticipants(BigInt(projectStage.project.id));
-    if (!project || !canManageProject(project, user)) {
-      throw new ForbiddenException('Sem permissão para remover esta coluna');
-    }
-    try {
-      await this.projectStagesRepository.update(id.toString(), {
-        deletedAt: new Date(),
-      });
-      return projectStage;
-    } catch (error) {
-      throw new InternalServerErrorException('Erro ao remover coluna');
-    }
+    });
   }
 }

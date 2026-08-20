@@ -105,7 +105,7 @@ Não corras as duas stacks em paralelo (partilham nomes de contentor e o volume 
 
 Comandos com **`docker compose`** (espaço — plugin Compose v2). Se ainda só tiveres `docker-compose` (hífen) antigo, vê [`docs/docker-compose-legacy.md`](docs/docker-compose-legacy.md).
 
-1. Copia e edita o `.env` (mínimo: `POSTGRES_PASSWORD`, `DB_PASSWORD`, `DB_REMOTE_PASSWORD`, `JWT_SECRET`, `SWAGGER_PASSWORD`; alinha `DB_NAME` com `POSTGRES_DB`). O [``.env.example`](.env.example) lista todos os campos.
+1. Copia e edita o `.env` (mínimo: `POSTGRES_PASSWORD`, `DB_PASSWORD`, `DB_REMOTE_PASSWORD`, `JWT_SECRET`, `SWAGGER_PASSWORD`, `GRAFANA_ADMIN_PASSWORD`; alinha `DB_NAME` com `POSTGRES_DB`). O [``.env.example`](.env.example) lista todos os campos.
 
 2. Sobe a stack só-API:
 
@@ -125,7 +125,9 @@ Comandos com **`docker compose`** (espaço — plugin Compose v2). Se ainda só 
 
 4. **Porta HTTP** no host: `HTTP_PORT` (default **8080**). O Nginx faz proxy para **`http://api:3001`** na rede Docker. Aceita qualquer `Host` (incluindo IP da LAN).
 
-5. **Volume novo:** o script `docker/postgres/init/01-users.sh` corre só quando o volume de dados está vazio. Se já tinhas dados com outro esquema de utilizadores, ou `docker compose down -v`, trata como **nova** base ou aplica alterações manualmente em SQL.
+5. **Grafana** na porta `GRAFANA_PORT` (default **3002**), com `GRAFANA_ADMIN_USER` / `GRAFANA_ADMIN_PASSWORD`. O Prometheus scrapa `http://api:3001/metrics` só na rede Docker (sem porta no host). `/metrics` **não** é exposto pelo Nginx.
+
+6. **Volume novo:** o script `docker/postgres/init/01-users.sh` corre só quando o volume de dados está vazio. Se já tinhas dados com outro esquema de utilizadores, ou `docker compose down -v`, trata como **nova** base ou aplica alterações manualmente em SQL.
 
 ### Migrations dentro do contentor `api`
 
@@ -179,6 +181,8 @@ Para confirmar no servidor: `docker compose exec api sh -c 'echo DB_HOST=$DB_HOS
 ### Acesso na LAN (sem DNS)
 
 Abre **`http://IP_DO_SERVIDOR:8080`** (ou o valor de `HTTP_PORT`). A API Nest continua na **3001** só **dentro** da rede Docker; o Nginx é a entrada HTTP.
+
+Grafana: **`http://IP_DO_SERVIDOR:3002`** (ou `GRAFANA_PORT`) com as credenciais `GRAFANA_*`. Dashboard provisionado: **TaskHive API**.
 
 Nomes locais (`/etc/hosts`, mDNS `orangepi.local`, etc.) são **opcionais** — úteis quando tiveres DNS; não são necessários para o proxy actual (`server_name _`).
 

@@ -7,6 +7,7 @@ import {
   mockSessionRepositoryProvider,
   mockUserRepositoryProvider,
 } from 'src/test-utils/unit-test.mocks';
+import { mockAppMetricsProvider } from 'src/test-utils/mock-app-metrics';
 
 describe('AuthService', () => {
   let service: AuthService;
@@ -14,6 +15,7 @@ describe('AuthService', () => {
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
+        mockAppMetricsProvider,
         AuthService,
         mockJwtServiceProvider,
         mockUserRepositoryProvider,

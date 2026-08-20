@@ -5,6 +5,7 @@ import {
   mockSnowflakeIdServiceProvider,
   mockSubtaskRepositoryProvider,
 } from 'src/test-utils/unit-test.mocks';
+import { mockAppMetricsProvider } from 'src/test-utils/mock-app-metrics';
 
 describe('SubtasksService', () => {
   let service: SubtasksService;
@@ -12,6 +13,7 @@ describe('SubtasksService', () => {
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
+        mockAppMetricsProvider,
         SubtasksService,
         mockSubtaskRepositoryProvider,
         mockSnowflakeIdServiceProvider,

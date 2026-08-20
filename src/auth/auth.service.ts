@@ -8,6 +8,7 @@ import { JWTAudience } from './auth.enums';
 import { ConfigService } from '@nestjs/config';
 import { ForgetPassword } from './entities/ForgetPassword.entity';
 import { Session } from './entities/Session.entity';
+import { AppMetricsService } from 'src/metrics/app-metrics.service';
 
 
 export interface SessionResponse {
@@ -30,6 +31,7 @@ export class AuthService {
     private sessionRepository: Repository<Session>,
 
     private readonly configService: ConfigService,
+    private readonly metrics: AppMetricsService,
   ) { }
 
   /**
@@ -67,7 +69,6 @@ export class AuthService {
         secret: this.configService.get<string>('jwtSecret'),
         ...options
       });
-      //console.log(res)
       return res
 
     } catch (error) {
@@ -84,26 +85,27 @@ export class AuthService {
    * @returns SessionResponse
    */
   async login(email: string, password: string) {
+    return this.metrics.track('auth', 'login', async () => {
+      const user = await this.findFirstUserByEmail(email)
 
-    const user = await this.findFirstUserByEmail(email)
+      if(!user) {
+        throw new BadRequestException('Usuário não cadastrado')
+      }
+      try {
+        
+        //console.log(await Crypt.compare(password, user.password))
+    
+        if(!await Crypt.compare(password, user.password)) {
+          throw new BadRequestException('Senha incorreta')
+        }
+        
+        return this.createSession(user)
 
-    if(!user) {
-      throw new BadRequestException('Usuário não cadastrado')
-    }
-    try {
-      
-      //console.log(await Crypt.compare(password, user.password))
-  
-      if(!await Crypt.compare(password, user.password)) {
+      } catch (error) {
+        console.log(error)
         throw new BadRequestException('Senha incorreta')
       }
-      
-      return this.createSession(user)
-
-    } catch (error) {
-      console.log(error)
-      throw new BadRequestException('Senha incorreta')
-    }
+    });
   }
 
   /**
@@ -112,15 +114,17 @@ export class AuthService {
    * @returns Promise<DeleteResult>
    */
   async logout(token: string) {
-    const session = await this.findSessionByToken(token)
+    return this.metrics.track('auth', 'logout', async () => {
+      const session = await this.findSessionByToken(token)
 
-    if(!session) {
-      throw new BadRequestException('Sessão inválida')
-    }
+      if(!session) {
+        throw new BadRequestException('Sessão inválida')
+      }
 
-    return await this.sessionRepository.delete({
-      id: session.id,
-    })
+      return await this.sessionRepository.delete({
+        id: session.id,
+      })
+    });
   }
 
   /**
@@ -129,24 +133,26 @@ export class AuthService {
    * @returns boolean
    */
   async forgetPassword(email: string) {
-    const user = await this.findFirstUserByEmail(email)
+    return this.metrics.track('auth', 'forget_password', async () => {
+      const user = await this.findFirstUserByEmail(email)
 
-    if(!user) {
-      throw new BadRequestException('Usuário não cadastrado')
-    }
+      if(!user) {
+        throw new BadRequestException('Usuário não cadastrado')
+      }
 
-    const expiresAt = new Date()
-    expiresAt.setDate(expiresAt.getDate() + 1)
+      const expiresAt = new Date()
+      expiresAt.setDate(expiresAt.getDate() + 1)
 
-    const res = await this.forgetPasswordRepository.save({
-      user,
-      token: await this.createToken(user, JWTAudience.FORGET_PASSWORD, '24h'),
-      expiresAt,
-    })
+      const res = await this.forgetPasswordRepository.save({
+        user,
+        token: await this.createToken(user, JWTAudience.FORGET_PASSWORD, '24h'),
+        expiresAt,
+      })
 
-    // enviar email
+      // enviar email
 
-    return !!res
+      return !!res
+    });
   }
 
   /**
@@ -156,45 +162,46 @@ export class AuthService {
    * @returns SessionResponse
    */
   async resetPassword(password: string, token: string) {
+    return this.metrics.track('auth', 'reset_password', async () => {
+      const check = await this.isValidResetToken(token)
 
-    const check = await this.checkTokenResetPassword(token)
+      if (!check) {
+        throw new BadRequestException('Token inválido')
+      }
 
-    if (!check) {
-      throw new BadRequestException('Token inválido')
-    }
+      const fp = await this.forgetPasswordRepository.findOne({
+        where: {
+          token,
+        },
+        relations: ['user'],
+      })
 
-    const fp = await this.forgetPasswordRepository.findOne({
-      where: {
-        token,
-      },
-      relations: ['user'],
-    })
+      if (!fp) {
+        throw new BadRequestException('Token inválido')
+      }
 
-    if (!fp) {
-      throw new BadRequestException('Token inválido')
-    }
+      const user = await this.userRepository.findOne({
+        where: {
+          id: fp.user.id,
+        },
+      })
 
-    const user = await this.userRepository.findOne({
-      where: {
-        id: fp.user.id,
-      },
-    })
+      if (!user) {
+        throw new BadRequestException('Usuário inválido')
+      }
 
-    if (!user) {
-      throw new BadRequestException('Usuário inválido')
-    }
+      user.password = await Crypt.hash(password)
 
-    user.password = await Crypt.hash(password)
+      const update = await this.userRepository.save(user)
 
-    const update = await this.userRepository.save(user)
+      if (!update) {
+        throw new BadRequestException('Falha ao atualizar usuário')
+      }
 
-    if (!update) {
-      throw new BadRequestException('Falha ao atualizar usuário')
-    }
+      // enviar email de aviso de alteração de senha
 
-    // enviar email de aviso de alteração de senha
-
-    return this.createSession(user)
+      return this.createSession(user)
+    });
   }
 
   /**
@@ -203,7 +210,12 @@ export class AuthService {
    * @returns boolean
    */
   async checkTokenResetPassword(token: string) {
+    return this.metrics.track('auth', 'check_token', () =>
+      this.isValidResetToken(token),
+    );
+  }
 
+  private async isValidResetToken(token: string) {
     const check = this.checkToken(token)
 
     if (!check) {

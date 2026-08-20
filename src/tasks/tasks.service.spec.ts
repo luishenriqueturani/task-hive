@@ -7,6 +7,7 @@ import {
   mockTaskCompletionRepositoryProvider,
   mockTaskRepositoryProvider,
 } from 'src/test-utils/unit-test.mocks';
+import { mockAppMetricsProvider } from 'src/test-utils/mock-app-metrics';
 
 describe('TasksService', () => {
   let service: TasksService;
@@ -14,6 +15,7 @@ describe('TasksService', () => {
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
+        mockAppMetricsProvider,
         TasksService,
         mockTaskRepositoryProvider,
         mockTaskCompletionRepositoryProvider,

@@ -11,6 +11,7 @@ import { ProjectsService } from 'src/projects/projects.service';
 import { User } from 'src/users/entities/User.entity';
 import { ProjectStage } from 'src/project-stages/entities/ProjectStage.entity';
 import { canAccessProject, canMoveOrRemoveTask } from 'src/projects/project-permissions.helper';
+import { AppMetricsService } from 'src/metrics/app-metrics.service';
 
 @Injectable()
 export class TasksService {
@@ -23,6 +24,7 @@ export class TasksService {
     private snowflakeIdService: SnowflakeIdService,
     private projectStagesService: ProjectStagesService,
     private projectsService: ProjectsService,
+    private readonly metrics: AppMetricsService,
   ) {}
 
   private async nextOrderInStage(stageId: string): Promise<number> {
@@ -96,61 +98,71 @@ export class TasksService {
   }
 
   async create(createTaskDto: CreateTaskDto, user: User) {
-    const stage = await this.projectStagesService.findOne(BigInt(createTaskDto.stageId));
-    if (!stage) {
-      throw new BadRequestException('Stage not found');
-    }
-    const project = await this.projectsService.findOneWithOwnerAndParticipants(BigInt(stage.project.id));
-    if (!project || !canAccessProject(project, user)) {
-      throw new ForbiddenException('Sem permissão para criar tarefa neste projeto');
-    }
-    const order = await this.nextOrderInStage(String(stage.id));
-    return this.tasksRepository.save({
-      id: String(this.snowflakeIdService.generateId()),
-      name: createTaskDto.name,
-      user,
-      stage,
-      order,
-      completedAt: null,
+    return this.metrics.track('tasks', 'create', async () => {
+      const stage = await this.projectStagesService.loadStage(BigInt(createTaskDto.stageId));
+      if (!stage) {
+        throw new BadRequestException('Stage not found');
+      }
+      const project = await this.projectsService.findOneWithOwnerAndParticipants(BigInt(stage.project.id));
+      if (!project || !canAccessProject(project, user)) {
+        throw new ForbiddenException('Sem permissão para criar tarefa neste projeto');
+      }
+      const order = await this.nextOrderInStage(String(stage.id));
+      return this.tasksRepository.save({
+        id: String(this.snowflakeIdService.generateId()),
+        name: createTaskDto.name,
+        user,
+        stage,
+        order,
+        completedAt: null,
+      });
     });
   }
 
   findAll(user: User) {
-    try {
-      return this.tasksRepository.find({
-        where: {
-          user: {
-            id: user.id
-          }
-        },
-        order: { order: 'ASC', createdAt: 'ASC' },
-      })
-    } catch (error) {
-      console.log(error)
-      throw error
-    }
+    return this.metrics.track('tasks', 'find_all', () => {
+      try {
+        return this.tasksRepository.find({
+          where: {
+            user: {
+              id: user.id
+            }
+          },
+          order: { order: 'ASC', createdAt: 'ASC' },
+        })
+      } catch (error) {
+        console.log(error)
+        throw error
+      }
+    });
   }
 
   findByStage(stage: string) {
-    try {
-      // Join explícito de `user` (só id/name/email) — o frontend usa
-      // task.user.id em canMoveOrRemoveTask para mostrar DnD/concluir.
-      return this.tasksRepository
-        .createQueryBuilder('task')
-        .leftJoinAndSelect('task.stage', 'stage')
-        .leftJoin('task.user', 'user')
-        .addSelect(['user.id', 'user.name', 'user.email'])
-        .where('stage.id = :stageId', { stageId: stage })
-        .orderBy('task.order', 'ASC')
-        .addOrderBy('task.createdAt', 'ASC')
-        .getMany();
-    } catch (error) {
-      console.log(error)
-      throw error
-    }
+    return this.metrics.track('tasks', 'find_by_stage', () => {
+      try {
+        // Join explícito de `user` (só id/name/email) — o frontend usa
+        // task.user.id em canMoveOrRemoveTask para mostrar DnD/concluir.
+        return this.tasksRepository
+          .createQueryBuilder('task')
+          .leftJoinAndSelect('task.stage', 'stage')
+          .leftJoin('task.user', 'user')
+          .addSelect(['user.id', 'user.name', 'user.email'])
+          .where('stage.id = :stageId', { stageId: stage })
+          .orderBy('task.order', 'ASC')
+          .addOrderBy('task.createdAt', 'ASC')
+          .getMany();
+      } catch (error) {
+        console.log(error)
+        throw error
+      }
+    });
   }
 
   findOne(id: bigint) {
+    return this.metrics.track('tasks', 'find_one', () => this.loadTaskEntity(id));
+  }
+
+  private loadTaskEntity(id: bigint) {
     try {
       return this.tasksRepository
         .createQueryBuilder('task')
@@ -183,165 +195,177 @@ export class TasksService {
   }
 
   async complete(id: bigint, user: User) {
-    const { task, project } = await this.loadTaskForAccess(id);
-    if (!canMoveOrRemoveTask(task, user)) {
-      throw new ForbiddenException('Sem permissão para concluir esta tarefa');
-    }
-    if (task.completedAt) {
-      throw new BadRequestException('Tarefa já está concluída');
-    }
-    if (!task.stage) {
-      throw new BadRequestException('Tarefa sem coluna');
-    }
-    const completedAt = new Date();
-    await this.tasksRepository.update(
-      { id: String(id) },
-      { completedAt },
-    );
-    await this.completionsRepository.save({
-      id: String(this.snowflakeIdService.generateId()),
-      task: { id: String(id) } as Task,
-      stage: { id: String(task.stage.id) } as ProjectStage,
-      completedAt,
+    return this.metrics.track('tasks', 'complete', async () => {
+      const { task, project } = await this.loadTaskForAccess(id);
+      if (!canMoveOrRemoveTask(task, user)) {
+        throw new ForbiddenException('Sem permissão para concluir esta tarefa');
+      }
+      if (task.completedAt) {
+        throw new BadRequestException('Tarefa já está concluída');
+      }
+      if (!task.stage) {
+        throw new BadRequestException('Tarefa sem coluna');
+      }
+      const completedAt = new Date();
+      await this.tasksRepository.update(
+        { id: String(id) },
+        { completedAt },
+      );
+      await this.completionsRepository.save({
+        id: String(this.snowflakeIdService.generateId()),
+        task: { id: String(id) } as Task,
+        stage: { id: String(task.stage.id) } as ProjectStage,
+        completedAt,
+      });
+      void project;
+      return this.loadTaskEntity(id);
     });
-    void project;
-    return this.findOne(id);
   }
 
   async listCompletions(id: bigint, user: User) {
-    const { task, project } = await this.loadTaskForAccess(id);
-    if (!canAccessProject(project, user)) {
-      throw new ForbiddenException(
-        'Sem permissão para ver o histórico desta tarefa',
-      );
-    }
-    void task;
-    return this.completionsRepository.find({
-      where: { task: { id: String(id) } },
-      relations: ['stage'],
-      order: { completedAt: 'DESC' },
+    return this.metrics.track('tasks', 'list_completions', async () => {
+      const { task, project } = await this.loadTaskForAccess(id);
+      if (!canAccessProject(project, user)) {
+        throw new ForbiddenException(
+          'Sem permissão para ver o histórico desta tarefa',
+        );
+      }
+      void task;
+      return this.completionsRepository.find({
+        where: { task: { id: String(id) } },
+        relations: ['stage'],
+        order: { completedAt: 'DESC' },
+      });
     });
   }
 
   async update(id: bigint, updateTaskDto: UpdateTaskDto, user: User) {
-    const { task, project } = await this.loadTaskForAccess(id);
+    return this.metrics.track('tasks', 'update', async () => {
+      const { task, project } = await this.loadTaskForAccess(id);
 
-    if (
-      updateTaskDto.completedAt !== undefined &&
-      updateTaskDto.completedAt !== null
-    ) {
-      throw new BadRequestException(
-        'Use POST /tasks/:id/completions para concluir a tarefa',
-      );
-    }
-
-    const canMoveOrRemove = canMoveOrRemoveTask(task, user);
-    if (canMoveOrRemove) {
-      const stageChanging =
-        updateTaskDto.stageId !== undefined &&
-        String(updateTaskDto.stageId) !== String(task.stage.id);
-      const orderChanging = updateTaskDto.order !== undefined;
-      const clearCompleted = updateTaskDto.completedAt === null;
-
-      if (stageChanging) {
-        const stage = await this.projectStagesService.findOne(
-          BigInt(updateTaskDto.stageId!),
-        );
-        if (!stage) throw new BadRequestException('Stage not found');
-      }
-
-      await this.tasksRepository.update(
-        { id: String(id) },
-        {
-          ...(updateTaskDto.description !== undefined && {
-            description: updateTaskDto.description,
-          }),
-          ...(updateTaskDto.finishDate !== undefined && {
-            finishDate: updateTaskDto.finishDate as unknown as Date,
-          }),
-          ...(updateTaskDto.name !== undefined && {
-            name: updateTaskDto.name,
-          }),
-          ...(clearCompleted ? { completedAt: null } : {}),
-        },
-      );
-
-      if (stageChanging || orderChanging) {
-        const targetStageId = stageChanging
-          ? String(updateTaskDto.stageId)
-          : String(task.stage.id);
-        await this.placeTask(
-          String(id),
-          targetStageId,
-          orderChanging ? updateTaskDto.order : undefined,
-        );
-      }
-    } else if (canAccessProject(project, user)) {
       if (
-        updateTaskDto.stageId !== undefined ||
-        updateTaskDto.order !== undefined ||
-        updateTaskDto.completedAt !== undefined
+        updateTaskDto.completedAt !== undefined &&
+        updateTaskDto.completedAt !== null
       ) {
+        throw new BadRequestException(
+          'Use POST /tasks/:id/completions para concluir a tarefa',
+        );
+      }
+
+      const canMoveOrRemove = canMoveOrRemoveTask(task, user);
+      if (canMoveOrRemove) {
+        const stageChanging =
+          updateTaskDto.stageId !== undefined &&
+          String(updateTaskDto.stageId) !== String(task.stage.id);
+        const orderChanging = updateTaskDto.order !== undefined;
+        const clearCompleted = updateTaskDto.completedAt === null;
+
+        if (stageChanging) {
+          const stage = await this.projectStagesService.loadStage(
+            BigInt(updateTaskDto.stageId!),
+          );
+          if (!stage) throw new BadRequestException('Stage not found');
+        }
+
+        await this.tasksRepository.update(
+          { id: String(id) },
+          {
+            ...(updateTaskDto.description !== undefined && {
+              description: updateTaskDto.description,
+            }),
+            ...(updateTaskDto.finishDate !== undefined && {
+              finishDate: updateTaskDto.finishDate as unknown as Date,
+            }),
+            ...(updateTaskDto.name !== undefined && {
+              name: updateTaskDto.name,
+            }),
+            ...(clearCompleted ? { completedAt: null } : {}),
+          },
+        );
+
+        if (stageChanging || orderChanging) {
+          const targetStageId = stageChanging
+            ? String(updateTaskDto.stageId)
+            : String(task.stage.id);
+          await this.placeTask(
+            String(id),
+            targetStageId,
+            orderChanging ? updateTaskDto.order : undefined,
+          );
+        }
+      } else if (canAccessProject(project, user)) {
+        if (
+          updateTaskDto.stageId !== undefined ||
+          updateTaskDto.order !== undefined ||
+          updateTaskDto.completedAt !== undefined
+        ) {
+          throw new ForbiddenException('Sem permissão para editar esta tarefa');
+        }
+        await this.tasksRepository.update(
+          { id: String(id) },
+          {
+            description: updateTaskDto.description,
+            finishDate: updateTaskDto.finishDate as unknown as Date,
+            name: updateTaskDto.name,
+          },
+        );
+      } else {
         throw new ForbiddenException('Sem permissão para editar esta tarefa');
       }
-      await this.tasksRepository.update(
-        { id: String(id) },
-        {
-          description: updateTaskDto.description,
-          finishDate: updateTaskDto.finishDate as unknown as Date,
-          name: updateTaskDto.name,
-        },
-      );
-    } else {
-      throw new ForbiddenException('Sem permissão para editar esta tarefa');
-    }
-    return this.findOne(id);
+      return this.loadTaskEntity(id);
+    });
   }
 
   async toPreviousStage(id: bigint, user: User) {
-    const task = await this.tasksRepository.findOne({
-      where: { id: String(id) },
-      relations: ['user', 'stage'],
+    return this.metrics.track('tasks', 'to_previous_stage', async () => {
+      const task = await this.tasksRepository.findOne({
+        where: { id: String(id) },
+        relations: ['user', 'stage'],
+      });
+      if (!task) throw new BadRequestException('Task not found');
+      if (!canMoveOrRemoveTask(task, user)) {
+        throw new ForbiddenException('Sem permissão para mover esta tarefa');
+      }
+      const stage = await this.projectStagesService.loadStage(BigInt(task.stage.id));
+      if (!stage?.prevStage) throw new BadRequestException('Stage not found');
+      await this.placeTask(String(id), String(stage.prevStage.id));
+      return this.loadTaskEntity(id);
     });
-    if (!task) throw new BadRequestException('Task not found');
-    if (!canMoveOrRemoveTask(task, user)) {
-      throw new ForbiddenException('Sem permissão para mover esta tarefa');
-    }
-    const stage = await this.projectStagesService.findOne(BigInt(task.stage.id));
-    if (!stage?.prevStage) throw new BadRequestException('Stage not found');
-    await this.placeTask(String(id), String(stage.prevStage.id));
-    return this.findOne(id);
   }
 
   async toNextStage(id: bigint, user: User) {
-    const task = await this.tasksRepository.findOne({
-      where: { id: String(id) },
-      relations: ['user', 'stage'],
+    return this.metrics.track('tasks', 'to_next_stage', async () => {
+      const task = await this.tasksRepository.findOne({
+        where: { id: String(id) },
+        relations: ['user', 'stage'],
+      });
+      if (!task) throw new BadRequestException('Task not found');
+      if (!canMoveOrRemoveTask(task, user)) {
+        throw new ForbiddenException('Sem permissão para mover esta tarefa');
+      }
+      const stage = await this.projectStagesService.loadStage(BigInt(task.stage.id));
+      if (!stage?.nextStage) throw new BadRequestException('Stage not found');
+      await this.placeTask(String(id), String(stage.nextStage.id));
+      return this.loadTaskEntity(id);
     });
-    if (!task) throw new BadRequestException('Task not found');
-    if (!canMoveOrRemoveTask(task, user)) {
-      throw new ForbiddenException('Sem permissão para mover esta tarefa');
-    }
-    const stage = await this.projectStagesService.findOne(BigInt(task.stage.id));
-    if (!stage?.nextStage) throw new BadRequestException('Stage not found');
-    await this.placeTask(String(id), String(stage.nextStage.id));
-    return this.findOne(id);
   }
 
   async remove(id: bigint, user: User) {
-    const task = await this.tasksRepository.findOne({
-      where: { id: String(id) },
-      relations: ['user', 'stage'],
+    return this.metrics.track('tasks', 'remove', async () => {
+      const task = await this.tasksRepository.findOne({
+        where: { id: String(id) },
+        relations: ['user', 'stage'],
+      });
+      if (!task) throw new BadRequestException('Task not found');
+      if (!canMoveOrRemoveTask(task, user)) {
+        throw new ForbiddenException('Sem permissão para remover esta tarefa');
+      }
+      const stageId = task.stage?.id ? String(task.stage.id) : null;
+      await this.tasksRepository.update({ id: String(id) }, { deletedAt: new Date() });
+      if (stageId) {
+        await this.reindexStage(stageId);
+      }
+      return task;
     });
-    if (!task) throw new BadRequestException('Task not found');
-    if (!canMoveOrRemoveTask(task, user)) {
-      throw new ForbiddenException('Sem permissão para remover esta tarefa');
-    }
-    const stageId = task.stage?.id ? String(task.stage.id) : null;
-    await this.tasksRepository.update({ id: String(id) }, { deletedAt: new Date() });
-    if (stageId) {
-      await this.reindexStage(stageId);
-    }
-    return task;
   }
 }
