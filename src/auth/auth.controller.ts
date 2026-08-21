@@ -8,6 +8,7 @@ import { AuthCheckTokenDto } from './dto/authCheckToken.dto';
 import { AuthResetPasswordDto } from './dto/authResetPassword.dto';
 import { AuthRefreshDto } from './dto/authRefresh.dto';
 import { AuthGuard } from 'src/guards/auth.guard';
+import { CsrfOriginGuard } from 'src/guards/csrf-origin.guard';
 import { RequestToken } from 'src/decorators/requestToken.decorator';
 
 @ApiTags('auth')
@@ -16,6 +17,7 @@ export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Throttle({ default: { limit: 10, ttl: 60000 } })
+  @UseGuards(CsrfOriginGuard)
   @Post('login')
   @ApiOperation({ summary: 'Login', description: 'Autentica com email e senha. Retorna token JWT e dados do usuário (sem senha).' })
   @ApiBody({ type: AuthLoginDto })
@@ -73,6 +75,7 @@ export class AuthController {
   }
   
   @Throttle({ default: { limit: 10, ttl: 60000 } })
+  @UseGuards(CsrfOriginGuard)
   @Post('forget-password')
   @ApiOperation({ summary: 'Esqueci a senha', description: 'Gera token de redefinição e associa ao usuário (email de envio pode ser implementado depois). Retorna true se o usuário existir.' })
   @ApiBody({ type: AuthForgetPasswordDto })

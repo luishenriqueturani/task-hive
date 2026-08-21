@@ -1,4 +1,4 @@
-import { BadRequestException, Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { CreateToDoDto } from './dto/create-to-do.dto';
 import { UpdateToDoDto } from './dto/update-to-do.dto';
 import { User } from 'src/users/entities/User.entity';
@@ -10,6 +10,8 @@ import { AppMetricsService } from 'src/metrics/app-metrics.service';
 
 @Injectable()
 export class ToDoService {
+
+  private readonly logger = new Logger(ToDoService.name);
 
   constructor(
     @Inject(PostgreSQLTokens.TODO_REPOSITORY)
@@ -59,7 +61,8 @@ export class ToDoService {
         }
 
       } catch (error) {
-        throw new BadRequestException('Falha ao criar a tarefa, Error: ' + error)
+        this.logger.error('Falha ao criar tarefa avulsa', error);
+        throw new BadRequestException('Não foi possível criar a tarefa');
       }
     });
   }
@@ -96,7 +99,8 @@ export class ToDoService {
           }
         })
       } catch (error) {
-        throw new BadRequestException('Falha ao buscar todas as tarefas, Error: ' + error)
+        this.logger.error('Falha ao listar tarefas avulsas', error);
+        throw new BadRequestException('Não foi possível listar as tarefas');
       }
     });
   }
@@ -138,7 +142,8 @@ export class ToDoService {
         return todo;
       } catch (error) {
         if (error instanceof NotFoundException) throw error;
-        throw new BadRequestException('Falha ao buscar a tarefa, Error: ' + error)
+        this.logger.error('Falha ao buscar tarefa avulsa', error);
+        throw new BadRequestException('Não foi possível buscar a tarefa');
       }
     });
   }
@@ -210,7 +215,8 @@ export class ToDoService {
 
       } catch (error) {
         if (error instanceof NotFoundException) throw error;
-        throw new BadRequestException('Falha ao atualizar a tarefa, Error: ' + error)
+        this.logger.error('Falha ao atualizar tarefa avulsa', error);
+        throw new BadRequestException('Não foi possível atualizar a tarefa');
       }
     });
   }
@@ -226,7 +232,8 @@ export class ToDoService {
 
       } catch (error) {
         if (error instanceof NotFoundException) throw error;
-        throw new BadRequestException('Falha ao remover a tarefa, Error: ' + error)
+        this.logger.error('Falha ao remover tarefa avulsa', error);
+        throw new BadRequestException('Não foi possível remover a tarefa');
       }
     });
   }
@@ -248,7 +255,8 @@ export class ToDoService {
 
       } catch (error) {
         if (error instanceof NotFoundException) throw error;
-        throw new BadRequestException('Falha ao remover a tarefa, Error: ' + error)
+        this.logger.error('Falha ao concluir tarefa avulsa', error);
+        throw new BadRequestException('Não foi possível concluir a tarefa');
       }
     });
   }
@@ -264,7 +272,8 @@ export class ToDoService {
 
       } catch (error) {
         if (error instanceof NotFoundException) throw error;
-        throw new BadRequestException('Falha ao remover a tarefa, Error: ' + error)
+        this.logger.error('Falha ao alterar status da tarefa avulsa', error);
+        throw new BadRequestException('Não foi possível alterar o status da tarefa');
       }
     });
   }
@@ -328,7 +337,8 @@ export class ToDoService {
 
       } catch (error) {
         if (error instanceof NotFoundException) throw error;
-        throw new BadRequestException('Falha ao remover a tarefa, Error: ' + error)
+        this.logger.error('Falha ao avançar recorrência da tarefa avulsa', error);
+        throw new BadRequestException('Não foi possível avançar a recorrência da tarefa');
       }
     });
   }

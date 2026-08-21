@@ -8,6 +8,7 @@ import { DatabaseModule } from 'src/repository/database.module';
 import { UsersModule } from 'src/users/users.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { AuthGuard } from 'src/guards/auth.guard';
+import { CsrfOriginGuard } from 'src/guards/csrf-origin.guard';
 import { RolesGuard } from 'src/guards/roles.guard';
 
 @Module({
@@ -28,13 +29,14 @@ import { RolesGuard } from 'src/guards/roles.guard';
     forwardRef(() => UsersModule),
   ],
   controllers: [AuthController, PersonalAccessTokensController],
-  providers: [AuthService, PersonalAccessTokensService, AuthGuard, RolesGuard],
+  providers: [AuthService, PersonalAccessTokensService, AuthGuard, RolesGuard, CsrfOriginGuard],
   exports: [
     JwtModule,
     AuthService,
     PersonalAccessTokensService,
     AuthGuard,
     RolesGuard,
+    CsrfOriginGuard,
     forwardRef(() => UsersModule),
   ],
 })

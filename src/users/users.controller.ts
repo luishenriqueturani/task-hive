@@ -17,6 +17,7 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { UserPublicResponseDto } from './dto/user-public-response.dto';
 import { TypeormUpdateResultDto } from 'src/common/swagger/typeorm-update-result.dto';
 import { AuthGuard } from 'src/guards/auth.guard';
+import { CsrfOriginGuard } from 'src/guards/csrf-origin.guard';
 import { RolesGuard } from 'src/guards/roles.guard';
 import { Roles } from 'src/decorators/roles.decorator';
 import { User } from 'src/decorators/user.decorator';
@@ -29,6 +30,7 @@ export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   @Throttle({ default: { limit: 5, ttl: 3600000 } })
+  @UseGuards(CsrfOriginGuard)
   @Post()
   @ApiOperation({ summary: 'Criar usuário', description: 'Cadastra um novo usuário. Não requer autenticação. Retorna o usuário criado (sem senha).' })
   @ApiBody({ type: CreateUserDto })
