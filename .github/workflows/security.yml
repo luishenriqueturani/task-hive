@@ -1,0 +1,45 @@
+name: Security
+
+on:
+  push:
+    branches: [master, main]
+  pull_request:
+    branches: [master, main]
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - run: npm ci
+      - run: npm run audit:ci
+
+  e2e:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: taskhive_e2e
+          POSTGRES_PASSWORD: taskhive_e2e_secret
+          POSTGRES_DB: task_hive_e2e
+        ports:
+          - 5433:5432
+        options: >-
+          --health-cmd "pg_isready -U taskhive_e2e -d task_hive_e2e"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - run: npm ci
+      - run: cp .env.e2e.example .env.e2e
+      - run: npm run test:e2e
