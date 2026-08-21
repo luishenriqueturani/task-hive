@@ -60,6 +60,18 @@ export class TaskOpenApiDto {
   @ApiPropertyOptional({ type: () => UserIdRefOpenApiDto })
   user?: UserIdRefOpenApiDto;
 
+  @ApiPropertyOptional({
+    example: 2,
+    description: 'Subtarefas concluídas (apenas em GET /tasks/stage/:stage)',
+  })
+  subtaskDoneCount?: number;
+
+  @ApiPropertyOptional({
+    example: 5,
+    description: 'Total de subtarefas (apenas em GET /tasks/stage/:stage)',
+  })
+  subtaskTotalCount?: number;
+
   @ApiPropertyOptional({ example: '2025-02-09T12:00:00.000Z' })
   createdAt?: string;
 

@@ -155,6 +155,20 @@ export class TasksService {
           .leftJoinAndSelect('task.stage', 'stage')
           .leftJoin('task.user', 'user')
           .addSelect(['user.id', 'user.name', 'user.email'])
+          .loadRelationCountAndMap(
+            'task.subtaskTotalCount',
+            'task.subtask',
+            'subtaskAll',
+          )
+          .loadRelationCountAndMap(
+            'task.subtaskDoneCount',
+            'task.subtask',
+            'subtaskDone',
+            (qb) =>
+              qb.andWhere('subtaskDone.isCompleted = :isCompleted', {
+                isCompleted: true,
+              }),
+          )
           .where('stage.id = :stageId', { stageId: stage })
           .orderBy('task.order', 'ASC')
           .addOrderBy('task.createdAt', 'ASC')
