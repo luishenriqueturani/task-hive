@@ -1,5 +1,6 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards } from '@nestjs/common';
-import { ApiTags, ApiBearerAuth, ApiOperation, ApiResponse, ApiBody, ApiParam } from '@nestjs/swagger';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Query, UseGuards } from '@nestjs/common';
+import { ApiTags, ApiBearerAuth, ApiOperation, ApiQuery, ApiResponse, ApiBody, ApiParam } from '@nestjs/swagger';
+import { parseProjectListScope } from './project-list-scope';
 import { ProjectsService } from './projects.service';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
@@ -49,7 +50,17 @@ export class ProjectsController {
   }
 
   @Get()
-  @ApiOperation({ summary: 'Listar projetos', description: 'Retorna projetos em que o usuário é dono ou participante (query com userOwner e participants).' })
+  @ApiOperation({
+    summary: 'Listar projetos',
+    description:
+      'Retorna projetos em que o usuário é dono ou participante. `scope=owned` só os próprios; `scope=invited` só onde foi convidado; default `all`.',
+  })
+  @ApiQuery({
+    name: 'scope',
+    required: false,
+    enum: ['all', 'owned', 'invited'],
+    description: 'Filtro de listagem. Default all.',
+  })
   @ApiResponse({
     status: 200,
     description: 'Lista de projetos com userOwner e participants carregados',
@@ -70,9 +81,9 @@ export class ProjectsController {
   })
   @ApiResponse({ status: 401, description: 'Não autorizado' })
   @ApiResponse({ status: 500, description: 'Erro ao buscar projetos' })
-  findAll(@User() user: UserEntity) {
+  findAll(@User() user: UserEntity, @Query('scope') scope?: string) {
     try {
-      return this.projectsService.findAll(user);
+      return this.projectsService.findAll(user, parseProjectListScope(scope));
     } catch (error) {
       console.log(error)
       throw error

@@ -7,7 +7,11 @@ import { SnowflakeIdService } from 'src/snowflakeid/snowflakeid.service';
 export function createMockRepository(): Record<string, jest.Mock> {
   const qb = {
     leftJoinAndSelect: jest.fn().mockReturnThis(),
+    leftJoin: jest.fn().mockReturnThis(),
+    innerJoin: jest.fn().mockReturnThis(),
+    addSelect: jest.fn().mockReturnThis(),
     where: jest.fn().mockReturnThis(),
+    andWhere: jest.fn().mockReturnThis(),
     orWhere: jest.fn().mockReturnThis(),
     getMany: jest.fn().mockResolvedValue([]),
   };

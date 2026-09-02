@@ -10,6 +10,7 @@ import { CompaniesService } from 'src/companies/companies.service';
 import { Company } from 'src/companies/entities/Company.entity';
 import { canManageProject, canAccessProject } from './project-permissions.helper';
 import { AppMetricsService } from 'src/metrics/app-metrics.service';
+import { ProjectListScope } from './project-list-scope';
 
 @Injectable()
 export class ProjectsService {
@@ -51,18 +52,32 @@ export class ProjectsService {
     });
   }
 
-  async findAll(user: User) {
+  async findAll(user: User, scope: ProjectListScope = 'all') {
     return this.metrics.track('projects', 'find_all', async () => {
       try {
-        return this.projectsRepository
+        const qb = this.projectsRepository
           .createQueryBuilder('project')
           .leftJoin('project.userOwner', 'owner')
           .addSelect(['owner.id', 'owner.name', 'owner.email', 'owner.avatar', 'owner.role'])
           .leftJoin('project.participants', 'participants')
-          .addSelect(['participants.id', 'participants.name', 'participants.email', 'participants.avatar', 'participants.role'])
-          .where('owner.id = :userId', { userId: user.id })
-          .orWhere('participants.id = :userId', { userId: user.id })
-          .getMany();
+          .addSelect(['participants.id', 'participants.name', 'participants.email', 'participants.avatar', 'participants.role']);
+
+        if (scope === 'owned') {
+          qb.andWhere('owner.id = :userId', { userId: user.id });
+        } else if (scope === 'invited') {
+          qb.innerJoin(
+            'project.participants',
+            'member',
+            'member.id = :userId',
+            { userId: user.id },
+          );
+        } else {
+          qb.andWhere('(owner.id = :userId OR participants.id = :userId)', {
+            userId: user.id,
+          });
+        }
+
+        return qb.getMany();
       } catch (error) {
         throw new InternalServerErrorException('Erro ao buscar todos os projetos', { cause: error });
       }
