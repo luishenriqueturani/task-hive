@@ -20,7 +20,7 @@ describe('ProjectInvitesService', () => {
     count: jest.Mock;
     update: jest.Mock;
   };
-  let projects: { findOne: jest.Mock };
+  let projects: { findOne: jest.Mock; save: jest.Mock };
 
   const owner = {
     id: 'owner-1',
@@ -119,5 +119,39 @@ describe('ProjectInvitesService', () => {
     await expect(
       service.assertCanAddParticipant(project as never, owner, 'bob@example.com'),
     ).resolves.toBeUndefined();
+  });
+
+  it('aceita convite e adiciona o participante', async () => {
+    const guest = {
+      id: 'guest-1',
+      email: 'bob@example.com',
+      role: UserRole.CLIENT,
+    } as User;
+    invites.findOne.mockResolvedValue({
+      email: 'bob@example.com',
+      status: ProjectInviteStatus.PENDING,
+      expiresAt: new Date(Date.now() + 60_000),
+      project: { ...project, participants: [] },
+    });
+    invites.save.mockResolvedValue({});
+    projects.save.mockResolvedValue({});
+
+    await expect(service.acceptByToken('tok', guest)).resolves.toEqual({
+      projectId: '1',
+      projectName: 'Backlog',
+    });
+    expect(projects.save).toHaveBeenCalled();
+  });
+
+  it('recusa aceitar com outro e-mail', async () => {
+    invites.findOne.mockResolvedValue({
+      email: 'bob@example.com',
+      status: ProjectInviteStatus.PENDING,
+      expiresAt: new Date(Date.now() + 60_000),
+      project,
+    });
+    await expect(
+      service.acceptByToken('tok', owner),
+    ).rejects.toBeInstanceOf(ForbiddenException);
   });
 });
