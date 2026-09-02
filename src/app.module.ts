@@ -16,6 +16,7 @@ import { TasksModule } from './tasks/tasks.module';
 import { SubtasksModule } from './subtasks/subtasks.module';
 import { MetricsModule } from './metrics/metrics.module';
 import { PlansModule } from './plans/plans.module';
+import { CouponsModule } from './coupons/coupons.module';
 
 
 
@@ -38,6 +39,7 @@ import { PlansModule } from './plans/plans.module';
     TasksModule,
     SubtasksModule,
     PlansModule,
+    CouponsModule,
   ],
   controllers: [AppController],
   providers: [

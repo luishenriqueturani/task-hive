@@ -96,6 +96,12 @@ export const mockPlanRepositoryProvider = mockRepositoryProvider(
 export const mockPlanBenefitRepositoryProvider = mockRepositoryProvider(
   PostgreSQLTokens.PLAN_BENEFIT_REPOSITORY,
 );
+export const mockCouponRepositoryProvider = mockRepositoryProvider(
+  PostgreSQLTokens.COUPON_REPOSITORY,
+);
+export const mockCouponRedemptionRepositoryProvider = mockRepositoryProvider(
+  PostgreSQLTokens.COUPON_REDEMPTION_REPOSITORY,
+);
 export const mockProjectStageRepositoryProvider = mockRepositoryProvider(
   PostgreSQLTokens.PROJECT_STAGE_REPOSITORY,
 );
