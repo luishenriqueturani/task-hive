@@ -11,6 +11,7 @@ import { Company } from 'src/companies/entities/Company.entity';
 import { canManageProject, canAccessProject } from './project-permissions.helper';
 import { AppMetricsService } from 'src/metrics/app-metrics.service';
 import { ProjectListScope } from './project-list-scope';
+import { ProjectInvitesService } from './project-invites.service';
 
 @Injectable()
 export class ProjectsService {
@@ -25,6 +26,7 @@ export class ProjectsService {
     private companiesService: CompaniesService,
     private snowflakeIdService: SnowflakeIdService,
     private readonly metrics: AppMetricsService,
+    private readonly projectInvitesService: ProjectInvitesService,
   ) {}
 
 
@@ -193,11 +195,21 @@ export class ProjectsService {
       if (project.userOwner?.id === userId) {
         throw new BadRequestException('O dono do projeto já tem acesso total');
       }
+      await this.projectInvitesService.assertCanAddParticipant(
+        project,
+        user,
+        userToAdd.email,
+      );
       const updatedParticipants = [...(project.participants ?? []), userToAdd];
       await this.projectsRepository.save({
         ...project,
         participants: updatedParticipants,
       });
+      await this.projectInvitesService.acceptPendingForEmail(
+        project.id,
+        userToAdd.email,
+        userToAdd,
+      );
       return this.listParticipantsUntracked(projectId, user);
     });
   }

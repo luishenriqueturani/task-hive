@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ProjectsController } from './projects.controller';
 import { ProjectsService } from './projects.service';
+import { ProjectInvitesService } from './project-invites.service';
 import { AuthGuard } from 'src/guards/auth.guard';
 
 describe('ProjectsController', () => {
@@ -9,7 +10,10 @@ describe('ProjectsController', () => {
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [ProjectsController],
-      providers: [{ provide: ProjectsService, useValue: {} }],
+      providers: [
+        { provide: ProjectsService, useValue: {} },
+        { provide: ProjectInvitesService, useValue: {} },
+      ],
     })
       .overrideGuard(AuthGuard)
       .useValue({ canActivate: jest.fn(() => true) })

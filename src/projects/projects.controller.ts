@@ -5,16 +5,21 @@ import { ProjectsService } from './projects.service';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
 import { AddParticipantDto } from './dto/add-participant.dto';
+import { CreateProjectInviteDto } from './dto/create-project-invite.dto';
 import { User } from 'src/decorators/user.decorator';
 import { User as UserEntity } from 'src/users/entities/User.entity';
 import { AuthGuard } from 'src/guards/auth.guard';
+import { ProjectInvitesService } from './project-invites.service';
 
 @ApiTags('projects')
 @ApiBearerAuth()
 @UseGuards(AuthGuard)
 @Controller('projects')
 export class ProjectsController {
-  constructor(private readonly projectsService: ProjectsService) {}
+  constructor(
+    private readonly projectsService: ProjectsService,
+    private readonly projectInvitesService: ProjectInvitesService,
+  ) {}
 
   @Post()
   @ApiOperation({ summary: 'Criar projeto', description: 'Cria um novo projeto. O usuário autenticado será o dono. Opcionalmente vincula a uma empresa (companyOwnerId).' })
@@ -170,6 +175,48 @@ export class ProjectsController {
       console.log(error)
       throw error
     }
+  }
+
+  @Get(':id/invites')
+  @ApiOperation({
+    summary: 'Listar convites pendentes',
+    description: 'Gestor: convites PENDING e guestUsage (used / limit / pendingInvites).',
+  })
+  @ApiParam({ name: 'id', description: 'ID do projeto (bigint)' })
+  @ApiResponse({ status: 200, description: 'Lista de convites e quota de convidados' })
+  @ApiResponse({ status: 403, description: 'Sem permissão' })
+  listInvites(@Param('id') id: string, @User() user: UserEntity) {
+    return this.projectInvitesService.list(BigInt(id), user);
+  }
+
+  @Post(':id/invites')
+  @ApiOperation({
+    summary: 'Convidar por e-mail',
+    description: 'Cria convite PENDING e reserva vaga. Devolve token para copiar /invite/:token.',
+  })
+  @ApiParam({ name: 'id', description: 'ID do projeto (bigint)' })
+  @ApiBody({ type: CreateProjectInviteDto })
+  @ApiResponse({ status: 201, description: 'Convite criado' })
+  @ApiResponse({ status: 402, description: 'Quota de convidados atingida' })
+  createInvite(
+    @Param('id') id: string,
+    @Body() dto: CreateProjectInviteDto,
+    @User() user: UserEntity,
+  ) {
+    return this.projectInvitesService.create(BigInt(id), dto.email, user);
+  }
+
+  @Delete(':id/invites/:inviteId')
+  @ApiOperation({ summary: 'Revogar convite pendente' })
+  @ApiParam({ name: 'id', description: 'ID do projeto (bigint)' })
+  @ApiParam({ name: 'inviteId', description: 'UUID do convite' })
+  @ApiResponse({ status: 200, description: 'Lista actualizada de convites' })
+  revokeInvite(
+    @Param('id') id: string,
+    @Param('inviteId') inviteId: string,
+    @User() user: UserEntity,
+  ) {
+    return this.projectInvitesService.revoke(BigInt(id), inviteId, user);
   }
 
   @Get(':id')

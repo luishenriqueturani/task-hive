@@ -4,11 +4,13 @@ import { CompaniesService } from 'src/companies/companies.service';
 import { PostgreSQLTokens } from 'src/repository/postgresql.enums';
 import { User } from 'src/users/entities/User.entity';
 import {
+  mockProjectInviteRepositoryProvider,
   mockProjectRepositoryProvider,
   mockSnowflakeIdServiceProvider,
   mockUserRepositoryProvider,
 } from 'src/test-utils/unit-test.mocks';
 import { mockAppMetricsProvider } from 'src/test-utils/mock-app-metrics';
+import { ProjectInvitesService } from './project-invites.service';
 
 describe('ProjectsService', () => {
   let service: ProjectsService;
@@ -22,8 +24,16 @@ describe('ProjectsService', () => {
         ProjectsService,
         mockProjectRepositoryProvider,
         mockUserRepositoryProvider,
+        mockProjectInviteRepositoryProvider,
         mockSnowflakeIdServiceProvider,
         { provide: CompaniesService, useValue: {} },
+        {
+          provide: ProjectInvitesService,
+          useValue: {
+            assertCanAddParticipant: jest.fn(),
+            acceptPendingForEmail: jest.fn(),
+          },
+        },
       ],
     }).compile();
 

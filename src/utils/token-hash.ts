@@ -8,6 +8,10 @@ export function generateRefreshToken(): string {
   return `th_rf_${randomBytes(32).toString('base64url')}`;
 }
 
+export function generateProjectInviteToken(): string {
+  return `th_inv_${randomBytes(24).toString('base64url')}`;
+}
+
 export function generatePersonalAccessToken(): string {
   return `th_pat_${randomBytes(32).toString('base64url')}`;
 }
