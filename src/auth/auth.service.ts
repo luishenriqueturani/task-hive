@@ -10,6 +10,7 @@ import { ForgetPassword } from './entities/ForgetPassword.entity';
 import { Session } from './entities/Session.entity';
 import { RefreshToken } from './entities/RefreshToken.entity';
 import { AppMetricsService } from 'src/metrics/app-metrics.service';
+import { AccountKind } from 'src/users/account-kind.enum';
 import { GENERIC_AUTH_ERROR, DUMMY_BCRYPT_HASH } from 'src/utils/auth-constants';
 import {
   generateRefreshToken,
@@ -59,6 +60,7 @@ export class AuthService {
         name: user.name,
         email: user.email,
         role: user.role,
+        accountKind: user.accountKind ?? AccountKind.INDIVIDUAL,
       },
       {
         subject: user.id,
@@ -217,6 +219,7 @@ export class AuthService {
           email: true,
           avatar: true,
           role: true,
+          accountKind: true,
           createdAt: true,
           updatedAt: true,
         },
