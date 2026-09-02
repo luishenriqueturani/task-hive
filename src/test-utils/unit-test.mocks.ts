@@ -56,6 +56,13 @@ export const mockTaskCompletionRepositoryProvider = mockRepositoryProvider(
 export const mockUserRepositoryProvider = mockRepositoryProvider(
   PostgreSQLTokens.USER_REPOSITORY,
 );
+export const mockDataSourceProvider = {
+  provide: PostgreSQLTokens.DATA_SOURCE,
+  useValue: {
+    transaction: jest.fn(),
+    getRepository: jest.fn(),
+  },
+};
 export const mockForgetPasswordRepositoryProvider = mockRepositoryProvider(
   PostgreSQLTokens.FORGET_PASSWORD,
 );

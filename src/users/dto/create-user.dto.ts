@@ -1,6 +1,23 @@
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
-import { IsEmail, IsOptional, IsString, IsStrongPassword, MaxLength } from "class-validator";
+import { Transform, Type } from 'class-transformer';
+import {
+  IsDefined,
+  IsEmail,
+  IsEnum,
+  IsOptional,
+  IsString,
+  IsStrongPassword,
+  MaxLength,
+  ValidateIf,
+  ValidateNested,
+} from "class-validator";
 import { IsEqualsTo } from "src/decorators/IsEqualsTo.decorator";
+import { AccountKind } from "../account-kind.enum";
+import { RegisterCompanyDto } from "./register-company.dto";
+
+function toDigits(value: unknown): unknown {
+  return typeof value === 'string' ? value.replace(/\D/g, '') : value;
+}
 
 export class CreateUserDto {
 
@@ -53,4 +70,41 @@ export class CreateUserDto {
   @IsString()
   @IsOptional()
   avatar: string;
+
+  @ApiPropertyOptional({
+    enum: AccountKind,
+    description: 'Tipo de conta no cadastro. Omissão = pessoa física.',
+    example: AccountKind.INDIVIDUAL,
+  })
+  @IsOptional()
+  @IsEnum(AccountKind)
+  accountKind?: AccountKind;
+
+  @ApiPropertyOptional({
+    description: 'CPF (apenas dígitos). Opcional para pessoa física.',
+    example: '39053344705',
+  })
+  @IsOptional()
+  @Transform(({ value }) => toDigits(value))
+  @IsString()
+  @MaxLength(14)
+  document?: string;
+
+  @ApiPropertyOptional({
+    type: RegisterCompanyDto,
+    description: 'Dados da empresa. Obrigatório quando accountKind=COMPANY.',
+  })
+  @ValidateIf((o: CreateUserDto) => o.accountKind === AccountKind.COMPANY)
+  @IsDefined()
+  @ValidateNested()
+  @Type(() => RegisterCompanyDto)
+  company?: RegisterCompanyDto;
+
+  @ApiPropertyOptional({
+    description: 'Token de convite para projecto (consumido na Onda 2).',
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(128)
+  inviteToken?: string;
 }

@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { UsersService } from './users.service';
-import { mockUserRepositoryProvider } from 'src/test-utils/unit-test.mocks';
+import { mockDataSourceProvider, mockUserRepositoryProvider } from 'src/test-utils/unit-test.mocks';
 import { mockAppMetricsProvider } from 'src/test-utils/mock-app-metrics';
 
 describe('UsersService', () => {
@@ -8,7 +8,12 @@ describe('UsersService', () => {
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [mockAppMetricsProvider, UsersService, mockUserRepositoryProvider],
+      providers: [
+        mockAppMetricsProvider,
+        UsersService,
+        mockUserRepositoryProvider,
+        mockDataSourceProvider,
+      ],
     }).compile();
 
     service = module.get<UsersService>(UsersService);

@@ -1,12 +1,15 @@
 import { BadRequestException, HttpException, HttpStatus, Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { DataSource, Repository } from 'typeorm';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { Repository } from 'typeorm';
 import { User } from 'src/users/entities/User.entity';
+import { Company } from 'src/companies/entities/Company.entity';
 import { PostgreSQLTokens } from 'src/repository/postgresql.enums';
 import { Crypt } from 'src/utils/crypt';
+import { isValidCnpj, isValidCpf } from 'src/utils/br-documents';
 import { AppMetricsService } from 'src/metrics/app-metrics.service';
 import { canAccessUserProfile, canManageUsers } from './user-permissions.helper';
+import { AccountKind } from './account-kind.enum';
 
 const PUBLIC_USER_SELECT = {
   password: false as const,
@@ -18,6 +21,8 @@ const PUBLIC_USER_SELECT = {
   name: true,
   email: true,
   role: true,
+  accountKind: true,
+  document: true,
 };
 
 @Injectable()
@@ -26,6 +31,8 @@ export class UsersService {
   constructor(
     @Inject(PostgreSQLTokens.USER_REPOSITORY)
     private userRepository: Repository<User>,
+    @Inject(PostgreSQLTokens.DATA_SOURCE)
+    private dataSource: DataSource,
     private readonly metrics: AppMetricsService,
   ) { }
 
@@ -68,12 +75,12 @@ export class UsersService {
       }
       const user = await this.userRepository.findOne({
         where: { id, deletedAt: null },
-        select: PUBLIC_USER_SELECT,
+        relations: { ownedCompany: true },
       });
       if (!user) {
         throw new NotFoundException('Usuário não encontrado');
       }
-      return user;
+      return this.toPublicUser(user);
     });
   }
 
@@ -117,21 +124,62 @@ export class UsersService {
         throw new HttpException('Email already exists', HttpStatus.UNPROCESSABLE_ENTITY);
       }
 
-      const user = await this.userRepository.save({
-        avatar: createUserDto.avatar,
-        email: createUserDto.email,
-        name: createUserDto.name,
-        password: await Crypt.hash(createUserDto.password),
-        updatedAt: null,
-      })
-
-      if(!user) {
-        throw new BadRequestException('Não foi possível criar o usuário');
+      const accountKind = createUserDto.accountKind ?? AccountKind.INDIVIDUAL;
+      const cpf = createUserDto.document?.trim() || null;
+      if (accountKind === AccountKind.INDIVIDUAL && cpf && !isValidCpf(cpf)) {
+        throw new BadRequestException('Informe um CPF válido.');
+      }
+      if (accountKind === AccountKind.COMPANY) {
+        if (!createUserDto.company) {
+          throw new BadRequestException('Informe os dados da empresa.');
+        }
+        if (!isValidCnpj(createUserDto.company.document)) {
+          throw new BadRequestException('Informe um CNPJ válido.');
+        }
       }
 
-      user.password = undefined;
+      const passwordHash = await Crypt.hash(createUserDto.password);
 
-      return user;
+      return this.dataSource.transaction(async (manager) => {
+        const userRepo = manager.getRepository(User);
+        const companyRepo = manager.getRepository(Company);
+
+        const user = await userRepo.save({
+          avatar: createUserDto.avatar,
+          email: createUserDto.email,
+          name: createUserDto.name,
+          password: passwordHash,
+          accountKind,
+          document: accountKind === AccountKind.INDIVIDUAL ? cpf : null,
+          updatedAt: null,
+        });
+
+        if (!user) {
+          throw new BadRequestException('Não foi possível criar o usuário');
+        }
+
+        if (accountKind === AccountKind.COMPANY && createUserDto.company) {
+          const cnpj = createUserDto.company.document;
+          const existingCnpj = await companyRepo.findOne({
+            where: { document: cnpj },
+          });
+          if (existingCnpj) {
+            throw new HttpException('CNPJ já cadastrado', HttpStatus.UNPROCESSABLE_ENTITY);
+          }
+          const legalName = createUserDto.company.legalName.trim();
+          const tradeName = createUserDto.company.tradeName?.trim() || null;
+          const company = await companyRepo.save({
+            name: tradeName || legalName,
+            legalName,
+            tradeName,
+            document: cnpj,
+            owner: user,
+          });
+          user.ownedCompany = company;
+        }
+
+        return this.toPublicUser(user);
+      });
     });
   }
 
@@ -188,5 +236,32 @@ export class UsersService {
       },
       select: PUBLIC_USER_SELECT,
     });
+  }
+
+  private toPublicUser(user: User) {
+    const owned = user.ownedCompany;
+    const company =
+      owned && !owned.deletedAt
+        ? {
+            id: owned.id,
+            legalName: owned.legalName || owned.name,
+            tradeName: owned.tradeName ?? null,
+            document: owned.document ?? null,
+          }
+        : null;
+
+    return {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      avatar: user.avatar ?? null,
+      role: user.role,
+      accountKind: user.accountKind ?? AccountKind.INDIVIDUAL,
+      document: user.document ?? null,
+      company,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
+      deletedAt: user.deletedAt,
+    };
   }
 }

@@ -20,6 +20,7 @@ export class CompaniesService {
       try {
         return this.companyRepository.save({
           name: createCompanyDto.name,
+          legalName: createCompanyDto.name,
         });
       } catch (error) {
         throw new InternalServerErrorException('Erro ao criar a Empresa');

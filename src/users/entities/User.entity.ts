@@ -1,4 +1,4 @@
-import { Column, CreateDateColumn, DeleteDateColumn, Entity, ManyToMany, ManyToOne, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
+import { Column, CreateDateColumn, DeleteDateColumn, Entity, OneToMany, OneToOne, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
 import { Project } from "../../projects/entities/Project.entity";
 import { Task } from "../../tasks/entities/Task.entity";
 import { Subtask } from "../../subtasks/entities/subtask.entity";
@@ -8,6 +8,8 @@ import { UserFriendship } from "./UserFriendship.entity";
 import { Session } from "src/auth/entities/Session.entity";
 import { ForgetPassword } from "src/auth/entities/ForgetPassword.entity";
 import { UserRole } from "../user-role.enum";
+import { AccountKind } from "../account-kind.enum";
+import { Company } from "../../companies/entities/Company.entity";
 
 @Entity()
 export class User {
@@ -29,6 +31,15 @@ export class User {
 
   @Column({ type: 'varchar', length: 32, default: UserRole.CLIENT })
   role: UserRole;
+
+  @Column({ type: 'varchar', length: 32, default: AccountKind.INDIVIDUAL })
+  accountKind: AccountKind;
+
+  @Column({ nullable: true, type: 'varchar', length: 14 })
+  document: string | null;
+
+  @OneToOne(() => Company, (company) => company.owner)
+  ownedCompany: Company | null;
 
   @CreateDateColumn({ type: "timestamp", default: () => "CURRENT_TIMESTAMP()" })
   createdAt: Date;

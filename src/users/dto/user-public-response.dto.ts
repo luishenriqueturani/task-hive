@@ -1,5 +1,20 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { UserRole } from '../user-role.enum';
+import { AccountKind } from '../account-kind.enum';
+
+export class SessionCompanyResponseDto {
+  @ApiProperty({ format: 'uuid' })
+  id: string;
+
+  @ApiProperty({ example: 'Acme Tecnologia Ltda' })
+  legalName: string;
+
+  @ApiPropertyOptional({ nullable: true, example: 'Acme' })
+  tradeName?: string | null;
+
+  @ApiPropertyOptional({ nullable: true, example: '11444777000161' })
+  document?: string | null;
+}
 
 /** Usuário exposto na API (sem `password`). Campos opcionais variam conforme o endpoint. */
 export class UserPublicResponseDto {
@@ -17,6 +32,15 @@ export class UserPublicResponseDto {
 
   @ApiPropertyOptional({ enum: UserRole, example: UserRole.CLIENT })
   role?: UserRole;
+
+  @ApiPropertyOptional({ enum: AccountKind, example: AccountKind.INDIVIDUAL })
+  accountKind?: AccountKind;
+
+  @ApiPropertyOptional({ nullable: true, example: null })
+  document?: string | null;
+
+  @ApiPropertyOptional({ type: SessionCompanyResponseDto, nullable: true })
+  company?: SessionCompanyResponseDto | null;
 
   @ApiProperty({ example: '2025-02-09T12:00:00.000Z' })
   createdAt: string;
