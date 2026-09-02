@@ -19,6 +19,7 @@ export function createMockRepository(): Record<string, jest.Mock> {
     find: jest.fn(),
     findOne: jest.fn(),
     findOneBy: jest.fn(),
+    create: jest.fn((entity) => entity),
     save: jest.fn(),
     update: jest.fn(),
     delete: jest.fn(),
@@ -88,6 +89,12 @@ export const mockProjectRepositoryProvider = mockRepositoryProvider(
 );
 export const mockProjectInviteRepositoryProvider = mockRepositoryProvider(
   PostgreSQLTokens.PROJECT_INVITE_REPOSITORY,
+);
+export const mockPlanRepositoryProvider = mockRepositoryProvider(
+  PostgreSQLTokens.PLAN_REPOSITORY,
+);
+export const mockPlanBenefitRepositoryProvider = mockRepositoryProvider(
+  PostgreSQLTokens.PLAN_BENEFIT_REPOSITORY,
 );
 export const mockProjectStageRepositoryProvider = mockRepositoryProvider(
   PostgreSQLTokens.PROJECT_STAGE_REPOSITORY,

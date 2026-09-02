@@ -15,6 +15,7 @@ import { ProjectStagesModule } from './project-stages/project-stages.module';
 import { TasksModule } from './tasks/tasks.module';
 import { SubtasksModule } from './subtasks/subtasks.module';
 import { MetricsModule } from './metrics/metrics.module';
+import { PlansModule } from './plans/plans.module';
 
 
 
@@ -36,6 +37,7 @@ import { MetricsModule } from './metrics/metrics.module';
     ProjectStagesModule,
     TasksModule,
     SubtasksModule,
+    PlansModule,
   ],
   controllers: [AppController],
   providers: [
