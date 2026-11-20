@@ -23,6 +23,10 @@ import { CreateSupportMessageDto } from './dto/create-message.dto';
 import { CreateSupportTicketDto } from './dto/create-ticket.dto';
 import { ListSupportTicketsQueryDto } from './dto/list-tickets-query.dto';
 import { PatchSupportTicketDto } from './dto/patch-ticket.dto';
+import {
+  SupportMessageOpenApiDto,
+  SupportTicketOpenApiDto,
+} from './dto/support-openapi.dto';
 import { SupportService } from './support.service';
 
 @ApiTags('support')
@@ -34,7 +38,7 @@ export class SupportController {
 
   @Get()
   @ApiOperation({ summary: 'Listar tickets de suporte' })
-  @ApiOkResponse({ description: 'Tickets do autor ou, para admin, a fila global' })
+  @ApiOkResponse({ type: SupportTicketOpenApiDto, isArray: true })
   list(
     @User() actor: UserEntity,
     @Query() query: ListSupportTicketsQueryDto,
@@ -44,12 +48,14 @@ export class SupportController {
 
   @Post()
   @ApiOperation({ summary: 'Abrir ticket de suporte' })
+  @ApiOkResponse({ type: SupportTicketOpenApiDto })
   create(@User() actor: UserEntity, @Body() dto: CreateSupportTicketDto) {
     return this.support.create(actor, dto);
   }
 
   @Get(':id')
   @ApiOperation({ summary: 'Detalhe de um ticket' })
+  @ApiOkResponse({ type: SupportTicketOpenApiDto })
   findOne(
     @Param('id', ParseUUIDPipe) id: string,
     @User() actor: UserEntity,
@@ -59,6 +65,7 @@ export class SupportController {
 
   @Patch(':id')
   @ApiOperation({ summary: 'Actualizar estado ou assumir ticket' })
+  @ApiOkResponse({ type: SupportTicketOpenApiDto })
   patch(
     @Param('id', ParseUUIDPipe) id: string,
     @User() actor: UserEntity,
@@ -69,6 +76,7 @@ export class SupportController {
 
   @Get(':id/messages')
   @ApiOperation({ summary: 'Mensagens do ticket' })
+  @ApiOkResponse({ type: SupportMessageOpenApiDto, isArray: true })
   listMessages(
     @Param('id', ParseUUIDPipe) id: string,
     @User() actor: UserEntity,
@@ -79,6 +87,7 @@ export class SupportController {
   @Throttle({ default: { limit: 30, ttl: 60000 } })
   @Post(':id/messages')
   @ApiOperation({ summary: 'Enviar mensagem no ticket' })
+  @ApiOkResponse({ type: SupportMessageOpenApiDto })
   postMessage(
     @Param('id', ParseUUIDPipe) id: string,
     @User() actor: UserEntity,

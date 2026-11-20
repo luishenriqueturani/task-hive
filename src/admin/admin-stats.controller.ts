@@ -9,6 +9,7 @@ import { Roles } from 'src/decorators/roles.decorator';
 import { AuthGuard } from 'src/guards/auth.guard';
 import { RolesGuard } from 'src/guards/roles.guard';
 import { UserRole } from 'src/users/user-role.enum';
+import { AdminStatsOpenApiDto } from 'src/support/dto/support-openapi.dto';
 import { AdminStatsService } from './admin-stats.service';
 
 @ApiTags('admin')
@@ -21,7 +22,7 @@ export class AdminStatsController {
 
   @Get('stats')
   @ApiOperation({ summary: 'Resumo do painel admin' })
-  @ApiOkResponse({ description: 'Contagens de utilizadores, empresas e tickets' })
+  @ApiOkResponse({ type: AdminStatsOpenApiDto })
   snapshot() {
     return this.stats.snapshot();
   }

@@ -23,8 +23,7 @@ async function main() {
 
 main().catch((err) => {
   logger.error(
-    'Falha ao gerar OpenAPI (a app precisa de PostgreSQL acessível com o .env atual). ' +
-      'Alternativa com a API já a correr: npm run openapi:pull',
+    'Falha ao gerar OpenAPI. Alternativa com a API já a correr: npm run openapi:pull',
   );
   logger.error(err?.message ?? err);
   process.exit(1);

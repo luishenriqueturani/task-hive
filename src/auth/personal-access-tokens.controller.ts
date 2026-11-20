@@ -12,8 +12,10 @@ import {
   ApiCreatedResponse,
   ApiOkResponse,
   ApiOperation,
+  ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
+import { PlanLimitErrorDto } from 'src/common/swagger/plan-limit-error.dto';
 import { AuthGuard } from 'src/guards/auth.guard';
 import { User } from 'src/decorators/user.decorator';
 import { User as UserEntity } from 'src/users/entities/User.entity';
@@ -45,6 +47,11 @@ export class PersonalAccessTokensController {
       'Devolve o token completo uma única vez. Use Authorization: Bearer th_pat_…',
   })
   @ApiCreatedResponse({ type: PersonalAccessTokenCreatedDto })
+  @ApiResponse({
+    status: 402,
+    description: 'Quota de chaves API atingida',
+    type: PlanLimitErrorDto,
+  })
   create(@User() user: UserEntity, @Body() dto: CreatePersonalAccessTokenDto) {
     return this.service.create(user, dto);
   }

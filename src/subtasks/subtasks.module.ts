@@ -9,16 +9,14 @@ import { taskProviders } from 'src/repository/providers/task.provider';
 import { taskCompletionProviders } from 'src/repository/providers/taskCompletion.provider';
 import { ProjectStagesService } from 'src/project-stages/project-stages.service';
 import { projectStageProviders } from 'src/repository/providers/projectStage.provider';
-import { projectProviders } from 'src/repository/providers/project.provider';
-import { ProjectsService } from 'src/projects/projects.service';
 import { companyProvider } from 'src/repository/providers/company.provider';
 import { CompaniesService } from 'src/companies/companies.service';
 import { AuthModule } from 'src/auth/auth.module';
+import { ProjectsModule } from 'src/projects/projects.module';
 
 @Module({
   controllers: [SubtasksController],
   providers: [
-    ...projectProviders,
     ...companyProvider,
     ...taskProviders,
     ...taskCompletionProviders,
@@ -26,11 +24,10 @@ import { AuthModule } from 'src/auth/auth.module';
     ...subtaskProviders,
     SnowflakeIdService,
     CompaniesService,
-    ProjectsService,
     ProjectStagesService,
     TasksService,
     SubtasksService,
   ],
-  imports: [AuthModule, DatabaseModule],
+  imports: [AuthModule, DatabaseModule, ProjectsModule],
 })
 export class SubtasksModule {}

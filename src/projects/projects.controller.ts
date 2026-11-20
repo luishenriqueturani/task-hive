@@ -5,6 +5,7 @@ import { ProjectsService } from './projects.service';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
 import { AddParticipantDto } from './dto/add-participant.dto';
+import { PlanLimitErrorDto } from 'src/common/swagger/plan-limit-error.dto';
 import { CreateProjectInviteDto } from './dto/create-project-invite.dto';
 import { User } from 'src/decorators/user.decorator';
 import { User as UserEntity } from 'src/users/entities/User.entity';
@@ -41,6 +42,7 @@ export class ProjectsController {
     },
   })
   @ApiResponse({ status: 401, description: 'Não autorizado' })
+  @ApiResponse({ status: 402, description: 'Quota de projectos atingida', type: PlanLimitErrorDto })
   @ApiResponse({ status: 422, description: 'Dados inválidos' })
   @ApiResponse({ status: 500, description: 'Erro ao criar o projeto' })
   create(@Body() createProjectDto: CreateProjectDto, @User() user: UserEntity) {
@@ -144,6 +146,7 @@ export class ProjectsController {
     },
   })
   @ApiResponse({ status: 400, description: 'Usuário já é participante ou é o dono do projeto' })
+  @ApiResponse({ status: 402, description: 'Quota de convidados atingida', type: PlanLimitErrorDto })
   @ApiResponse({ status: 403, description: 'Sem permissão para adicionar participantes' })
   @ApiResponse({ status: 404, description: 'Projeto ou usuário não encontrado' })
   addParticipant(@Param('id') id: string, @Body() dto: AddParticipantDto, @User() user: UserEntity) {
@@ -197,7 +200,7 @@ export class ProjectsController {
   @ApiParam({ name: 'id', description: 'ID do projeto (bigint)' })
   @ApiBody({ type: CreateProjectInviteDto })
   @ApiResponse({ status: 201, description: 'Convite criado' })
-  @ApiResponse({ status: 402, description: 'Quota de convidados atingida' })
+  @ApiResponse({ status: 402, description: 'Quota de convidados atingida', type: PlanLimitErrorDto })
   createInvite(
     @Param('id') id: string,
     @Body() dto: CreateProjectInviteDto,

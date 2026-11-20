@@ -6,6 +6,7 @@ import { UpdateToDoDto } from './dto/update-to-do.dto';
 import { AuthGuard } from 'src/guards/auth.guard';
 import { User } from 'src/decorators/user.decorator';
 import { User as UserEntity } from 'src/users/entities/User.entity';
+import { PlanLimitErrorDto } from 'src/common/swagger/plan-limit-error.dto';
 import { ChangeTaskStatusDto } from './dto/changeTaskStatus.dto';
 
 @ApiTags('to-do')
@@ -41,6 +42,12 @@ export class ToDoController {
   })
   @ApiResponse({ status: 400, description: 'Falha ao criar a tarefa' })
   @ApiResponse({ status: 401, description: 'Não autorizado' })
+  @ApiResponse({
+    status: 402,
+    description: 'Quota de tarefas avulsas atingida',
+    type: PlanLimitErrorDto,
+  })
+  @ApiResponse({ status: 403, description: 'Contas empresa não têm tarefas avulsas' })
   @ApiResponse({ status: 422, description: 'Dados inválidos' })
   create(@Body() createToDoDto: CreateToDoDto, @User() user: UserEntity) {
     try {
