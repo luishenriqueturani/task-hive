@@ -170,4 +170,31 @@ describe('CouponsService', () => {
       NotFoundException,
     );
   });
+
+  it('assertRedeemable recusa trial e cupom esgotado', async () => {
+    coupons.findOne.mockResolvedValue({
+      ...savedCoupon,
+      maxRedemptions: 1,
+      redeemedCount: 1,
+    });
+    await expect(
+      service.assertRedeemable('WELCOME10', starter as never),
+    ).rejects.toBeInstanceOf(BadRequestException);
+
+    coupons.findOne.mockResolvedValue({
+      ...savedCoupon,
+      maxRedemptions: 50,
+      redeemedCount: 1,
+    });
+    await expect(
+      service.assertRedeemable('WELCOME10', trial as never),
+    ).rejects.toBeInstanceOf(BadRequestException);
+  });
+
+  it('assertRedeemable aceita plano pago aplicável', async () => {
+    coupons.findOne.mockResolvedValue(savedCoupon);
+    await expect(
+      service.assertRedeemable('welcome10', starter as never),
+    ).resolves.toEqual(savedCoupon);
+  });
 });

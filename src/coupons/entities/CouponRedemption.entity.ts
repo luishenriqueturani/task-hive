@@ -24,7 +24,6 @@ export class CouponRedemption {
   @JoinColumn({ name: 'userId' })
   user: User | null;
 
-  /** Preenchido quando existir Subscription; nesta onda só o histórico. */
   @Column({ type: 'uuid', nullable: true })
   subscriptionId: string | null;
 

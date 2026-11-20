@@ -14,6 +14,12 @@ export function createMockRepository(): Record<string, jest.Mock> {
     andWhere: jest.fn().mockReturnThis(),
     orWhere: jest.fn().mockReturnThis(),
     getMany: jest.fn().mockResolvedValue([]),
+    getCount: jest.fn().mockResolvedValue(0),
+    getManyAndCount: jest.fn().mockResolvedValue([[], 0]),
+    skip: jest.fn().mockReturnThis(),
+    take: jest.fn().mockReturnThis(),
+    orderBy: jest.fn().mockReturnThis(),
+    select: jest.fn().mockReturnThis(),
   };
   return {
     find: jest.fn(),
@@ -101,6 +107,9 @@ export const mockCouponRepositoryProvider = mockRepositoryProvider(
 );
 export const mockCouponRedemptionRepositoryProvider = mockRepositoryProvider(
   PostgreSQLTokens.COUPON_REDEMPTION_REPOSITORY,
+);
+export const mockSubscriptionRepositoryProvider = mockRepositoryProvider(
+  PostgreSQLTokens.SUBSCRIPTION_REPOSITORY,
 );
 export const mockProjectStageRepositoryProvider = mockRepositoryProvider(
   PostgreSQLTokens.PROJECT_STAGE_REPOSITORY,

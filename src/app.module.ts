@@ -17,6 +17,8 @@ import { SubtasksModule } from './subtasks/subtasks.module';
 import { MetricsModule } from './metrics/metrics.module';
 import { PlansModule } from './plans/plans.module';
 import { CouponsModule } from './coupons/coupons.module';
+import { SubscriptionsModule } from './subscriptions/subscriptions.module';
+import { AdminModule } from './admin/admin.module';
 
 
 
@@ -40,6 +42,8 @@ import { CouponsModule } from './coupons/coupons.module';
     SubtasksModule,
     PlansModule,
     CouponsModule,
+    SubscriptionsModule,
+    AdminModule,
   ],
   controllers: [AppController],
   providers: [

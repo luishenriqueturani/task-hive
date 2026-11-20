@@ -5,13 +5,15 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { In, Repository } from 'typeorm';
+import { EntityManager, In, Repository } from 'typeorm';
 import { AppMetricsService } from 'src/metrics/app-metrics.service';
 import { PostgreSQLTokens } from 'src/repository/postgresql.enums';
 import { Plan } from 'src/plans/entities/Plan.entity';
+import { User } from 'src/users/entities/User.entity';
 import { CouponType } from './coupon.enums';
 import { CreateCouponDto, UpdateCouponDto } from './dto/coupon.dto';
 import { Coupon } from './entities/Coupon.entity';
+import { CouponRedemption } from './entities/CouponRedemption.entity';
 
 @Injectable()
 export class CouponsService {
@@ -97,6 +99,63 @@ export class CouponsService {
       await this.coupons.softDelete(id);
       return { id };
     });
+  }
+
+  /**
+   * Valida código, janela, tecto e planos aplicáveis.
+   * Cupons nunca se aplicam a planos `isSystem`.
+   */
+  async assertRedeemable(code: string, plan: Plan): Promise<Coupon> {
+    const coupon = await this.coupons.findOne({
+      where: { code: this.normalizeCode(code) },
+      relations: { applicablePlans: true },
+    });
+    if (!coupon) throw new NotFoundException('Cupom não encontrado.');
+    if (!coupon.isActive) {
+      throw new BadRequestException('Cupom inactivo.');
+    }
+    const now = Date.now();
+    if (coupon.startsAt && coupon.startsAt.getTime() > now) {
+      throw new BadRequestException('Cupom ainda não é válido.');
+    }
+    if (coupon.expiresAt && coupon.expiresAt.getTime() < now) {
+      throw new BadRequestException('Cupom expirado.');
+    }
+    if (
+      coupon.maxRedemptions != null &&
+      coupon.redeemedCount >= coupon.maxRedemptions
+    ) {
+      throw new BadRequestException('Cupom esgotado.');
+    }
+    if (plan.isSystem) {
+      throw new BadRequestException(
+        'Cupons não se aplicam ao plano de sistema (trial).',
+      );
+    }
+    const allowed = coupon.applicablePlans ?? [];
+    if (allowed.length > 0 && !allowed.some((item) => item.id === plan.id)) {
+      throw new BadRequestException('Cupom não se aplica a este plano.');
+    }
+    return coupon;
+  }
+
+  async recordRedemption(
+    manager: EntityManager,
+    coupon: Coupon,
+    subscriptionId: string,
+    user: User | null,
+  ): Promise<void> {
+    const couponRepo = manager.getRepository(Coupon);
+    const redemptionRepo = manager.getRepository(CouponRedemption);
+    coupon.redeemedCount += 1;
+    await couponRepo.save(coupon);
+    await redemptionRepo.save(
+      redemptionRepo.create({
+        coupon,
+        user,
+        subscriptionId,
+      }),
+    );
   }
 
   private async load(id: string): Promise<Coupon> {
