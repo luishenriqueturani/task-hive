@@ -19,6 +19,7 @@ import { PlansModule } from './plans/plans.module';
 import { CouponsModule } from './coupons/coupons.module';
 import { SubscriptionsModule } from './subscriptions/subscriptions.module';
 import { AdminModule } from './admin/admin.module';
+import { SupportModule } from './support/support.module';
 
 
 
@@ -43,6 +44,7 @@ import { AdminModule } from './admin/admin.module';
     PlansModule,
     CouponsModule,
     SubscriptionsModule,
+    SupportModule,
     AdminModule,
   ],
   controllers: [AppController],

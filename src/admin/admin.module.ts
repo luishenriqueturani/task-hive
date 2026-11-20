@@ -6,6 +6,7 @@ import { planProviders } from 'src/repository/providers/plan.provider';
 import { projectProviders } from 'src/repository/providers/project.provider';
 import { todoProviders } from 'src/repository/providers/todo.provider';
 import { SubscriptionsModule } from 'src/subscriptions/subscriptions.module';
+import { SupportModule } from 'src/support/support.module';
 import { AdminCompaniesController } from './admin-companies.controller';
 import { AdminCompaniesService } from './admin-companies.service';
 import { AdminStatsController } from './admin-stats.controller';
@@ -14,7 +15,7 @@ import { AdminUsersController } from './admin-users.controller';
 import { AdminUsersService } from './admin-users.service';
 
 @Module({
-  imports: [DatabaseModule, AuthModule, SubscriptionsModule],
+  imports: [DatabaseModule, AuthModule, SubscriptionsModule, SupportModule],
   controllers: [
     AdminStatsController,
     AdminUsersController,
