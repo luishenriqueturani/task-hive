@@ -97,21 +97,15 @@ npm run test:e2e
 
 ## Docker em casa
 
-**Stack completa (UI + API + Postgres + Nginx):** usa o compose na **raiz do monorepo** — ver [`../README.md`](../README.md#docker-em-casa-stack-completa). Acesso por IP (`http://IP:8080`), sem DNS.
+**App no Orange Pi (API + UI):** compose na **raiz do monorepo** — ver [`../README.md`](../README.md#docker-em-casa-orange-pi). Acesso por IP (`http://IP:8080`), sem DNS. Postgres, Nginx e Grafana estão em `/root/infra`, não neste compose.
 
-**Stack só-API** (este diretório): Postgres + Nest + Nginx. Ficheiros: [`Dockerfile`](Dockerfile), [`docker-compose.yml`](docker-compose.yml), [`docker/nginx.conf`](docker/nginx.conf), init em [`docker/postgres/init/`](docker/postgres/init/).
-
-Não corras as duas stacks em paralelo (partilham nomes de contentor e o volume `task_hive_pg`).
+O volume `task_hive_pg` é do Postgres partilhado. Não corras `docker compose down -v` em `/root/infra/postgres`.
 
 Comandos com **`docker compose`** (espaço — plugin Compose v2). Se ainda só tiveres `docker-compose` (hífen) antigo, vê [`docs/docker-compose-legacy.md`](docs/docker-compose-legacy.md).
 
 1. Copia e edita o `.env` (mínimo: `POSTGRES_PASSWORD`, `DB_PASSWORD`, `DB_REMOTE_PASSWORD`, `JWT_SECRET`, `SWAGGER_PASSWORD`, `GRAFANA_ADMIN_PASSWORD`; alinha `DB_NAME` com `POSTGRES_DB`). O [``.env.example`](.env.example) lista todos os campos.
 
-2. Sobe a stack só-API:
-
-   ```bash
-   docker compose up -d --build
-   ```
+2. Sobe a app a partir da **raiz** do monorepo (`docker compose up -d --build`), com o Postgres partilhado já a correr. Não há compose só-API neste diretório.
 
 3. **Utilizadores na base de dados** (criados na **primeira** inicialização do volume; ver nota abaixo):
 
@@ -119,7 +113,7 @@ Comandos com **`docker compose`** (espaço — plugin Compose v2). Se ainda só 
    |----------|--------|
    | `POSTGRES_USER` / `POSTGRES_PASSWORD` | Superuser do contentor (ex. `postgres`) — administração total; **não** uses como `DB_USER`. |
    | `DB_USER` / `DB_PASSWORD` | Utilizador da API (migrations + TypeORM). |
-   | `DB_REMOTE_USER` / `DB_REMOTE_PASSWORD` | Clientes remotos (pgAdmin, DBeaver, `psql`) na LAN: liga ao **IP do host** e à porta **`POSTGRES_PUBLISH_PORT`** (default **5432**). |
+   | `DB_REMOTE_USER` / `DB_REMOTE_PASSWORD` | Clientes remotos (pgAdmin, DBeaver, `psql`) na LAN: IP do Pi, porta **5433**. |
 
    `DB_USER` e `DB_REMOTE_USER` têm de ser **nomes diferentes** de `POSTGRES_USER` e entre si.
 
@@ -138,7 +132,7 @@ docker compose exec api npm run migration:run:dist
 docker compose exec api npm run migration:revert:dist
 ```
 
-O Compose já define **`DB_HOST=postgres`** e **`DB_PORT=5432`** para o serviço `api`; **`DB_USER`**, **`DB_PASSWORD`** e **`DB_NAME`** vêm do teu `.env` (via `env_file`). Não precisas de hostname `postgres` no host — só dentro da rede Docker.
+O Compose da raiz define **`DB_HOST=shared-postgres`** e **`DB_PORT=5432`** para o serviço `api`; **`DB_USER`**, **`DB_PASSWORD`** e **`DB_NAME`** vêm do teu `.env` (via `env_file`). Na LAN, o Postgres partilhado está na porta **5433** do Pi.
 
 Se o contentor `api` ainda não estiver a correr:
 
@@ -150,29 +144,19 @@ docker compose run --rm api npm run migration:run:dist
 
 No **host** (código-fonte + Postgres na porta publicada), continua a usar `npm run typeorm -- migration:run` com `DB_HOST=127.0.0.1` e `DB_PORT` = `POSTGRES_PUBLISH_PORT`.
 
-### Recriar o Postgres (sem dados / password errada no init)
+### Volume do Postgres
 
-Se criaste o volume com `DB_PASSWORD` vazio ou queres alinhar utilizadores ao `.env` sem dados a preservar:
-
-```bash
-docker compose down -v
-# Preenche no .env: POSTGRES_PASSWORD, DB_PASSWORD, DB_REMOTE_PASSWORD (todos não vazios)
-docker compose up -d
-```
-
-O `-v` remove o volume nomeado (`task_hive_pg`); na próxima subida o init volta a criar roles e extensões.
+Os dados estão no volume `task_hive_pg`, montado pelo contentor `shared-postgres`. `docker compose down -v` nessa stack apaga a base. Para mudar a password de um role, usa o `ALTER ROLE` abaixo. O script `docker/postgres/init/01-users.sh` só corre num volume vazio.
 
 **Só alterar a password de um role** (Postgres já a correr, superuser `postgres`):
 
 ```bash
-docker compose exec postgres psql -U postgres -d task_hive -c "ALTER ROLE taskhive_app PASSWORD 'a_tua_nova_password';"
+docker exec shared-postgres psql -U postgres -d task_hive -c "ALTER ROLE taskhive_app PASSWORD 'a_tua_nova_password';"
 ```
 
-Depois iguala `DB_PASSWORD` no `.env` à mesma string. Para migrations a correr **no host** (fora do Docker), usa `DB_HOST=127.0.0.1` (ou IP da máquina) e `DB_PORT` igual a `POSTGRES_PUBLISH_PORT` — o hostname `postgres` só existe dentro da rede do Compose.
+Depois iguala `DB_PASSWORD` no `.env` à mesma string. Para migrations a correr **no host** (fora do Docker), usa o IP do Pi e `DB_PORT=5433`. Dentro da rede Docker o host é `shared-postgres` e a porta é `5432`.
 
-Se no **host** já existir um serviço na porta **5432** (Postgres instalado no sistema, outro contentor com `-p 5432`, etc.), define **`POSTGRES_PUBLISH_PORT`** para uma porta livre (ex. **5433**); a API dentro do Docker não precisa de alteração.
-
-**`.env`:** não repitas `DB_USER` / `DB_PASSWORD` / `DB_NAME` no mesmo ficheiro. Passwords com **`#`** têm de ir entre aspas no `.env`. No `docker-compose.yml`, **Postgres e API** carregam credenciais **só via `env_file`** (não usamos `${DB_PASSWORD}` no bloco `environment`), para o Compose no host nunca sobrescrever com variável vazia. Só `DB_HOST`/`DB_PORT` da API vêm fixos no YAML (`postgres` / `5432`).
+**`.env`:** não repitas `DB_USER` / `DB_PASSWORD` / `DB_NAME` no mesmo ficheiro. Passwords com **`#`** têm de ir entre aspas no `.env`. A API carrega credenciais via `env_file`. `DB_HOST` e `DB_PORT` do contentor vêm fixos no YAML (`shared-postgres` / `5432`).
 
 Para confirmar no servidor: `docker compose exec api sh -c 'echo DB_HOST=$DB_HOST; test -n "$DB_PASSWORD" && echo DB_PASSWORD=definida || echo DB_PASSWORD=AUSENTE'`.
 
