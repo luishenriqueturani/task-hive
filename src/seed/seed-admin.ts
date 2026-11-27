@@ -50,7 +50,16 @@ async function main() {
 
   const existing = await repo.findOne({ where: { email } });
   if (existing) {
-    console.log(`Utilizador já existe (${email}). Nada a fazer.`);
+    if (existing.role === UserRole.ADMIN_GOD) {
+      console.log(`Admin já existe (${email}). Nada a fazer.`);
+    } else {
+      const previous = existing.role;
+      existing.role = UserRole.ADMIN_GOD;
+      await repo.save(existing);
+      console.log(
+        `Utilizador ${email} passou de ${previous} para ADMIN_GOD. Relogin necessário para actualizar o JWT.`,
+      );
+    }
     await dataSource.destroy();
     process.exit(0);
   }
